@@ -602,12 +602,12 @@
     border:1px solid var(--line); box-shadow:var(--shadow);
   }
   .product-card .pc-img{
-    width:100%; height:110px; background:var(--cream); display:flex; align-items:center; justify-content:center;
+    width:100%; height:170px; background:var(--cream); display:flex; align-items:center; justify-content:center;
     overflow:hidden; position:relative;
   }
-  .product-card .pc-img img{ width:100%; height:100%; object-fit:cover; }
+  .product-card .pc-img img{ width:100%; height:100%; object-fit:contain; padding:4px; box-sizing:border-box; }
   .product-card .pc-img .pc-placeholder-wrap{ display:flex; flex-direction:column; align-items:center; gap:5px; }
-  .product-card .pc-img .pc-placeholder{ font-size:26px; color:#c9bfa8; }
+  .product-card .pc-img .pc-placeholder{ font-size:38px; color:#c9bfa8; }
   .product-card .pc-img .pc-add-photo-hint{ font-size:10px; color:#a89a7c; font-weight:600; }
   .product-card .pc-img::after{
     content:'📷'; position:absolute; bottom:5px; right:5px; width:22px; height:22px; border-radius:50%;
@@ -633,6 +633,29 @@
   .cat-chip.on{ background:var(--gold); border-color:var(--gold); color:#fff; }
   .cat-chip:active{ transform:scale(.95); }
 
+  /* ---------- coffee lot QC ---------- */
+  .qc-lot-card{
+    background:#fffefc; border:1px solid var(--line); border-radius:14px; padding:12px 14px;
+    margin-bottom:10px; cursor:pointer; transition:.15s; box-shadow:var(--shadow);
+  }
+  .qc-lot-card:active{ transform:scale(.98); }
+  .qc-score-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15);
+  }
+  .qc-score-stars{ display:flex; gap:3px; flex:none; }
+  .qc-star{
+    background:none; border:none; font-size:20px; color:rgba(255,255,255,.25); cursor:pointer;
+    padding:2px; line-height:1;
+  }
+  .qc-star.on{ color:var(--gold); }
+  .sale-edit-btn{
+    border:1px solid rgba(139,110,43,.3); background:#fff; border-radius:50%;
+    width:20px; height:20px; font-size:11px; color:#8F5A26; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:0; flex:none;
+  }
+  .sale-edit-btn:active{ background:var(--gold); color:#fff; }
+
   .sell-gallery{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
   .sell-tile{
     position:relative; border-radius:14px; overflow:hidden; cursor:pointer; transition:.15s;
@@ -641,11 +664,11 @@
   .sell-tile.on{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(220,167,61,.3); }
   .sell-tile:active{ transform:scale(.97); }
   .sell-tile-img{
-    width:100%; height:86px; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center;
+    width:100%; height:130px; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center;
     overflow:hidden;
   }
-  .sell-tile-img img{ width:100%; height:100%; object-fit:cover; }
-  .sell-tile-placeholder{ font-size:26px; opacity:.5; }
+  .sell-tile-img img{ width:100%; height:100%; object-fit:contain; padding:4px; box-sizing:border-box; }
+  .sell-tile-placeholder{ font-size:38px; opacity:.5; }
   .sell-tile-body{ padding:8px; }
   .sell-tile-name{ font-size:11.5px; font-weight:600; color:#fff; line-height:1.3; min-height:28px; }
   .sell-tile-price{ font-size:11px; color:var(--gold); font-weight:700; margin-top:2px; font-family:'IBM Plex Mono'; }
@@ -1052,6 +1075,20 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="qcModalOverlay">
+  <div class="modal-box" style="position:relative; text-align:left; max-width:560px;">
+    <button class="modal-close" id="qcModalClose">✕</button>
+    <div id="qcModalBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="qcDetailModalOverlay">
+  <div class="modal-box" style="position:relative; text-align:left; max-width:520px;">
+    <button class="modal-close" id="qcDetailModalClose">✕</button>
+    <div id="qcDetailModalBody"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="reportModalOverlay">
   <div class="modal-box" style="position:relative;">
     <button class="modal-close" id="reportModalClose">✕</button>
@@ -1077,6 +1114,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="textInputModalOverlay" style="z-index:150;">
+  <div class="modal-box" style="position:relative; text-align:left;">
+    <button class="modal-close" id="textInputModalClose">✕</button>
+    <h3 id="textInputModalTitle">กรอกข้อความ</h3>
+    <p class="hint" id="textInputModalSub"></p>
+    <input type="text" id="textInputModalField" class="pill" style="width:100%; margin-top:10px;">
+    <div style="display:flex; gap:10px; margin-top:18px;">
+      <button class="btn ghost" id="textInputModalCancel" style="flex:1;">ยกเลิก</button>
+      <button class="btn-arrow" id="textInputModalOk" style="flex:1; justify-content:center;">ยืนยัน<span class="circ">✓</span></button>
+    </div>
+  </div>
+</div>
+
 <script>
 
 function openModal(id){
@@ -1093,6 +1143,8 @@ document.getElementById('bookingModalClose').onclick = ()=> closeModal('bookingM
 document.getElementById('productModalClose').onclick = ()=> closeModal('productModalOverlay');
 document.getElementById('profileModalClose').onclick = ()=> closeModal('profileModalOverlay');
 document.getElementById('evalModalClose').onclick = ()=> closeModal('evalModalOverlay');
+document.getElementById('qcModalClose').onclick = ()=> closeModal('qcModalOverlay');
+document.getElementById('qcDetailModalClose').onclick = ()=> closeModal('qcDetailModalOverlay');
 document.getElementById('reportModalClose').onclick = ()=> closeModal('reportModalOverlay');
 document.getElementById('menuModalOverlay').addEventListener('click', e=>{ if(e.target.id==='menuModalOverlay') closeModal('menuModalOverlay'); });
 document.getElementById('matModalOverlay').addEventListener('click', e=>{ if(e.target.id==='matModalOverlay') closeModal('matModalOverlay'); });
@@ -1100,6 +1152,8 @@ document.getElementById('bookingModalOverlay').addEventListener('click', e=>{ if
 document.getElementById('productModalOverlay').addEventListener('click', e=>{ if(e.target.id==='productModalOverlay') closeModal('productModalOverlay'); });
 document.getElementById('profileModalOverlay').addEventListener('click', e=>{ if(e.target.id==='profileModalOverlay') closeModal('profileModalOverlay'); });
 document.getElementById('evalModalOverlay').addEventListener('click', e=>{ if(e.target.id==='evalModalOverlay') closeModal('evalModalOverlay'); });
+document.getElementById('qcModalOverlay').addEventListener('click', e=>{ if(e.target.id==='qcModalOverlay') closeModal('qcModalOverlay'); });
+document.getElementById('qcDetailModalOverlay').addEventListener('click', e=>{ if(e.target.id==='qcDetailModalOverlay') closeModal('qcDetailModalOverlay'); });
 document.getElementById('reportModalOverlay').addEventListener('click', e=>{ if(e.target.id==='reportModalOverlay') closeModal('reportModalOverlay'); });
 
 function parseCSV(text){
@@ -1126,23 +1180,224 @@ function extractSheetId(url){
   const m = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
   return m ? m[1] : null;
 }
+function extractGid(url){
+  const m = url.match(/[#&]gid=(\d+)/);
+  return m ? m[1] : null;
+}
+function buildSheetCsvUrl(url){
+  if(!url) return null;
+  // "Publish to web" links (contain /d/e/<longid>/pub) are the most CORS-reliable — use as-is, just force CSV output
+  const pubMatch = url.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub/);
+  if(pubMatch){
+    const base = `https://docs.google.com/spreadsheets/d/e/${pubMatch[1]}/pub`;
+    const gid = extractGid(url);
+    return `${base}?output=csv${gid ? '&gid='+gid : ''}`;
+  }
+  // if the person already pasted a direct CSV export/gviz link, use it as-is
+  if(url.includes('output=csv') || url.includes('tqx=out:csv')) return url;
+
+  const sheetId = extractSheetId(url);
+  if(!sheetId) return null;
+  const gid = extractGid(url);
+  // fallback: the gviz endpoint on the private doc ID — works for some sheets, but "Publish to web" links are more reliable for CORS
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv${gid ? '&gid='+gid : ''}`;
+}
+let regCourseFilter = 'ทั้งหมด';
+let regRowsCache = null;
+async function loadRegistrationList(filterRowId, listBoxId){
+  filterRowId = filterRowId || 'regCourseFilterRow';
+  listBoxId = listBoxId || 'regListBox';
+  const filterRow = document.getElementById(filterRowId);
+  const box = document.getElementById(listBoxId);
+  if(!box) return;
+  box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">กำลังโหลดข้อมูล...</div>`;
+  if(filterRow) filterRow.innerHTML = '';
+
+  if(!sharedEvalFormUrl){
+    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน — ตั้งค่าได้ที่ ⚙️</div>`;
+    return;
+  }
+  const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
+  if(!csvUrl){
+    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ลิงก์ไม่ถูกต้อง</div>`;
+    return;
+  }
+  try{
+    const res = await fetch(csvUrl);
+    if(!res.ok) throw new Error('status ' + res.status);
+    const text = await res.text();
+    if(text.trim().startsWith('<')) throw new Error('sheet not public');
+    const rows = parseCSV(text);
+    if(rows.length < 2){
+      box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ยังไม่มีข้อมูลผู้ลงทะเบียน</div>`;
+      return;
+    }
+    const headers = rows[0];
+    const dataRows = rows.slice(1).filter(r=> r.some(c=>c && c.trim()));
+
+    const findCol = (keywords)=> headers.findIndex(h=> keywords.some(k=> h.includes(k)));
+    const courseIdx = findCol(['คอร์ส']);
+    const nameIdx = findCol(['ชื่อ - นามสกุล (ภาษาไทย)', 'ชื่อ']);
+    const phoneIdx = findCol(['เบอร์โทร']);
+    const lineIdx = findCol(['LINE']);
+    const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
+    const timeIdx = 0;
+
+    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx };
+
+    const courses = ['ทั้งหมด', ...new Set(dataRows.map(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim()).filter(Boolean))];
+    if(filterRow){
+      filterRow.innerHTML = courses.map(c=>`<button type="button" class="cat-chip ${c===regCourseFilter?'on':''}" data-course="${c.replace(/"/g,'&quot;')}">${c.length>28?c.slice(0,26)+'…':c}</button>`).join('');
+      filterRow.querySelectorAll('.cat-chip').forEach(chip=>{
+        chip.onclick = ()=>{
+          regCourseFilter = chip.dataset.course;
+          filterRow.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('on'));
+          chip.classList.add('on');
+          renderRegistrationList(listBoxId);
+        };
+      });
+    }
+    renderRegistrationList(listBoxId);
+  }catch(err){
+    const isFetchFail = err.message && err.message.toLowerCase().includes('fetch');
+    box.innerHTML = `
+      <div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px; line-height:1.6;">
+        โหลดข้อมูลไม่ได้ (${err.message})<br>
+        ${isFetchFail
+          ? 'ลิงก์นี้ถูกเบราว์เซอร์บล็อก (CORS) — ต้องใช้ลิงก์แบบ "Publish to web" แทน: เปิดชีท → File → Share → Publish to web → เลือกแท็บที่มีคำตอบ → รูปแบบ CSV → Publish → คัดลอกลิงก์ที่ได้มาตั้งค่าใหม่ (⚙️)'
+          : 'ตรวจสอบว่าชีทเปิดสิทธิ์ "ทุกคนที่มีลิงก์ - ดูได้" แล้ว'}
+      </div>`;
+  }
+}
+function renderRegistrationList(listBoxId){
+  const box = document.getElementById(listBoxId || 'regListBox');
+  if(!box || !regRowsCache) return;
+  const { dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx } = regRowsCache;
+  let rows = dataRows;
+  if(regCourseFilter !== 'ทั้งหมด'){
+    rows = rows.filter(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim() === regCourseFilter);
+  }
+  rows = rows.slice(-50).reverse(); // most recent first, cap for performance
+  if(!rows.length){
+    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ไม่มีผู้ลงทะเบียนในคอร์สนี้</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <p class="hint" style="margin-bottom:8px;">${rows.length} รายการล่าสุด</p>
+    ${rows.map(r=>{
+      const name = nameIdx>=0 ? r[nameIdx] : '-';
+      const phone = phoneIdx>=0 ? r[phoneIdx] : '';
+      const line = lineIdx>=0 ? r[lineIdx] : '';
+      const course = courseIdx>=0 ? r[courseIdx] : '';
+      const joinDate = dateIdx>=0 ? r[dateIdx] : '';
+      const submitted = timeIdx>=0 ? r[timeIdx] : '';
+      return `<div style="padding:9px 0; border-bottom:1px dashed var(--line);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
+          <span style="font-weight:700; font-size:13px;">${name||'-'}</span>
+          <span style="font-size:10.5px; color:#948a78; flex:none;">สมัคร ${submitted||'-'}</span>
+        </div>
+        <div style="font-size:11.5px; color:#5A4433; margin-top:2px;">${course||'-'}</div>
+        <div style="font-size:11px; color:#948a78; margin-top:2px;">
+          ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} ${joinDate ? `· เข้าร่วม ${joinDate}` : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+// ---------- Sync bookings from Google Form registration sheet ----------
+function matchCourseIdFromText(text){
+  const t = (text||'').toLowerCase();
+  if(t.includes('business model')) return state.courses.find(c=> c.name.includes('Business Model'))?.id || null;
+  if(t.includes('workshop') || t.includes('group')) return state.courses.find(c=> c.name.includes('Workshop') || c.name.includes('Group'))?.id || null;
+  if(t.includes('specialty')) return state.courses.find(c=> c.name.includes('Specialty'))?.id || null;
+  if(t.includes('latte art')) return state.courses.find(c=> c.name.includes('Latte Art') && !c.name.includes('Specialty'))?.id || state.courses[0]?.id || null;
+  return null;
+}
+function parseThaiFormDate(text){
+  // expects formats like "10/7/2026" (D/M/YYYY, Gregorian year as entered by Google Forms date field)
+  if(!text) return null;
+  const m = text.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(!m) return null;
+  const [, d, mo, y] = m;
+  return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+async function syncBookingsFromGoogleForm(){
+  if(!sharedEvalFormUrl) return { error: 'ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน' };
+  const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
+  if(!csvUrl) return { error: 'ลิงก์ไม่ถูกต้อง' };
+  try{
+    const res = await fetch(csvUrl);
+    if(!res.ok) throw new Error('status ' + res.status);
+    const text = await res.text();
+    if(text.trim().startsWith('<')) throw new Error('sheet not public');
+    const rows = parseCSV(text);
+    if(rows.length < 2) return { added:0, skipped:0, unmatched:0 };
+    const headers = rows[0];
+    const dataRows = rows.slice(1).filter(r=> r.some(c=>c && c.trim()));
+    const findCol = (keywords)=> headers.findIndex(h=> keywords.some(k=> h.includes(k)));
+    const courseIdx = findCol(['คอร์ส']);
+    const nameIdx = findCol(['ชื่อ - นามสกุล (ภาษาไทย)', 'ชื่อ']);
+    const phoneIdx = findCol(['เบอร์โทร']);
+    const lineIdx = findCol(['LINE']);
+    const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
+
+    const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
+    let added = 0, skipped = 0, unmatched = 0;
+
+    dataRows.forEach(r=>{
+      const courseText = courseIdx>=0 ? r[courseIdx] : '';
+      const name = nameIdx>=0 ? r[nameIdx] : '';
+      const phone = phoneIdx>=0 ? r[phoneIdx] : '';
+      const line = lineIdx>=0 ? r[lineIdx] : '';
+      const rawDate = dateIdx>=0 ? r[dateIdx] : '';
+      const isoDate = parseThaiFormDate(rawDate);
+      const courseId = matchCourseIdFromText(courseText);
+      if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
+
+      const syncKey = `form_${name.trim()}_${isoDate}_${courseId}`;
+      if(existingKeys.has(syncKey)){ skipped++; return; }
+
+      sharedBookings.push({
+        date: isoDate,
+        courseId,
+        instructor: 'ยังไม่ระบุ',
+        note: `จากฟอร์มลงทะเบียน: ${name}${phone ? ' · '+phone : ''}${line ? ' · LINE: '+line : ''}`,
+        customerName: name, customerPhone: phone, customerLine: line,
+        source: 'google_form',
+        syncKey,
+        taught: false
+      });
+      existingKeys.add(syncKey);
+      added++;
+    });
+
+    if(added > 0) await saveSharedBookings();
+    return { added, skipped, unmatched };
+  }catch(err){
+    return { error: err.message };
+  }
+}
+
 async function openEvalResults(instructorNameFilter){
   const body = document.getElementById('evalModalBody');
   body.innerHTML = `<h3>📊 ผลการประเมิน</h3><p class="hint">กำลังโหลดข้อมูลจากชีท...</p>`;
   openModal('evalModalOverlay');
-  const sheetId = extractSheetId(sharedEvalFormUrl);
-  if(!sheetId){
+  const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
+  if(!csvUrl){
     body.innerHTML = `<h3>📊 ผลการประเมิน</h3><p class="hint">ลิงก์ไม่ถูกต้อง ไม่พบรหัสชีท</p>`;
     return;
   }
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
   try{
     const res = await fetch(csvUrl);
     if(!res.ok) throw new Error('โหลดข้อมูลไม่สำเร็จ (สถานะ ' + res.status + ')');
     const text = await res.text();
+    if(text.trim().startsWith('<')){
+      throw new Error('ชีทยังไม่เปิดสิทธิ์สาธารณะ');
+    }
     let rows = parseCSV(text);
     if(!rows.length){
-      body.innerHTML = `<h3>📊 ผลการประเมิน</h3><p class="hint">ยังไม่มีข้อมูลในชีท</p>`;
+      body.innerHTML = `<h3>📊 ผลการประเมิน</h3><p class="hint">ยังไม่มีข้อมูลในชีท (หรือแท็บที่เชื่อมอยู่ยังไม่มีคำตอบ)</p>`;
       return;
     }
     const headers = rows[0];
@@ -1175,7 +1430,7 @@ async function openEvalResults(instructorNameFilter){
   }catch(err){
     body.innerHTML = `
       <h3>📊 ผลการประเมิน</h3>
-      <p class="hint">โหลดข้อมูลในแอพไม่ได้ (${err.message}) — อาจเป็นเพราะชีทยังไม่ได้เปิดสิทธิ์ "ทุกคนที่มีลิงก์ดูได้"</p>
+      <p class="hint">โหลดข้อมูลในแอพไม่ได้ (${err.message}) — ต้องเปิดสิทธิ์ชีทเป็น "ทุกคนที่มีลิงก์ - ดูได้" (Anyone with the link - Viewer) และวางลิงก์แท็บที่มีคำตอบจริง (มี #gid= ต่อท้าย)</p>
       <button class="btn ghost" id="evalOpenExternalBtn2" style="width:100%;">เปิดชีทในแท็บใหม่แทน ↗</button>
     `;
     const extBtn2 = document.getElementById('evalOpenExternalBtn2');
@@ -1200,16 +1455,16 @@ async function loadEvalSummaryInline(name){
     box.innerHTML = `<div class="eval-empty">ยังไม่ได้ตั้งค่าลิงก์ผลการประเมิน — กด ⚙️ เพื่อตั้งค่า</div>`;
     return;
   }
-  const sheetId = extractSheetId(sharedEvalFormUrl);
-  if(!sheetId){
+  const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
+  if(!csvUrl){
     box.innerHTML = `<div class="eval-empty">ลิงก์ไม่ถูกต้อง ไม่พบรหัสชีท</div>`;
     return;
   }
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
   try{
     const res = await fetch(csvUrl);
     if(!res.ok) throw new Error('status ' + res.status);
     const text = await res.text();
+    if(text.trim().startsWith('<')) throw new Error('sheet not public');
     const rows = parseCSV(text);
     if(!box || box !== document.getElementById('profileEvalContent')) return; // modal closed/changed meanwhile
     if(rows.length < 2){
@@ -1257,7 +1512,7 @@ async function loadEvalSummaryInline(name){
     }
     box.innerHTML = (ratingHTML||'') + (commentsHTML||'');
   }catch(err){
-    if(box) box.innerHTML = `<div class="eval-empty">โหลดผลประเมินไม่ได้ — ตรวจสอบว่าชีทเปิดสิทธิ์ "ทุกคนที่มีลิงก์ดูได้" แล้วหรือยัง</div>`;
+    if(box) box.innerHTML = `<div class="eval-empty">โหลดผลประเมินไม่ได้ — ตรวจสอบว่าชีทเปิดสิทธิ์ "ทุกคนที่มีลิงก์ - ดูได้" แล้ว และลิงก์ที่ตั้งไว้ชี้ไปแท็บที่มีคำตอบจริง (⚙️ เพื่อแก้ลิงก์)</div>`;
   }
 }
 
@@ -1322,6 +1577,31 @@ function askPin(title, sub){
 function pinError(msg){
   document.getElementById('pinModalError').textContent = msg;
   shakePinDots();
+}
+function askText(title, sub, defaultValue){
+  return new Promise((resolve)=>{
+    document.getElementById('textInputModalTitle').textContent = title || 'กรอกข้อความ';
+    document.getElementById('textInputModalSub').textContent = sub || '';
+    const input = document.getElementById('textInputModalField');
+    input.value = defaultValue || '';
+    openModal('textInputModalOverlay');
+    setTimeout(()=>{ input.focus(); input.select(); }, 150);
+
+    const okBtn = document.getElementById('textInputModalOk');
+    const cancelBtn = document.getElementById('textInputModalCancel');
+    const closeBtn = document.getElementById('textInputModalClose');
+
+    const finish = (val)=>{
+      input.onkeydown = null;
+      okBtn.onclick = null; cancelBtn.onclick = null; closeBtn.onclick = null;
+      closeModal('textInputModalOverlay');
+      resolve(val);
+    };
+    input.onkeydown = (e)=>{ if(e.key==='Enter') finish(input.value); };
+    okBtn.onclick = ()=> finish(input.value);
+    cancelBtn.onclick = ()=> finish(null);
+    closeBtn.onclick = ()=> finish(null);
+  });
 }
 
 /* ============================= DATA ============================= */
@@ -1686,22 +1966,25 @@ function openInstructorProfile(name, booking){
       <div class="stat-row"><span class="stat-icon">💰</span><span class="stat-name">กำไรสะสม</span><div class="stat-track"><div class="stat-fill f3" id="statProfit"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.profit)}</span></div>
       <div class="stat-row"><span class="stat-icon">📦</span><span class="stat-name">ต้นทุนวัตถุดิบสะสม</span><div class="stat-track"><div class="stat-fill f4" id="statEff"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.cost)}</span></div>
     </div>
-    <div style="margin-top:16px;">
+    <div style="margin-top:16px; text-align:left;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-        <span style="font-size:12px; font-weight:700; color:var(--gold); letter-spacing:.5px;">⭐ ผลการประเมิน</span>
-        <button class="btn ghost small" id="evalFormSettingsBtn" title="ตั้งค่าลิงก์ผลการประเมิน">⚙️</button>
+        <span style="font-size:12px; font-weight:700; color:var(--gold); letter-spacing:.5px;">📋 ผู้ลงทะเบียนเรียน</span>
+        <div style="display:flex; gap:6px;">
+          <button class="btn ghost small" id="profileRegSettingsBtn" title="ตั้งค่าลิงก์ชีท">⚙️</button>
+          <button class="btn ghost small" id="profileRegRefreshBtn" title="รีเฟรช">⟳</button>
+        </div>
       </div>
-      <div id="profileEvalContent" class="eval-box">
-        <div class="eval-loading">กำลังโหลดผลการประเมิน...</div>
-      </div>
+      <div id="profileRegCatFilterRow" class="cat-filter-row"></div>
+      <div id="profileRegListBox" class="eval-box"></div>
     </div>
   `;
-  document.getElementById('evalFormSettingsBtn').onclick = ()=>{
-    promptSetEvalFormUrl();
-    openInstructorProfile(name, booking);
-  };
   openModal('profileModalOverlay');
-  loadEvalSummaryInline(name);
+  loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
+  document.getElementById('profileRegRefreshBtn').onclick = ()=> loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
+  document.getElementById('profileRegSettingsBtn').onclick = ()=>{
+    promptSetEvalFormUrl();
+    loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
+  };
   setTimeout(()=>{
     const setW = (id,pct)=>{ const el=document.getElementById(id); if(el) el.style.width = Math.max(4,pct)+'%'; };
     setW('statExp', expPct);
@@ -1723,10 +2006,10 @@ function switchTab(tab){
     Promise.all([loadSharedBookings(), loadStandaloneSales(), loadRetailProducts()]).then(()=>{ if(document.getElementById('tab-dashboard')) renderDashboard(); });
   }
   if(tab==='stock'){
-    Promise.all([loadRetailProducts(), loadSharedBookings(), loadStandaloneSales(), loadStockMovements()]).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
+    Promise.all([loadRetailProducts(), loadSharedBookings(), loadStandaloneSales(), loadStockMovements(), loadCustomCategories()]).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
   }
   if(tab==='sell'){
-    loadRetailProducts().then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
+    Promise.all([loadRetailProducts(), loadPromptPayId()]).then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
   }
 }
 document.getElementById('tabs').addEventListener('click', e=>{
@@ -1961,8 +2244,35 @@ function renderDashboard(){
       <p class="hint">จัดอันดับสินค้าเสนอขาย รวมยอดจากทั้งขายพร้อมคอร์สและขายหน้าร้าน</p>
       ${bestSellingProductsHTML()}
     </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>ผู้ลงทะเบียนเรียน</h2>
+          <p class="hint">ดึงจากฟอร์มลงทะเบียนสมัครเรียน (Google Sheet) แยกตามคอร์สที่สมัคร</p>
+        </div>
+        <div style="display:flex; gap:6px; flex:none;">
+          <button class="btn small ghost" id="regFixLinkBtn" title="แก้ลิงก์อัตโนมัติ" style="background:var(--gold); color:#fff; border-color:var(--gold);">🔧 แก้ลิงก์</button>
+          <button class="btn small ghost" id="regSettingsBtn" title="ตั้งค่าลิงก์ชีท">⚙️</button>
+          <button class="btn small ghost" id="regRefreshBtn" title="รีเฟรชข้อมูล">⟳</button>
+        </div>
+      </div>
+      <div id="regCourseFilterRow" class="cat-filter-row"></div>
+      <div id="regListBox"></div>
+    </div>
   `;
 
+  loadRegistrationList();
+  document.getElementById('regRefreshBtn').onclick = ()=> loadRegistrationList();
+  document.getElementById('regSettingsBtn').onclick = ()=>{
+    promptSetEvalFormUrl();
+    loadRegistrationList();
+  };
+  document.getElementById('regFixLinkBtn').onclick = async ()=>{
+    sharedEvalFormUrl = DEFAULT_EVAL_FORM_URL;
+    await saveSharedEvalFormUrl();
+    flashSaved('แก้ลิงก์เป็นค่าที่ใช้งานได้แล้ว ✓');
+    loadRegistrationList();
+  };
   // ---------- Monthly summary ----------
   if(typeof window._msYear === 'undefined'){
     const now = new Date();
@@ -2416,9 +2726,9 @@ async function sendToLineGroupAuto(courseId, btn){
   btn.disabled = false;
   setTimeout(()=>{ btn.textContent = old; }, 2000);
 }
-function promptLineRelayUrl(){
+async function promptLineRelayUrl(){
   const current = state.lineRelayUrl || '';
-  const val = prompt('วาง Web App URL ของ Google Apps Script (ตัวกลางส่ง LINE เข้ากลุ่มอัตโนมัติ)\nเว้นว่างแล้วกด OK เพื่อลบการตั้งค่า', current);
+  const val = await askText('ตั้งค่า LINE', 'วาง Web App URL ของ Google Apps Script (ตัวกลางส่ง LINE เข้ากลุ่มอัตโนมัติ) เว้นว่างเพื่อลบการตั้งค่า', current);
   if(val===null) return;
   state.lineRelayUrl = val.trim();
   scheduleSave();
@@ -2436,7 +2746,7 @@ async function saveSharedAdminPin(){
   try{ await window.storage.set('shared_admin_pin', sharedAdminPin, true); }catch(e){}
 }
 
-const DEFAULT_EVAL_FORM_URL = 'https://docs.google.com/spreadsheets/d/1K2n71EdCS_F7zVb9GiFDgwsgIi2gfTBPwAudZBn_bF8/edit?usp=sharing';
+const DEFAULT_EVAL_FORM_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTKEOcsA6NtPRywrlj57nl8GEc_AzPedofKkCHSzJEj3l3OYwpMpGMF7_yHjz6VWPgwSvkGibb3psQ8/pub?output=csv';
 let sharedEvalFormUrl = '';
 async function loadSharedEvalFormUrl(){
   try{
@@ -2447,15 +2757,12 @@ async function loadSharedEvalFormUrl(){
 async function saveSharedEvalFormUrl(){
   try{ await window.storage.set('shared_eval_form_url', sharedEvalFormUrl, true); }catch(e){}
 }
-function promptSetEvalFormUrl(){
-  const val = prompt('วางลิงก์ดูผลการประเมิน (เช่น Google Sheet ที่เก็บคำตอบจากแบบฟอร์ม) — ใช้ร่วมกันทุกคน\nเว้นว่างแล้วกด OK เพื่อลบลิงก์:', sharedEvalFormUrl);
+async function promptSetEvalFormUrl(){
+  const val = await askText('ลิงก์ชีทผู้ลงทะเบียน', 'วางลิงก์ Google Sheet ที่เก็บข้อมูลผู้ลงทะเบียนสมัครเรียน (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบลิงก์', sharedEvalFormUrl);
   if(val===null) return;
   sharedEvalFormUrl = val.trim();
   saveSharedEvalFormUrl();
-  alert(sharedEvalFormUrl ? 'บันทึกลิงก์ผลการประเมินแล้ว' : 'ลบลิงก์ผลการประเมินแล้ว');
-  if(document.getElementById('profileModalBody') && document.getElementById('profileModalOverlay').classList.contains('open')){
-    // no-op: profile re-render happens on next open
-  }
+  flashSaved(sharedEvalFormUrl ? 'บันทึกลิงก์ชีทผู้ลงทะเบียนแล้ว' : 'ลบลิงก์แล้ว');
 }
 async function promptSetAdminPin(){
   if(currentUser !== ADMIN_NAME){
@@ -2893,7 +3200,6 @@ function openTaughtReport(booking, students, soldProducts){
         สรุปส่งไลน์
       </button>`}
       <button class="btn ghost" id="reportCopyBtn">คัดลอกข้อความ</button>
-      ${sharedEvalFormUrl ? `<button class="btn" id="reportEvalBtn" style="background:var(--gold); color:var(--ink);">📊 ดูผลการประเมิน</button>` : ''}
     </div>
   `;
   const shareBtn = document.getElementById('reportLineShareBtn');
@@ -2901,8 +3207,6 @@ function openTaughtReport(booking, students, soldProducts){
   const autoBtn = document.getElementById('reportLineAutoBtn');
   if(autoBtn) autoBtn.onclick = (e)=> sendTextToLineGroupAuto(msg, e.currentTarget);
   document.getElementById('reportCopyBtn').onclick = (e)=> copyTextToClipboard(msg, e.currentTarget);
-  const evalBtn = document.getElementById('reportEvalBtn');
-  if(evalBtn) evalBtn.onclick = ()=> openEvalResults(booking.instructor);
 }
 
 /* ============================= RENDER: COURSE + MENU + P&L ============================= */
@@ -3156,11 +3460,65 @@ async function saveInstructorPins(){
 }
 
 let retailProducts = []; // [{ id, name, price, photo }] — shared, sold as add-on during class
+const DEFAULT_RETAIL_PRODUCTS = [
+  { name:'ผงครีมชีส 400 กรัม', price:225, stock:33, category:'ผงชงเครื่องดื่ม' },
+  { name:'ผงปั่น 400 กรัม', price:190, stock:4, category:'ผงชงเครื่องดื่ม' },
+  { name:'ผงมะนาว 400 กรัม', price:165, stock:2, category:'ผงชงเครื่องดื่ม' },
+  { name:'ชาอาบัง 500 กรัม', price:225, stock:2, category:'ใบชา/ชาผง' },
+  { name:'ไส้สังขยาไข่เค็ม 350 กรัม', price:140, stock:5, category:'ไส้ขนม' },
+  { name:'ผงโกโก้ 500 กรัม', price:290, stock:9, category:'ผงชงเครื่องดื่ม' },
+  { name:'รังสรรค์ครีมเมอร์ 1000 กรัม', price:150, stock:2, category:'ครีมเมอร์/นมผง' },
+  { name:'นมผงฮอกไกโด 500 กรัม', price:215, stock:8, category:'ครีมเมอร์/นมผง' },
+  { name:'รังสรรค์ชาไต้หวัน 300 กรัม', price:240, stock:7, category:'ใบชา/ชาผง' },
+  { name:'รังสรรค์ชาไทย 500 กรัม', price:650, stock:4, category:'ใบชา/ชาผง' },
+  { name:'ไส้สังขยาใบเตย 350 กรัม', price:140, stock:12, category:'ไส้ขนม' },
+  { name:'ไส้สังขยาชาไทย 350 กรัม', price:140, stock:13, category:'ไส้ขนม' },
+  { name:'ใบชาปักษ์ใต้ 500 กรัม', price:230, stock:10, category:'ใบชา/ชาผง' },
+  { name:'ใบชาเขียวพรีเมี่ยม 500 กรัม', price:180, stock:11, category:'ใบชา/ชาผง' },
+  { name:'ใบชาไต้หวันพรีเมี่ยม 500 กรัม', price:260, stock:15, category:'ใบชา/ชาผง' },
+  { name:'ใบชามะลิ 500 กรัม', price:310, stock:5, category:'ใบชา/ชาผง' },
+  { name:'กาแฟ Vanilla Whisky อาราบิก้า 100% 250 กรัม', price:360, stock:0, category:'เมล็ดกาแฟ' },
+  { name:'ผงมัทฉะพรีเมี่ยม 100 กรัม', price:260, stock:10, category:'ใบชา/ชาผง' },
+  { name:'ผงมัทฉะชิซึโอกะ 100 กรัม', price:250, stock:13, category:'ใบชา/ชาผง' },
+  { name:'ใบชาไทยพรีเมี่ยม 500 กรัม', price:190, stock:8, category:'ใบชา/ชาผง' },
+  { name:'กาแฟเทพสามตา 500 กรัม', price:310, stock:24, category:'เมล็ดกาแฟ' },
+  { name:'กาแฟเทพสามตา 250 กรัม', price:190, stock:16, category:'เมล็ดกาแฟ' },
+  { name:'กาแฟเดอะรังสรรค์ 500 กรัม', price:325, stock:43, category:'เมล็ดกาแฟ' },
+  { name:'กาแฟ Colombia อาราบิก้า 100% 250 กรัม', price:325, stock:10, category:'เมล็ดกาแฟ' },
+  { name:'กาแฟศรีนวล 500 กรัม', price:325, stock:26, category:'เมล็ดกาแฟ' },
+  { name:'กาแฟศรีนวล 250 กรัม', price:200, stock:1, category:'เมล็ดกาแฟ' },
+  { name:'แมวเป้า คั่วกลาง 500 กรัม', price:325, stock:33, category:'เมล็ดกาแฟ' },
+  { name:'แมวเป้า คั่วกลาง 250 กรัม', price:200, stock:10, category:'เมล็ดกาแฟ' },
+];
 async function loadRetailProducts(){
   try{
     const res = await window.storage.get('shared_retail_products', true);
     retailProducts = (res && res.value) ? JSON.parse(res.value) : [];
   }catch(e){ retailProducts = []; }
+
+  let changed = false;
+
+  // migrate old category labels (e.g. the retired "เครื่องดื่มพร้อมขาย") to the new, more specific categories
+  const defaultByName = {};
+  DEFAULT_RETAIL_PRODUCTS.forEach(p=> defaultByName[p.name.trim().toLowerCase()] = p.category);
+  retailProducts.forEach(p=>{
+    if(!allProductCategories().includes(p.category)){
+      const match = defaultByName[p.name.trim().toLowerCase()];
+      if(match){ p.category = match; changed = true; }
+    }
+  });
+
+  const existingNames = new Set(retailProducts.map(p=> p.name.trim().toLowerCase()));
+  const missing = DEFAULT_RETAIL_PRODUCTS.filter(p=> !existingNames.has(p.name.trim().toLowerCase()));
+  if(missing.length){
+    missing.forEach((p,i)=>{
+      retailProducts.push({
+        id:'prod_seed_'+Date.now()+'_'+i, name:p.name, price:p.price, cost:0, category:p.category, photo:'', stock:p.stock
+      });
+    });
+    changed = true;
+  }
+  if(changed) saveRetailProducts();
 }
 async function saveRetailProducts(){
   try{
@@ -3203,8 +3561,122 @@ function logStockMovement(productName, type, qty, note){
   saveStockMovements();
 }
 
+// ---------- PromptPay QR payment ----------
+const DEFAULT_PROMPTPAY_ID = '0105567121929';
+let sharedPromptPayId = '';
+async function loadPromptPayId(){
+  try{
+    const res = await window.storage.get('shared_promptpay_id', true);
+    sharedPromptPayId = (res && res.value) ? res.value : DEFAULT_PROMPTPAY_ID;
+  }catch(e){ sharedPromptPayId = DEFAULT_PROMPTPAY_ID; }
+}
+async function savePromptPayId(){
+  try{ await window.storage.set('shared_promptpay_id', sharedPromptPayId, true); }catch(e){ console.error('shared promptpay id save failed', e); }
+}
+async function promptSetPromptPayId(){
+  const val = await askText('เลข PromptPay', 'วางเบอร์โทร หรือเลขบัตรประชาชน/นิติบุคคล ที่ผูก PromptPay (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบ', sharedPromptPayId);
+  if(val===null) return;
+  sharedPromptPayId = val.trim();
+  savePromptPayId();
+  flashSaved(sharedPromptPayId ? 'บันทึกเลข PromptPay แล้ว' : 'ลบเลข PromptPay แล้ว');
+}
+function crc16ccitt(str){
+  let crc = 0xFFFF;
+  for(let c=0; c<str.length; c++){
+    crc ^= str.charCodeAt(c) << 8;
+    for(let i=0;i<8;i++){
+      crc = (crc & 0x8000) ? ((crc<<1) ^ 0x1021) : (crc<<1);
+      crc &= 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4,'0');
+}
+function tlv(tag, value){
+  return tag + String(value.length).padStart(2,'0') + value;
+}
+function buildPromptPayPayload(id, amount){
+  let cleanId = (id||'').replace(/[^0-9]/g,'');
+  if(!cleanId) return null;
+  let subField;
+  if(cleanId.length === 13){
+    subField = tlv('02', cleanId); // national ID / tax ID
+  } else {
+    if(cleanId.length === 10) cleanId = cleanId.substring(1); // drop leading 0
+    subField = tlv('01', '66'+cleanId); // mobile number, country code 66
+  }
+  const merchantInfo = tlv('00','A000000677010111') + subField;
+  const merchantField = tlv('29', merchantInfo);
+  let payload = '';
+  payload += tlv('00','01');
+  payload += tlv('01', amount ? '12' : '11');
+  payload += merchantField;
+  payload += tlv('53','764');
+  if(amount) payload += tlv('54', Number(amount).toFixed(2));
+  payload += tlv('58','TH');
+  payload += '6304';
+  payload += crc16ccitt(payload);
+  return payload;
+}
+function promptPayQrImgUrl(id, amount){
+  const payload = buildPromptPayPayload(id, amount);
+  if(!payload) return null;
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(payload);
+}
+
+// ---------- Coffee Lot QC ----------
+const QC_CRITERIA = [
+  { key:'aroma', label:'Aroma / กลิ่น', hint:'เช่น หอมถั่ว ช็อกโกแลต ผลไม้ ดอกไม้ ควัน' },
+  { key:'flavor', label:'Flavor / รสรวม', hint:'รสหลักชัดเจนไหม / ตรง profile ที่ต้องการไหม' },
+  { key:'sweetness', label:'Sweetness / ความหวาน', hint:'หวานธรรมชาติ ไม่ฝาด ไม่แบน' },
+  { key:'acidity', label:'Acidity / ความเปรี้ยว', hint:'สดใสพอดี ไม่เปรี้ยวแหลม/หมักเกิน' },
+  { key:'body', label:'Body / บอดี้', hint:'น้ำหนักปาก ดีสำหรับเมนูที่ใช้จริง' },
+  { key:'balance', label:'Balance / ความสมดุล', hint:'กลิ่น-รส-บอดี้เข้ากัน' },
+  { key:'aftertaste', label:'Aftertaste / ท้ายรส', hint:'สะอาด ยาว ไม่ขมติดคอ' },
+  { key:'cleanCup', label:'Clean Cup & Defect', hint:'ไม่มี defect: อับ ชื้น ไหม้ หืน ดิน หมักเสีย' },
+];
+const QC_DEFECTS = [
+  'Smoky / Burnt / ขมไหม้',
+  'Sour / Fermented / เปรี้ยวเสีย',
+  'Moldy / Musty / อับชื้น',
+  'Stale / Rancid / หืน เก่า',
+  'Grassy / Hay / เขียว ฝาด',
+];
+let qcLots = [];
+async function loadQcLots(){
+  try{
+    const res = await window.storage.get('shared_qc_lots', true);
+    qcLots = (res && res.value) ? JSON.parse(res.value) : [];
+  }catch(e){ qcLots = []; }
+}
+async function saveQcLots(){
+  try{ await window.storage.set('shared_qc_lots', JSON.stringify(qcLots), true); flashSaved(); }catch(e){ console.error('shared qc lots save failed', e); }
+}
+function qcTotalScore(scores){
+  return QC_CRITERIA.reduce((s,c)=> s + (Number(scores[c.key])||0), 0);
+}
+function qcStatus(totalScore, hasDefect){
+  if(hasDefect) return { status:'REJECT', label:'REJECT ทันที', color:'var(--alert)' };
+  const pct = (totalScore/40)*100;
+  if(pct >= 85) return { status:'APPROVED', label:'APPROVED', color:'var(--sage)' };
+  if(pct >= 75) return { status:'HOLD', label:'HOLD / CONDITIONAL', color:'#B8763B' };
+  return { status:'REJECT', label:'REJECT', color:'var(--alert)' };
+}
+
 // preset catalog of common item names — a "backend" list so staff can pick instead of typing
-const PRODUCT_CATEGORIES = ['เมล็ดกาแฟ','อุปกรณ์ชงกาแฟ','เครื่องดื่มพร้อมขาย','ของที่ระลึก','เอกสาร/ใบประกาศ','อื่นๆ'];
+const PRODUCT_CATEGORIES = ['เมล็ดกาแฟ','เครื่องดื่ม','ใบชา/ชาผง','ผงชงเครื่องดื่ม','ครีมเมอร์/นมผง','ไส้ขนม','อุปกรณ์ชงกาแฟ','ของที่ระลึก','เอกสาร/ใบประกาศ','อื่นๆ'];
+let customCategories = [];
+async function loadCustomCategories(){
+  try{
+    const res = await window.storage.get('shared_custom_categories', true);
+    customCategories = (res && res.value) ? JSON.parse(res.value) : [];
+  }catch(e){ customCategories = []; }
+}
+async function saveCustomCategories(){
+  try{ await window.storage.set('shared_custom_categories', JSON.stringify(customCategories), true); }catch(e){ console.error('shared custom categories save failed', e); }
+}
+function allProductCategories(){
+  return [...PRODUCT_CATEGORIES, ...customCategories];
+}
 const PRODUCT_NAME_CATALOG = [
   { name:'เมล็ดกาแฟคั่วถุง 250g', icon:'☕', category:'เมล็ดกาแฟ' },
   { name:'เมล็ดกาแฟคั่วถุง 500g', icon:'☕', category:'เมล็ดกาแฟ' },
@@ -3349,10 +3821,12 @@ function renderLogTab(){
           <p class="hint">ใช้ร่วมกันทุกคน — อาจารย์แต่ละท่านลงคิวของตัวเองได้เลย ทุกคนที่เปิดลิงก์นี้จะเห็นตารางเดียวกัน</p>
         </div>
         <div style="display:flex; gap:8px; flex:none;">
+          <button class="btn small ghost" id="syncFromFormBtn" title="ดึงคิวจากฟอร์มลงทะเบียน">📋⟳</button>
           <button class="btn small ghost" id="refreshBookings" title="รีเฟรชตารางล่าสุด">⟳</button>
           <button class="add-fab" id="openBookingModalBtn" title="จองคิวสอน">+</button>
         </div>
       </div>
+      <div id="syncFormResultBanner" style="display:none;"></div>
       <div class="cal-nav">
         <button id="calPrevBtn">‹</button>
         <div class="cal-title" id="calTitle"></div>
@@ -3775,6 +4249,29 @@ function renderLogTab(){
     renderCalendar();
     flashSaved();
   };
+  document.getElementById('syncFromFormBtn').onclick = async ()=>{
+    const btn = document.getElementById('syncFromFormBtn');
+    const banner = document.getElementById('syncFormResultBanner');
+    btn.disabled = true; btn.textContent = '⏳';
+    banner.style.display = 'block';
+    banner.style.cssText = 'display:block; margin:0 0 12px; padding:10px 14px; border-radius:10px; background:var(--cream); font-size:12.5px; text-align:center;';
+    banner.textContent = 'กำลังซิงค์ข้อมูลจากฟอร์ม...';
+
+    const result = await syncBookingsFromGoogleForm();
+    btn.disabled = false; btn.textContent = '📋⟳';
+    renderBookingCards();
+    renderCalendar();
+
+    if(result.error){
+      banner.style.background = 'var(--alert-soft)';
+      banner.style.color = 'var(--alert)';
+      banner.innerHTML = `❌ ดึงข้อมูลไม่ได้: ${result.error}`;
+    } else {
+      banner.style.background = 'var(--sage-soft)';
+      banner.style.color = 'var(--ink)';
+      banner.innerHTML = `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
+    }
+  };
 
   const body = document.getElementById('logBody');
   const sortedLog = state.teachingLog.map((l,i)=>({...l, _idx:i})).sort((a,b)=> (b.date||'').localeCompare(a.date||''));
@@ -4017,7 +4514,26 @@ function renderStockTab(){
     document.getElementById('productWarning').style.display = 'none';
     pendingProductPhotoDataUrl = null;
     document.getElementById('newProductCategory').innerHTML =
-      PRODUCT_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+      allProductCategories().map(c=>`<option value="${c}">${c}</option>`).join('') +
+      `<option value="__add_new__">+ เพิ่มหมวดหมู่ใหม่...</option>`;
+    document.getElementById('newProductCategory').onchange = async (e)=>{
+      if(e.target.value === '__add_new__'){
+        const newCat = await askText('เพิ่มหมวดหมู่ใหม่', 'ตั้งชื่อหมวดหมู่สินค้าที่ต้องการเพิ่ม');
+        if(newCat && newCat.trim()){
+          const trimmed = newCat.trim();
+          if(!allProductCategories().includes(trimmed)){
+            customCategories.push(trimmed);
+            saveCustomCategories();
+          }
+          document.getElementById('newProductCategory').innerHTML =
+            allProductCategories().map(c=>`<option value="${c}">${c}</option>`).join('') +
+            `<option value="__add_new__">+ เพิ่มหมวดหมู่ใหม่...</option>`;
+          document.getElementById('newProductCategory').value = trimmed;
+        } else {
+          document.getElementById('newProductCategory').value = PRODUCT_CATEGORIES[0];
+        }
+      }
+    };
     const existingNames = retailProducts.map(p=>p.name);
     const alreadyAdded = new Set(existingNames.map(n=>n.toLowerCase()));
     const catalogNames = PRODUCT_NAME_CATALOG.map(c=>c.name);
@@ -4184,8 +4700,10 @@ function renderSellTab(){
     <div class="card">
       <h2>ขายสินค้าหน้าร้าน</h2>
       <p class="hint">บันทึกการขายสินค้าที่ไม่ได้ผูกกับคิวสอน (เช่น ลูกค้าเดินเข้ามาซื้อเมล็ดกาแฟเฉยๆ) — หักสต๊อกอัตโนมัติ ข้อมูลแชร์กลาง</p>
+      ${retailProducts.length ? `<input type="text" id="sellSearchInput" class="pill" placeholder="🔍 ค้นหาสินค้า..." style="width:100%; margin-bottom:12px;">` : ''}
       ${retailProducts.length ? `<div class="cat-filter-row" id="sellCatFilterRow">${usedCategories.map(c=>`<button type="button" class="cat-chip ${c==='ทั้งหมด'?'on':''}" data-cat="${c}">${c}</button>`).join('')}</div>` : ''}
       <div class="sell-gallery light" id="sellGallery"></div>
+      <div id="sellGalleryPager" style="display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px;"></div>
       ${retailProducts.length ? `
       <div class="cart-box light">
         <div class="cart-title">🛒 ตะกร้าสินค้า</div>
@@ -4207,12 +4725,24 @@ function renderSellTab(){
     return;
   }
 
+  const PAGE_SIZE = 8;
+  let sellGalleryPage = 0;
+  let sellSearchQuery = '';
   const renderGallery = ()=>{
     const gallery = document.getElementById('sellGallery');
+    const pager = document.getElementById('sellGalleryPager');
+    const q = sellSearchQuery.trim().toLowerCase();
     const filtered = retailProducts
       .map((p,i)=>({p,i}))
-      .filter(({p})=> sellCategoryFilter==='ทั้งหมด' || (p.category||'อื่นๆ')===sellCategoryFilter);
-    gallery.innerHTML = filtered.map(({p,i})=>`
+      .filter(({p})=> sellCategoryFilter==='ทั้งหมด' || (p.category||'อื่นๆ')===sellCategoryFilter)
+      .filter(({p})=> !q || p.name.toLowerCase().includes(q));
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if(sellGalleryPage >= totalPages) sellGalleryPage = totalPages - 1;
+    if(sellGalleryPage < 0) sellGalleryPage = 0;
+    const pageItems = filtered.slice(sellGalleryPage*PAGE_SIZE, sellGalleryPage*PAGE_SIZE + PAGE_SIZE);
+
+    gallery.innerHTML = pageItems.map(({p,i})=>`
       <div class="sell-tile ${sellTabCart[i]>0?'on':''}" data-idx="${i}">
         <div class="sell-tile-cartbadge">${sellTabCart[i]>0?sellTabCart[i]:''}</div>
         <div class="sell-tile-img">${p.photo ? `<img src="${p.photo}">` : `<span class="sell-tile-placeholder">☕</span>`}</div>
@@ -4220,7 +4750,24 @@ function renderSellTab(){
           <div class="sell-tile-name">${p.name}</div>
           <div class="sell-tile-price">฿${fmt(p.price)}</div>
         </div>
-      </div>`).join('') || `<div style="grid-column:1/-1; text-align:center; color:#948a78; font-size:12px; padding:14px;">ไม่มีสินค้าในหมวดนี้</div>`;
+      </div>`).join('') || `<div style="grid-column:1/-1; text-align:center; color:#948a78; font-size:12px; padding:14px;">${q ? 'ไม่พบสินค้าที่ค้นหา' : 'ไม่มีสินค้าในหมวดนี้'}</div>`;
+
+    if(pager){
+      if(totalPages > 1){
+        pager.innerHTML = `
+          <button class="btn small ghost" id="sellPagePrev" ${sellGalleryPage===0?'disabled':''}>‹</button>
+          <span style="font-size:12px; color:#5A4433; font-weight:600;">หน้า ${sellGalleryPage+1} / ${totalPages}</span>
+          <button class="btn small ghost" id="sellPageNext" ${sellGalleryPage>=totalPages-1?'disabled':''}>›</button>
+        `;
+        const prevBtn = document.getElementById('sellPagePrev');
+        const nextBtn = document.getElementById('sellPageNext');
+        if(prevBtn) prevBtn.onclick = ()=>{ sellGalleryPage--; renderGallery(); };
+        if(nextBtn) nextBtn.onclick = ()=>{ sellGalleryPage++; renderGallery(); };
+      } else {
+        pager.innerHTML = '';
+      }
+    }
+
     document.querySelectorAll('#sellGallery .sell-tile').forEach(tile=>{
       tile.onclick = ()=>{
         const i = tile.dataset.idx;
@@ -4233,9 +4780,18 @@ function renderSellTab(){
     });
   };
   renderGallery();
+  const searchInput = document.getElementById('sellSearchInput');
+  if(searchInput){
+    searchInput.oninput = ()=>{
+      sellSearchQuery = searchInput.value;
+      sellGalleryPage = 0;
+      renderGallery();
+    };
+  }
   document.querySelectorAll('#sellCatFilterRow .cat-chip').forEach(chip=>{
     chip.onclick = ()=>{
       sellCategoryFilter = chip.dataset.cat;
+      sellGalleryPage = 0;
       document.querySelectorAll('#sellCatFilterRow .cat-chip').forEach(c=> c.classList.remove('on'));
       chip.classList.add('on');
       renderGallery();
@@ -4243,7 +4799,7 @@ function renderSellTab(){
   });
   renderSellCart();
 
-  document.getElementById('recordSaleBtn').onclick = async ()=>{
+  document.getElementById('recordSaleBtn').onclick = ()=>{
     const warn = document.getElementById('sellWarning');
     const items = Object.keys(sellTabCart).filter(i=> sellTabCart[i] > 0).map(i=>{
       const p = retailProducts[i];
@@ -4255,14 +4811,381 @@ function renderSellTab(){
       return;
     }
     warn.style.display = 'none';
-    const total = items.reduce((s,p)=> s+p.price*p.qty, 0);
+    openPaymentModal(items);
+  };
+}
 
+/* ============================= RENDER: COFFEE LOT QC ============================= */
+let qcStatusFilter = 'ทั้งหมด';
+function renderQcTab(){
+  const el = document.getElementById('tab-qc');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>QC ตรวจคุณภาพกาแฟ</h2>
+          <p class="hint">บันทึกผลตรวจรสชาติกาแฟแต่ละ Lot ก่อนนำไปขาย/กระจายสาขา ให้คะแนน 8 หัวข้อ เต็ม 40 คะแนน — ข้อมูลแชร์กลาง</p>
+        </div>
+        <button class="add-fab" id="openQcModalBtn" title="เพิ่ม Lot ใหม่">+</button>
+      </div>
+      ${qcActiveBeanCostHTML()}
+      ${qcSummaryStatsHTML()}
+      <div class="cat-filter-row" id="qcStatusFilterRow"></div>
+      <div id="qcLotList"></div>
+    </div>
+  `;
+  renderQcStatusFilter();
+  renderQcLotList();
+  document.getElementById('openQcModalBtn').onclick = openQcAddModal;
+}
+
+function qcActiveBeanCostHTML(){
+  const matchLot = qcLots.slice().reverse().find(l=> l.costPerKg && l.costPerKg === state.priceBeanPerKg);
+  return `
+    <div style="background:linear-gradient(160deg,#1B1815,#0E0C0A); border:1px solid rgba(220,167,61,.3); border-radius:14px; padding:14px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:11px; color:#C9A960; font-weight:700; letter-spacing:.4px;">ต้นทุนเมล็ดกาแฟที่ใช้คำนวณกำไรคอร์สสอนอยู่ตอนนี้</div>
+          <div class="mono" style="font-size:22px; font-weight:800; color:#fff; margin-top:4px;">฿${fmt(state.priceBeanPerKg)}<span style="font-size:12px; font-weight:600; color:#C9C2B6;">/กก.</span></div>
+          ${matchLot ? `<div style="font-size:11px; color:#8FCB9E; margin-top:3px;">✓ มาจาก Lot ${matchLot.lotNo || matchLot.id} (${matchLot.supplier||'-'})</div>` : `<div style="font-size:11px; color:#948a78; margin-top:3px;">ยังไม่ได้ผูกกับ Lot QC ใด — ตั้งค่าที่แท็บ "เมนู & สูตร" หรือเพิ่ม Lot ใหม่ที่ผ่าน Approved</div>`}
+        </div>
+      </div>
+    </div>`;
+}
+
+function qcSummaryStatsHTML(){
+  const total = qcLots.length;
+  const approved = qcLots.filter(l=> qcStatus(qcTotalScore(l.scores), l.defects.length>0).status==='APPROVED').length;
+  const hold = qcLots.filter(l=> qcStatus(qcTotalScore(l.scores), l.defects.length>0).status==='HOLD').length;
+  const reject = qcLots.filter(l=> qcStatus(qcTotalScore(l.scores), l.defects.length>0).status==='REJECT').length;
+  if(!total) return '';
+  return `
+    <div class="kpi-grid" style="margin-bottom:14px;">
+      <div class="kpi"><div class="label">ตรวจแล้วทั้งหมด</div><div class="value">${total}</div></div>
+      <div class="kpi"><div class="label" style="color:var(--sage);">Approved</div><div class="value" style="color:var(--sage);">${approved}</div></div>
+      <div class="kpi"><div class="label" style="color:#B8763B;">Hold</div><div class="value" style="color:#B8763B;">${hold}</div></div>
+      <div class="kpi"><div class="label" style="color:var(--alert);">Reject</div><div class="value" style="color:var(--alert);">${reject}</div></div>
+    </div>`;
+}
+
+function renderQcStatusFilter(){
+  const row = document.getElementById('qcStatusFilterRow');
+  if(!row) return;
+  const options = ['ทั้งหมด','APPROVED','HOLD','REJECT'];
+  row.innerHTML = options.map(o=>`<button type="button" class="cat-chip ${o===qcStatusFilter?'on':''}" data-status="${o}">${o}</button>`).join('');
+  row.querySelectorAll('.cat-chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      qcStatusFilter = chip.dataset.status;
+      row.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('on'));
+      chip.classList.add('on');
+      renderQcLotList();
+    };
+  });
+}
+
+function renderQcLotList(){
+  const box = document.getElementById('qcLotList');
+  if(!box) return;
+  let lots = qcLots.slice().reverse();
+  if(qcStatusFilter !== 'ทั้งหมด'){
+    lots = lots.filter(l=> qcStatus(qcTotalScore(l.scores), l.defects.length>0).status === qcStatusFilter);
+  }
+  if(!lots.length){
+    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:20px; font-size:12.5px;">ยังไม่มีบันทึก QC — กด "+" เพื่อตรวจ Lot แรก</div>`;
+    return;
+  }
+  box.innerHTML = lots.map(l=>{
+    const total = qcTotalScore(l.scores);
+    const st = qcStatus(total, l.defects.length>0);
+    const dateStr = l.date ? new Date(l.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+    return `<div class="qc-lot-card" data-id="${l.id}">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div>
+          <div style="font-weight:700; font-size:13.5px;">${l.lotNo || 'Lot ไม่ระบุ'}</div>
+          <div style="font-size:11.5px; color:#948a78; margin-top:2px;">${l.supplier || '-'} · ${dateStr}</div>
+        </div>
+        <span class="badge" style="background:${st.color}22; color:${st.color}; flex:none; white-space:nowrap;">${st.label}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+        <div style="flex:1; background:var(--sage-soft); border-radius:999px; height:7px; overflow:hidden; margin-right:10px;">
+          <div style="background:${st.color}; height:100%; width:${Math.min(100,total/40*100)}%;"></div>
+        </div>
+        <div class="mono" style="font-weight:700; font-size:13px; flex:none;">${total}/40</div>
+      </div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.qc-lot-card').forEach(card=>{
+    card.onclick = ()=> openQcDetail(card.dataset.id);
+  });
+}
+
+function openQcAddModal(){
+  const today = new Date().toISOString().slice(0,10);
+  const scoreRows = QC_CRITERIA.map(c=>`
+    <div class="qc-score-row">
+      <div>
+        <div style="font-size:12.5px; font-weight:600;">${c.label}</div>
+        <div style="font-size:10.5px; color:#948a78;">${c.hint}</div>
+      </div>
+      <div class="qc-score-stars" data-key="${c.key}">
+        ${[1,2,3,4,5].map(n=>`<button type="button" class="qc-star" data-val="${n}">★</button>`).join('')}
+      </div>
+    </div>`).join('');
+  const defectRows = QC_DEFECTS.map((d,i)=>`
+    <label style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:12px;">
+      <input type="checkbox" class="qc-defect-check" data-idx="${i}" style="width:16px;height:16px;flex:none;">
+      ${d}
+    </label>`).join('');
+
+  document.getElementById('qcModalBody').innerHTML = `
+    <h3>+ ตรวจ Lot กาแฟใหม่</h3>
+    <p class="hint">กรอกข้อมูล Lot แล้วให้คะแนนแต่ละหัวข้อ ระบบคำนวณผลตัดสินให้อัตโนมัติ</p>
+    <div class="modal-field-label">ข้อมูล Lot</div>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+      <input type="date" id="qcDate" class="pill" value="${today}">
+      <input type="text" id="qcLotNo" class="pill" placeholder="Lot No. / Batch No.">
+      <input type="text" id="qcSupplier" class="pill" placeholder="Supplier / โรงคั่ว">
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="qcOrigin" class="pill" placeholder="Origin" style="flex:1;">
+        <input type="number" id="qcWeight" class="pill" placeholder="จำนวน (kg)" style="flex:1;">
+      </div>
+      <select id="qcRoastLevel" class="pill">
+        <option value="">เลือกระดับคั่ว</option>
+        <option value="Light">Light</option>
+        <option value="Medium">Medium</option>
+        <option value="Dark">Dark</option>
+      </select>
+      <div class="price-field"><span class="price-currency">฿</span><input type="number" id="qcCostPerKg" placeholder="ต้นทุนเมล็ด/กก. ของ Lot นี้" value="${state.priceBeanPerKg||''}"><span class="price-suffix">/กก.</span></div>
+    </div>
+    <div class="modal-field-label">ให้คะแนน (แตะดาว 1-5 แต้ม)</div>
+    <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:14px;">
+      ${scoreRows}
+    </div>
+    <div style="text-align:center; margin-bottom:14px;">
+      <span style="font-size:12px; color:#C9A960;">รวมคะแนน</span>
+      <div id="qcLiveTotal" class="mono" style="font-size:22px; font-weight:800; color:#fff;">0 / 40</div>
+    </div>
+    <div class="modal-field-label">Defect Checklist (ติ๊กถ้าพบ)</div>
+    <div style="margin-bottom:14px;">${defectRows}</div>
+    <div class="modal-field-label">หมายเหตุ</div>
+    <input type="text" id="qcNotes" class="pill" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" style="margin-bottom:14px;">
+    <button class="btn-arrow" id="saveQcLotBtn" style="justify-content:center; width:100%;">บันทึกผล QC<span class="circ">✓</span></button>
+  `;
+
+  document.querySelectorAll('.qc-score-stars').forEach(group=>{
+    group.dataset.value = '0';
+    group.querySelectorAll('.qc-star').forEach(star=>{
+      star.onclick = ()=>{
+        const val = Number(star.dataset.val);
+        group.dataset.value = val;
+        group.querySelectorAll('.qc-star').forEach(s=> s.classList.toggle('on', Number(s.dataset.val) <= val));
+        updateQcLiveTotal();
+      };
+    });
+  });
+  document.getElementById('saveQcLotBtn').onclick = ()=>{
+    const scores = {};
+    QC_CRITERIA.forEach(c=>{
+      const group = document.querySelector(`.qc-score-stars[data-key="${c.key}"]`);
+      scores[c.key] = Number(group.dataset.value)||0;
+    });
+    const defects = [];
+    document.querySelectorAll('.qc-defect-check:checked').forEach(chk=> defects.push(QC_DEFECTS[Number(chk.dataset.idx)]));
+    const costPerKg = Number(document.getElementById('qcCostPerKg').value) || 0;
+    const lot = {
+      id: 'qc_'+Date.now(),
+      date: document.getElementById('qcDate').value || today,
+      lotNo: document.getElementById('qcLotNo').value.trim(),
+      supplier: document.getElementById('qcSupplier').value.trim(),
+      origin: document.getElementById('qcOrigin').value.trim(),
+      weight: document.getElementById('qcWeight').value,
+      roastLevel: document.getElementById('qcRoastLevel').value,
+      costPerKg,
+      scores, defects,
+      notes: document.getElementById('qcNotes').value.trim(),
+      inspector: currentUser || '-'
+    };
+    qcLots.push(lot);
+    saveQcLots();
+    closeModal('qcModalOverlay');
+    renderQcTab();
+
+    const st = qcStatus(qcTotalScore(scores), defects.length>0);
+    if(st.status === 'APPROVED' && costPerKg > 0 && costPerKg !== state.priceBeanPerKg){
+      if(confirm(`Lot นี้ผ่าน APPROVED ✓\n\nต้องการอัปเดตราคาต้นทุนเมล็ดกาแฟที่ใช้คำนวณกำไรคอร์สสอนทั้งหมด จาก ฿${fmt(state.priceBeanPerKg)}/กก. เป็น ฿${fmt(costPerKg)}/กก. (ตาม Lot นี้) หรือไม่?`)){
+        state.priceBeanPerKg = costPerKg;
+        scheduleSave();
+        renderMenuTab();
+        renderPLTab();
+        alert(`อัปเดตราคาต้นทุนเมล็ดกาแฟเป็น ฿${fmt(costPerKg)}/กก. แล้ว — มีผลกับการคำนวณกำไรคอร์สสอนทันที`);
+      }
+    }
+    openQcDetail(lot.id);
+  };
+  openModal('qcModalOverlay');
+}
+function updateQcLiveTotal(){
+  let total = 0;
+  QC_CRITERIA.forEach(c=>{
+    const group = document.querySelector(`.qc-score-stars[data-key="${c.key}"]`);
+    total += Number(group.dataset.value)||0;
+  });
+  const el = document.getElementById('qcLiveTotal');
+  if(el) el.textContent = total + ' / 40';
+}
+
+function buildQcSummaryReport(lot){
+  const total = qcTotalScore(lot.scores);
+  const st = qcStatus(total, lot.defects.length>0);
+  const dateStr = lot.date ? new Date(lot.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+  let msg = `☕ RANGSAN Academy — ผล QC กาแฟ\n`;
+  msg += `📦 Lot: ${lot.lotNo || '-'}\n`;
+  msg += `🏭 Supplier: ${lot.supplier || '-'}\n`;
+  msg += `📅 วันที่ตรวจ: ${dateStr}\n`;
+  msg += `--------------------------\n`;
+  QC_CRITERIA.forEach(c=>{
+    msg += `${c.label}: ${lot.scores[c.key]||0}/5\n`;
+  });
+  msg += `--------------------------\n`;
+  msg += `🏆 รวมคะแนน: ${total}/40\n`;
+  msg += `สถานะ: ${st.label}\n`;
+  if(lot.defects.length) msg += `⚠️ Defect: ${lot.defects.join(', ')}\n`;
+  if(lot.notes) msg += `📝 หมายเหตุ: ${lot.notes}\n`;
+  msg += `ผู้ตรวจ: ${lot.inspector}`;
+  return msg;
+}
+
+function openQcDetail(id){
+  const lot = qcLots.find(l=> l.id === id);
+  if(!lot) return;
+  const total = qcTotalScore(lot.scores);
+  const st = qcStatus(total, lot.defects.length>0);
+  const dateStr = lot.date ? new Date(lot.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+  const scoreRowsHTML = QC_CRITERIA.map(c=>{
+    const v = lot.scores[c.key]||0;
+    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed var(--line); font-size:12.5px;">
+      <span>${c.label}</span>
+      <span class="mono" style="font-weight:700;">${'★'.repeat(v)}${'☆'.repeat(5-v)} ${v}/5</span>
+    </div>`;
+  }).join('');
+  document.getElementById('qcDetailModalBody').innerHTML = `
+    <h3>${lot.lotNo || 'Lot'} — ผล QC</h3>
+    <p class="hint">${lot.supplier || '-'} · ${dateStr} · ผู้ตรวจ ${lot.inspector}</p>
+    <div style="text-align:center; margin:14px 0;">
+      <span class="badge" style="background:${st.color}22; color:${st.color}; font-size:14px; padding:6px 16px;">${st.label}</span>
+      <div class="mono" style="font-size:26px; font-weight:800; margin-top:8px;">${total}/40</div>
+    </div>
+    ${scoreRowsHTML}
+    ${lot.defects.length ? `<div style="margin-top:12px; padding:10px; background:var(--alert-soft); border-radius:10px;">
+      <div style="font-size:11px; font-weight:700; color:var(--alert); margin-bottom:4px;">⚠️ Defect ที่พบ</div>
+      ${lot.defects.map(d=>`<div style="font-size:12px;">• ${d}</div>`).join('')}
+    </div>` : ''}
+    ${lot.notes ? `<div style="margin-top:10px; font-size:12.5px; color:#5A4433;"><b>หมายเหตุ:</b> ${lot.notes}</div>` : ''}
+    ${lot.costPerKg ? `
+    <div style="margin-top:12px; padding:10px 12px; background:var(--cream); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:11px; color:#948a78;">ต้นทุนเมล็ด Lot นี้</div>
+        <div class="mono" style="font-weight:700; font-size:14px;">฿${fmt(lot.costPerKg)}/กก.</div>
+      </div>
+      ${lot.costPerKg !== state.priceBeanPerKg ? `<button class="btn small" id="qcUseCostBtn">ใช้ราคานี้คำนวณคอร์ส</button>` : `<span class="badge ok">กำลังใช้อยู่</span>`}
+    </div>` : ''}
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="btn" id="qcSendLineBtn" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#06C755"/><path d="M6 10.2c0-3 2.8-5.4 6-5.4s6 2.4 6 5.4c0 2.7-2.2 4.9-5.2 5.3-.2.6-.6 1.9-.7 2.2-.1.3-.3.3-.5.1-.1-.1-1.6-1.1-2.3-1.6C7.4 15.5 6 13 6 10.2Z" fill="#fff"/></svg>
+        ส่งผลเข้าไลน์
+      </button>
+      <button class="btn ghost" id="qcDeleteBtn" style="flex:none; color:var(--alert);">ลบ</button>
+    </div>
+  `;
+  const useCostBtn = document.getElementById('qcUseCostBtn');
+  if(useCostBtn) useCostBtn.onclick = ()=>{
+    state.priceBeanPerKg = lot.costPerKg;
+    scheduleSave();
+    renderMenuTab();
+    renderPLTab();
+    alert(`อัปเดตราคาต้นทุนเมล็ดกาแฟเป็น ฿${fmt(lot.costPerKg)}/กก. แล้ว — มีผลกับการคำนวณกำไรคอร์สสอนทันที`);
+    openQcDetail(id);
+  };
+  document.getElementById('qcSendLineBtn').onclick = ()=>{
+    const msg = buildQcSummaryReport(lot);
+    if(state.lineRelayUrl){
+      sendTextToLineGroupAuto(msg, document.getElementById('qcSendLineBtn'));
+    } else {
+      sendTextToLine(msg);
+    }
+  };
+  document.getElementById('qcDeleteBtn').onclick = ()=>{
+    if(!confirm(`ลบบันทึก QC ของ Lot "${lot.lotNo}" ใช่หรือไม่?`)) return;
+    qcLots = qcLots.filter(l=> l.id !== lot.id);
+    saveQcLots();
+    closeModal('qcDetailModalOverlay');
+    renderQcTab();
+  };
+  openModal('qcDetailModalOverlay');
+}
+
+let pendingSlipDataUrl = null;
+function openPaymentModal(items){
+  const total = items.reduce((s,p)=> s+p.price*p.qty, 0);
+  pendingSlipDataUrl = null;
+  const qrUrl = sharedPromptPayId ? promptPayQrImgUrl(sharedPromptPayId, total) : null;
+
+  document.getElementById('reportModalBody').innerHTML = `
+    <h3>💳 รับชำระเงิน</h3>
+    <p class="hint">ยอดที่ต้องชำระ ${items.length} รายการ</p>
+    <div style="text-align:center; margin:14px 0;">
+      <div class="mono" style="font-size:30px; font-weight:800; color:#fff;">฿${fmt(total)}</div>
+    </div>
+    ${qrUrl ? `
+      <div style="background:#fff; border-radius:14px; padding:16px; text-align:center;">
+        <img src="${qrUrl}" alt="PromptPay QR" style="width:200px; height:200px; margin:0 auto; display:block;">
+        <div style="font-size:11px; color:#948a78; margin-top:8px;">สแกนจ่ายผ่าน PromptPay</div>
+      </div>
+      <div style="text-align:center; margin-top:6px;">
+        <button class="btn ghost small" id="ppEditBtn" style="font-size:11px;">⚙️ เปลี่ยนเลข PromptPay</button>
+      </div>
+    ` : `
+      <div style="text-align:center; padding:14px; background:rgba(255,255,255,.05); border-radius:12px; font-size:12.5px; color:#C9C2B6;">
+        ยังไม่ได้ตั้งค่าเลข PromptPay
+        <div style="margin-top:8px;"><button class="btn small" id="ppSetBtn">⚙️ ตั้งค่าเลข PromptPay</button></div>
+      </div>
+    `}
+    <div style="margin-top:16px;">
+      <div class="modal-field-label">แนบสลิปการโอน (ไม่บังคับ แต่แนะนำให้แนบเป็นหลักฐาน)</div>
+      <label class="btn ghost" style="cursor:pointer; text-align:center; display:block;">
+        📎 เลือกรูปสลิป
+        <input type="file" accept="image/*" id="slipInput" style="display:none;">
+      </label>
+      <div id="slipPreview" style="display:none; text-align:center; margin-top:8px;"></div>
+    </div>
+    <button class="btn-arrow" id="confirmPaymentBtn" style="justify-content:center; width:100%; margin-top:16px;">ยืนยันชำระแล้ว & บันทึกการขาย<span class="circ">✓</span></button>
+  `;
+
+  const ppSetBtn = document.getElementById('ppSetBtn');
+  if(ppSetBtn) ppSetBtn.onclick = ()=>{ promptSetPromptPayId(); openPaymentModal(items); };
+  const ppEditBtn = document.getElementById('ppEditBtn');
+  if(ppEditBtn) ppEditBtn.onclick = ()=>{ promptSetPromptPayId(); openPaymentModal(items); };
+
+  document.getElementById('slipInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      pendingSlipDataUrl = await resizeImageFile(file, 500, 0.85);
+      const prev = document.getElementById('slipPreview');
+      prev.style.display = 'block';
+      prev.innerHTML = `<img src="${pendingSlipDataUrl}" style="max-width:160px; border-radius:10px;">`;
+    }catch(err){ console.error('slip resize failed', err); }
+  });
+
+  document.getElementById('confirmPaymentBtn').onclick = async ()=>{
     const saleRecord = {
       date: new Date().toISOString().slice(0,10),
       time: new Date().toISOString(),
       seller: currentUser || '-',
       items,
-      total
+      total,
+      slip: pendingSlipDataUrl || ''
     };
     standaloneSales.push(saleRecord);
     await saveStandaloneSales();
@@ -4280,6 +5203,8 @@ function renderSellTab(){
     if(document.getElementById('stockWarehouseBody')) renderStockTab();
     openSaleReceipt(saleRecord);
   };
+
+  openModal('reportModalOverlay');
 }
 
 let showAllSalesHistory = false;
@@ -4296,12 +5221,17 @@ function renderTodaySalesList(){
       ? t.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
       : s.date;
     const itemsStr = s.items.map(it=> `${it.name} x${it.qty}`).join(', ');
+    const idx = standaloneSales.indexOf(s);
     return `<div style="padding:9px 0; border-bottom:1px dashed var(--line);">
-      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
         <span style="font-weight:700; font-size:13px;">฿${fmt(s.total)}</span>
-        <span style="font-size:11px; color:#948a78;">${dateTimeStr} · ${s.seller}</span>
+        <div style="display:flex; align-items:center; gap:8px; flex:none;">
+          <span style="font-size:11px; color:#948a78;">${dateTimeStr} · ${s.seller}</span>
+          ${currentUser===ADMIN_NAME ? `<button class="sale-edit-btn" data-idx="${idx}" title="แก้ไขบิล (ต้องใช้รหัสแอดมิน)">✎</button>` : ''}
+        </div>
       </div>
       <div style="font-size:11.5px; color:#5A4433; margin-top:2px;">${itemsStr}</div>
+      ${s.slip ? `<div style="margin-top:4px;"><img src="${s.slip}" class="slip-thumb" data-slip="${s.slip}" style="width:32px; height:32px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid var(--line);"></div>` : ''}
     </div>`;
   };
 
@@ -4329,6 +5259,138 @@ function renderTodaySalesList(){
   }
   const tBtn = document.getElementById('toggleSalesHistoryBtn');
   if(tBtn) tBtn.onclick = ()=>{ showAllSalesHistory = !showAllSalesHistory; renderTodaySalesList(); };
+  listEl.querySelectorAll('.sale-edit-btn').forEach(btn=>{
+    btn.onclick = async (e)=>{
+      e.stopPropagation();
+      if(currentUser !== ADMIN_NAME){
+        alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่แก้ไขบิลขายได้`);
+        return;
+      }
+      if(!(await checkAdminPin())) return;
+      openEditSaleModal(Number(btn.dataset.idx));
+    };
+  });
+  listEl.querySelectorAll('.slip-thumb').forEach(img=>{
+    img.onclick = (e)=>{
+      e.stopPropagation();
+      document.getElementById('reportModalBody').innerHTML = `
+        <h3>📎 สลิปการโอน</h3>
+        <div style="text-align:center; margin-top:10px;"><img src="${img.dataset.slip}" style="max-width:100%; border-radius:12px;"></div>
+      `;
+      openModal('reportModalOverlay');
+    };
+  });
+}
+
+function openEditSaleModal(idx){
+  const sale = standaloneSales[idx];
+  if(!sale) return;
+  const rows = sale.items.map((it,i)=>`
+    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line);">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:12.5px; font-weight:600;">${it.name}</div>
+        <div style="font-size:11px; color:#948a78;">฿${fmt(it.price)}/ชิ้น</div>
+      </div>
+      <button type="button" class="btn small ghost editsale-minus" data-i="${i}" style="padding:2px 8px;">−</button>
+      <span class="mono editsale-qty" data-i="${i}" style="min-width:22px; text-align:center; font-weight:700;">${it.qty}</span>
+      <button type="button" class="btn small ghost editsale-plus" data-i="${i}" style="padding:2px 8px;">+</button>
+      <button type="button" class="editsale-remove" data-i="${i}" title="ลบรายการนี้" style="border:none; background:none; color:var(--alert); font-size:16px; padding:0 4px;">✕</button>
+    </div>`).join('');
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <h3>แก้ไขบิลขาย</h3>
+    <p class="hint">ปรับจำนวนหรือลบรายการ ระบบจะปรับสต๊อกและยอดรวมให้อัตโนมัติ</p>
+    <div id="editSaleItems">${rows}</div>
+    <div style="display:flex; justify-content:space-between; padding-top:10px; font-weight:700;">
+      <span>ยอดรวมใหม่</span>
+      <span class="mono" id="editSaleTotal">฿${fmt(sale.total)}</span>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="btn-arrow" id="saveEditSaleBtn" style="flex:1; justify-content:center;">บันทึกการแก้ไข<span class="circ">✓</span></button>
+      <button class="btn ghost" id="deleteSaleBtn" style="flex:none; color:var(--alert);">ลบบิลนี้</button>
+    </div>
+  `;
+  document.getElementById('reportModalBody').innerHTML = '';
+  document.getElementById('reportModalBody').appendChild(body);
+
+  const workingItems = sale.items.map(it=> ({...it}));
+  const recalc = ()=>{
+    const total = workingItems.reduce((s,it)=> s + (it.qty>0 ? it.price*it.qty : 0), 0);
+    document.getElementById('editSaleTotal').textContent = '฿' + fmt(total);
+  };
+  const wire = ()=>{
+    body.querySelectorAll('.editsale-minus').forEach(b=>{
+      b.onclick = ()=>{
+        const i = Number(b.dataset.i);
+        workingItems[i].qty = Math.max(0, workingItems[i].qty-1);
+        body.querySelector(`.editsale-qty[data-i="${i}"]`).textContent = workingItems[i].qty;
+        recalc();
+      };
+    });
+    body.querySelectorAll('.editsale-plus').forEach(b=>{
+      b.onclick = ()=>{
+        const i = Number(b.dataset.i);
+        workingItems[i].qty += 1;
+        body.querySelector(`.editsale-qty[data-i="${i}"]`).textContent = workingItems[i].qty;
+        recalc();
+      };
+    });
+    body.querySelectorAll('.editsale-remove').forEach(b=>{
+      b.onclick = ()=>{
+        const i = Number(b.dataset.i);
+        workingItems[i].qty = 0;
+        const row = b.closest('div');
+        if(row) row.style.opacity = '.35';
+        body.querySelector(`.editsale-qty[data-i="${i}"]`).textContent = '0';
+        recalc();
+      };
+    });
+  };
+  wire();
+
+  document.getElementById('saveEditSaleBtn').onclick = async ()=>{
+    const oldItems = sale.items;
+    const newItems = workingItems.filter(it=> it.qty > 0);
+    // adjust stock by the delta per product name
+    const deltaMap = {};
+    oldItems.forEach(it=> deltaMap[it.name] = (deltaMap[it.name]||0) - it.qty);
+    newItems.forEach(it=> deltaMap[it.name] = (deltaMap[it.name]||0) + it.qty);
+    Object.keys(deltaMap).forEach(name=>{
+      const delta = deltaMap[name];
+      if(delta === 0) return;
+      const prod = retailProducts.find(p=> p.name===name);
+      if(prod){
+        prod.stock = Math.max(0, (prod.stock||0) - delta); // delta>0 means more sold -> stock down further
+        logStockMovement(name, delta>0?'sale':'in', Math.abs(delta), 'แก้ไขบิลขายโดยแอดมิน');
+      }
+    });
+    await saveRetailProducts();
+
+    sale.items = newItems;
+    sale.total = newItems.reduce((s,it)=> s + it.price*it.qty, 0);
+    await saveStandaloneSales();
+
+    closeModal('reportModalOverlay');
+    renderTodaySalesList();
+    if(document.getElementById('stockWarehouseBody')) renderStockTab();
+  };
+  document.getElementById('deleteSaleBtn').onclick = async ()=>{
+    if(!confirm('ลบบิลนี้ทั้งหมดใช่หรือไม่? สต๊อกจะถูกคืนกลับให้อัตโนมัติ')) return;
+    sale.items.forEach(it=>{
+      const prod = retailProducts.find(p=> p.name===it.name);
+      if(prod){
+        prod.stock = (prod.stock||0) + it.qty;
+        logStockMovement(it.name, 'in', it.qty, 'ยกเลิกบิลขายโดยแอดมิน');
+      }
+    });
+    await saveRetailProducts();
+    standaloneSales.splice(idx,1);
+    await saveStandaloneSales();
+    closeModal('reportModalOverlay');
+    renderTodaySalesList();
+    if(document.getElementById('stockWarehouseBody')) renderStockTab();
+  };
+  openModal('reportModalOverlay');
 }
 
 function openSaleReceipt(sale){
@@ -4351,8 +5413,9 @@ function openSaleReceipt(sale){
       ${itemLines}
       <hr>
       <div class="line total"><span>ยอดรวม</span><span>${fmt(sale.total)}</span></div>
-      <div class="foot">✓ บันทึกแล้ว</div>
+      <div class="foot">✓ บันทึกแล้ว${sale.slip ? ' · แนบสลิปแล้ว 📎' : ''}</div>
     </div>
+    ${sale.slip ? `<div style="text-align:center; margin-top:6px;"><img src="${sale.slip}" style="max-width:160px; border-radius:10px;"></div>` : ''}
     <button class="btn-arrow" id="saleReceiptOkBtn" style="justify-content:center; width:100%; margin-top:8px;">เรียบร้อย<span class="circ">✓</span></button>
   `;
   const okBtn = document.getElementById('saleReceiptOkBtn');
@@ -4396,6 +5459,7 @@ async function refreshAllSharedData(){
     loadStandaloneSales(),
     loadStockMovements(),
     loadSharedEvalFormUrl(),
+    loadQcLots(),
   ]);
   renderAll();
   flashSaved('รีเฟรชข้อมูลแล้ว ✓');
@@ -4461,9 +5525,12 @@ async function refreshAllSharedData(){
   await loadInstructorPhotos();
   await loadInstructorPins();
   await loadSharedAdminPin();
+  await loadCustomCategories();
   await loadRetailProducts();
   await loadStandaloneSales();
   await loadStockMovements();
+  await loadQcLots();
+  await loadPromptPayId();
   await loadSharedEvalFormUrl();
   await loadCurrentUser();
   renderShell();
