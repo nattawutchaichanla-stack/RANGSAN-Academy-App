@@ -3739,6 +3739,7 @@ function showLoginScreen(){
 }
 function hideLoginScreen(){
   document.getElementById('loginScreen').style.display = 'none';
+  startAutoSync();
 }
 async function attemptLogin(name){
   const hasPin = !!instructorPins[name];
@@ -4142,6 +4143,7 @@ function renderLogTab(){
       : initial;
     const isPast = b.date && b.date < new Date().toISOString().slice(0,10);
     const bookingRef = JSON.stringify({courseId:b.courseId, date:b.date, instructor:b.instructor, note:b.note||''}).replace(/"/g,'&quot;');
+    const needsInstructor = !b.instructor || b.instructor === 'ยังไม่ระบุ';
     return `
     <div class="agent-card" style="${b.taught?'opacity:.72;':''}">
       <button class="ac-del" data-del-booking="${b._idx}" title="ลบการจองนี้">✕</button>
@@ -4152,14 +4154,20 @@ function renderLogTab(){
       </div>
       <div class="ac-body">
         <div class="ac-info">
-          <div class="ac-name">${b.instructor}</div>
+          ${needsInstructor ? `
+            <div class="ac-name" style="color:#e0a94a;">⚠️ ยังไม่ระบุอาจารย์</div>
+            <select data-assign-instructor="${b._idx}" class="pill" style="margin:4px 0 8px; font-size:11.5px; padding:5px 8px; width:100%;">
+              <option value="">— เลือกอาจารย์ผู้สอน —</option>
+              ${state.instructors.map(n=>`<option value="${n}">${n}</option>`).join('')}
+            </select>
+          ` : `<div class="ac-name">${b.instructor}</div>`}
           <div class="ac-field"><b>COURSE</b> ${course ? course.name : '-'}</div>
           <div class="ac-field"><b>DATE</b> ${dateStr}</div>
           ${b.note ? `<div class="ac-field"><b>NOTE</b> ${b.note}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
-          ${!b.taught ? `<button class="btn small" data-confirm-taught="${bookingRef}" style="margin-top:8px; background:var(--sage);">✓ ยืนยันสอนแล้ว</button>` : ''}
+          ${!b.taught && !needsInstructor ? `<button class="btn small" data-confirm-taught="${bookingRef}" style="margin-top:8px; background:var(--sage);">✓ ยืนยันสอนแล้ว</button>` : ''}
         </div>
-        <div class="ac-avatar" style="background:${color}; cursor:pointer;" data-profile-instructor="${b.instructor}" data-profile-course="${b.courseId}" data-profile-date="${b.date}" data-profile-note="${(b.note||'').replace(/"/g,'&quot;')}">${avatarContent}</div>
+        ${needsInstructor ? '' : `<div class="ac-avatar" style="background:${color}; cursor:pointer;" data-profile-instructor="${b.instructor}" data-profile-course="${b.courseId}" data-profile-date="${b.date}" data-profile-note="${(b.note||'').replace(/"/g,'&quot;')}">${avatarContent}</div>`}
       </div>
     </div>`;
   };
@@ -4193,6 +4201,16 @@ function renderLogTab(){
         const booking = JSON.parse(btn.dataset.confirmTaught);
         await loadRetailProducts(); // make sure the product list is fresh no matter which tab was open last
         openConfirmTaughtModal(booking);
+      };
+    });
+    container.querySelectorAll('[data-assign-instructor]').forEach(sel=>{
+      sel.onchange = ()=>{
+        const idx = Number(sel.dataset.assignInstructor);
+        if(!sel.value) return;
+        sharedBookings[idx].instructor = sel.value;
+        saveSharedBookings();
+        renderBookingCards();
+        renderCalendar();
       };
     });
   };
@@ -4718,8 +4736,18 @@ function renderSellTab(){
       <p class="hint">รายการที่บันทึกไว้ในวันนี้ — ยืนยันว่าบันทึกสำเร็จแล้วจริง พร้อมกดดูประวัติย้อนหลังทั้งหมดได้ในนี้เลย</p>
       <div id="todaySalesList"></div>
     </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>📎 สลิปย้อนหลัง</h2>
+          <p class="hint">สรุปยอดสลิปเป็นรายวัน เลื่อนดูย้อนหลังได้ทั้งเดือน กดวันไหนดูรูปสลิปของวันนั้นได้เลย</p>
+        </div>
+      </div>
+      <div id="slipGalleryBox"></div>
+    </div>
   `;
   renderTodaySalesList();
+  renderSlipGallery();
   if(!retailProducts.length){
     document.getElementById('sellGallery').innerHTML = `<div style="text-align:center; color:#948a78; font-size:12.5px; padding:20px;">ยังไม่มีสินค้าในระบบ — ไปเพิ่มที่แท็บ "คลัง" ก่อน</div>`;
     return;
@@ -5132,34 +5160,77 @@ function openPaymentModal(items){
   const qrUrl = sharedPromptPayId ? promptPayQrImgUrl(sharedPromptPayId, total) : null;
 
   document.getElementById('reportModalBody').innerHTML = `
-    <h3>💳 รับชำระเงิน</h3>
-    <p class="hint">ยอดที่ต้องชำระ ${items.length} รายการ</p>
-    <div style="text-align:center; margin:14px 0;">
-      <div class="mono" style="font-size:30px; font-weight:800; color:#fff;">฿${fmt(total)}</div>
-    </div>
-    ${qrUrl ? `
-      <div style="background:#fff; border-radius:14px; padding:16px; text-align:center;">
-        <img src="${qrUrl}" alt="PromptPay QR" style="width:200px; height:200px; margin:0 auto; display:block;">
-        <div style="font-size:11px; color:#948a78; margin-top:8px;">สแกนจ่ายผ่าน PromptPay</div>
+    <div style="text-align:center; margin-bottom:4px;">
+      <div style="display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--gold); text-transform:uppercase;">
+        <span style="width:16px; height:1px; background:var(--gold); opacity:.6;"></span>
+        RANGSAN Academy
+        <span style="width:16px; height:1px; background:var(--gold); opacity:.6;"></span>
       </div>
-      <div style="text-align:center; margin-top:6px;">
-        <button class="btn ghost small" id="ppEditBtn" style="font-size:11px;">⚙️ เปลี่ยนเลข PromptPay</button>
+      <div style="font-size:13px; font-weight:700; color:#fff; margin-top:4px;">รับชำระเงิน · ${items.length} รายการ</div>
+    </div>
+    ${!qrUrl ? `
+    <div style="text-align:center; margin:12px 0 18px;">
+      <div class="mono" style="font-size:36px; font-weight:800; color:#fff; letter-spacing:.5px;">฿${fmt(total)}</div>
+    </div>
+    ` : ''}
+    ${qrUrl ? `
+      <div style="max-width:280px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.35); background:#fff;">
+        <div style="background:#1B3A5C; padding:22px 18px; display:flex; align-items:center; justify-content:center; gap:12px;">
+          <svg width="46" height="46" viewBox="0 0 46 46">
+            <rect x="1" y="1" width="44" height="44" rx="11" fill="none" stroke="#fff" stroke-width="2.5"/>
+            <rect x="12" y="12" width="10" height="10" rx="2" fill="#fff"/>
+            <rect x="24" y="12" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>
+            <rect x="12" y="24" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>
+            <path d="M24 34 L34 24 L34 34 Z" fill="#1AB394"/>
+          </svg>
+          <div style="text-align:left; line-height:1.2;">
+            <div style="color:#fff; font-size:20px; font-weight:800; letter-spacing:.5px; font-family:'IBM Plex Sans Thai',sans-serif;">THAI QR</div>
+            <div style="color:#fff; font-size:20px; font-weight:800; letter-spacing:.5px; font-family:'IBM Plex Sans Thai',sans-serif;">PAYMENT</div>
+          </div>
+        </div>
+        <div style="padding:22px 20px 24px; text-align:center;">
+          <div style="display:inline-block; border:1.5px solid #1B3A5C; border-radius:5px; padding:6px 10px 5px; margin-bottom:18px;">
+            <div style="font-size:9.5px; color:#1B3A5C; font-weight:600; margin-bottom:1px;">พร้อมเพย์</div>
+            <div style="display:flex; align-items:stretch; height:20px;">
+              <span style="font-size:17px; font-weight:700; color:#1B3A5C; font-style:italic; padding-right:4px;">Prompt</span>
+              <span style="background:#1B3A5C; color:#fff; font-size:17px; font-weight:800; font-style:italic; padding:0 6px; display:flex; align-items:center; border-radius:2px;">Pay</span>
+            </div>
+          </div>
+          <div style="position:relative; display:inline-block; line-height:0;">
+            <img src="${qrUrl}" alt="PromptPay QR" style="width:100%; max-width:230px; display:block;">
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:42px; height:42px; background:#fff; border:2.5px solid #1B3A5C; border-radius:9px; display:flex; align-items:center; justify-content:center;">
+              <svg width="22" height="22" viewBox="0 0 46 46">
+                <rect x="1" y="1" width="44" height="44" rx="10" fill="none" stroke="#1B3A5C" stroke-width="3"/>
+                <rect x="12" y="12" width="10" height="10" rx="2" fill="#1B3A5C"/>
+                <rect x="24" y="12" width="10" height="10" rx="2" fill="none" stroke="#1B3A5C" stroke-width="3"/>
+                <rect x="12" y="24" width="10" height="10" rx="2" fill="none" stroke="#1B3A5C" stroke-width="3"/>
+                <path d="M24 34 L34 24 L34 34 Z" fill="#1AB394"/>
+              </svg>
+            </div>
+          </div>
+          <div style="margin-top:18px; font-size:16px; color:#1B3A5C; font-weight:700; font-family:'IBM Plex Sans Thai',sans-serif;">
+            ยอดชำระ: <span style="color:#E8622C; font-family:'IBM Plex Mono'; font-weight:800; font-size:23px;">฿${fmt(total)}</span>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:10px;">
+        <button class="btn ghost small" id="ppEditBtn" style="font-size:11px; border-radius:999px;">⚙️ เปลี่ยนเลข PromptPay</button>
       </div>
     ` : `
-      <div style="text-align:center; padding:14px; background:rgba(255,255,255,.05); border-radius:12px; font-size:12.5px; color:#C9C2B6;">
+      <div style="text-align:center; padding:18px; background:rgba(255,255,255,.05); border:1px dashed rgba(220,167,61,.35); border-radius:16px; font-size:12.5px; color:#C9C2B6;">
         ยังไม่ได้ตั้งค่าเลข PromptPay
-        <div style="margin-top:8px;"><button class="btn small" id="ppSetBtn">⚙️ ตั้งค่าเลข PromptPay</button></div>
+        <div style="margin-top:10px;"><button class="btn small" id="ppSetBtn">⚙️ ตั้งค่าเลข PromptPay</button></div>
       </div>
     `}
-    <div style="margin-top:16px;">
+    <div style="margin-top:20px;">
       <div class="modal-field-label">แนบสลิปการโอน (ไม่บังคับ แต่แนะนำให้แนบเป็นหลักฐาน)</div>
-      <label class="btn ghost" style="cursor:pointer; text-align:center; display:block;">
+      <label class="btn ghost" style="cursor:pointer; text-align:center; display:block; border-radius:999px;">
         📎 เลือกรูปสลิป
         <input type="file" accept="image/*" id="slipInput" style="display:none;">
       </label>
       <div id="slipPreview" style="display:none; text-align:center; margin-top:8px;"></div>
     </div>
-    <button class="btn-arrow" id="confirmPaymentBtn" style="justify-content:center; width:100%; margin-top:16px;">ยืนยันชำระแล้ว & บันทึกการขาย<span class="circ">✓</span></button>
+    <button class="btn-arrow" id="confirmPaymentBtn" style="justify-content:center; width:100%; margin-top:18px;">ยืนยันชำระแล้ว & บันทึกการขาย<span class="circ">✓</span></button>
   `;
 
   const ppSetBtn = document.getElementById('ppSetBtn');
@@ -5282,6 +5353,182 @@ function renderTodaySalesList(){
   });
 }
 
+if(typeof window._slipGalleryYear === 'undefined'){
+  const now = new Date();
+  window._slipGalleryYear = now.getFullYear();
+  window._slipGalleryMonth = now.getMonth(); // 0-11
+}
+let slipGalleryOpenDay = null; // 'YYYY-MM-DD' currently expanded, or null
+function slipMonthDashboardHTML(byDay, days, monthTotal, txnCount){
+  const dayTotals = days.map(d=> byDay[d].total);
+  const avgPerDay = days.length ? monthTotal / days.length : 0;
+  const bestDay = days.reduce((best,d)=> byDay[d].total > (byDay[best]?.total||0) ? d : best, days[0]);
+  const bestDayLabel = bestDay ? new Date(bestDay+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit'}) : '-';
+  const avgPerTxn = txnCount ? monthTotal / txnCount : 0;
+
+  const cards = [
+    { label:'ยอดรวมเดือนนี้', value:fmt(monthTotal), sub:`${txnCount} รายการ`, icon:'💰', grad:'linear-gradient(135deg,#1E4A30,#4C8A3A)' },
+    { label:'วันที่มีสลิป', value:days.length, sub:'วัน', icon:'📅', grad:'linear-gradient(135deg,#8F5A26,#B8763B)' },
+    { label:'เฉลี่ย/วัน', value:fmt(Math.round(avgPerDay)), sub:'บาท', icon:'📊', grad:'linear-gradient(135deg,#B8942A,#DCA73D)' },
+    { label:'วันขายดีสุด', value:bestDayLabel, sub:`฿${fmt(byDay[bestDay]?.total||0)}`, icon:'🏆', grad:'linear-gradient(135deg,#165028,#3F7D4E)' },
+  ];
+
+  // simple bar chart across the days that have sales, oldest to newest
+  const chartDays = days.slice().reverse();
+  const maxVal = Math.max(1, ...chartDays.map(d=> byDay[d].total));
+  const barsHTML = chartDays.map(d=>{
+    const pct = Math.max(4, (byDay[d].total/maxVal)*100);
+    const dLabel = new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit'});
+    return `<div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; min-width:18px;">
+      <div style="width:100%; max-width:20px; background:var(--sage-soft); border-radius:4px 4px 0 0; height:70px; display:flex; align-items:flex-end; overflow:hidden;">
+        <div style="width:100%; background:var(--sage); border-radius:4px 4px 0 0; height:${pct}%;"></div>
+      </div>
+      <span style="font-size:8.5px; color:#948a78;">${dLabel}</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line);">
+      <div style="font-size:12px; font-weight:700; color:var(--gold); letter-spacing:.3px; margin-bottom:10px;">📊 สรุปยอดขาย Dashboard</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:16px;">
+        ${cards.map(c=>`
+          <div style="background:${c.grad}; border-radius:14px; padding:12px; color:#fff;">
+            <div style="font-size:17px; opacity:.9;">${c.icon}</div>
+            <div class="mono" style="font-size:15px; font-weight:800; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.value}</div>
+            <div style="font-size:10px; font-weight:600; opacity:.9; margin-top:1px;">${c.label}</div>
+            <div style="font-size:9px; opacity:.7; margin-top:1px;">${c.sub}</div>
+          </div>`).join('')}
+      </div>
+      ${chartDays.length>1 ? `
+        <div style="font-size:11px; font-weight:600; color:#5A4433; margin-bottom:8px;">ยอดขายรายวันในเดือนนี้</div>
+        <div style="display:flex; align-items:flex-end; gap:4px; overflow-x:auto; padding-bottom:2px;">${barsHTML}</div>
+      ` : ''}
+    </div>`;
+}
+
+function renderSlipGallery(){
+  const box = document.getElementById('slipGalleryBox');
+  if(!box) return;
+  const withSlips = standaloneSales
+    .map((s,i)=>({...s, _idx:i}))
+    .filter(s=> s.slip);
+
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const y = window._slipGalleryYear, m = window._slipGalleryMonth;
+  const monthPrefix = `${y}-${String(m+1).padStart(2,'0')}`;
+  const inMonth = withSlips.filter(s=> (s.date||'').startsWith(monthPrefix));
+
+  // group by day
+  const byDay = {};
+  inMonth.forEach(s=>{
+    if(!byDay[s.date]) byDay[s.date] = { total:0, count:0, items:[] };
+    byDay[s.date].total += s.total;
+    byDay[s.date].count += 1;
+    byDay[s.date].items.push(s);
+  });
+  const days = Object.keys(byDay).sort().reverse();
+  const monthTotal = inMonth.reduce((sum,s)=> sum+s.total, 0);
+
+  box.innerHTML = `
+    <div class="cal-nav" style="margin-bottom:10px;">
+      <button id="slipGalPrevBtn">‹</button>
+      <div class="cal-title">${monthNames[m]} ${y+543}</div>
+      <button id="slipGalNextBtn">›</button>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <input type="date" id="slipGalDatePicker" class="pill" style="flex:1; font-size:12.5px;" value="${slipGalleryOpenDay || ''}">
+      <button class="btn small" id="slipGalJumpBtn" style="flex:none;">ไปวันที่นี้</button>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:12px;">
+      <div class="kpi"><div class="label">ยอดรวมทั้งเดือน</div><div class="value">${fmt(monthTotal)}</div></div>
+      <div class="kpi"><div class="label">จำนวนสลิป</div><div class="value">${inMonth.length}</div></div>
+    </div>
+    ${slipGalleryOpenDay && !byDay[slipGalleryOpenDay] ? `<div style="text-align:center; color:#948a78; padding:10px; font-size:12px; background:var(--cream); border-radius:10px; margin-bottom:10px;">ไม่มีสลิปในวันที่เลือก</div>` : ''}
+    ${!days.length ? `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ไม่มีสลิปในเดือนนี้</div>` : days.map(d=>{
+      const day = byDay[d];
+      const dLabel = new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'2-digit', month:'2-digit'});
+      const isOpen = slipGalleryOpenDay === d;
+      return `
+      <div style="border:1px solid var(--line); border-radius:12px; margin-bottom:8px; overflow:hidden;">
+        <div class="slip-day-row" data-day="${d}" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; cursor:pointer; background:#fffefc;">
+          <div>
+            <div style="font-weight:700; font-size:13px;">${dLabel}</div>
+            <div style="font-size:10.5px; color:#948a78;">${day.count} สลิป</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="mono" style="font-weight:700; font-size:14px; color:var(--gold);">฿${fmt(day.total)}</span>
+            <span style="font-size:11px; color:#948a78;">${isOpen?'▲':'▼'}</span>
+          </div>
+        </div>
+        ${isOpen ? `
+        <div style="padding:10px 14px 14px; background:var(--cream); display:flex; flex-direction:column; gap:10px;">
+          ${day.items.map(s=>{
+            const t = s.time ? new Date(s.time) : null;
+            const timeStr = t && !isNaN(t) ? t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
+            const itemsStr = (s.items||[]).map(it=> `${it.name} x${it.qty}`).join(', ');
+            return `<div style="display:flex; gap:10px; background:#fffefc; border-radius:10px; padding:8px; border:1px solid var(--line);">
+              <img class="slip-gallery-item" data-slip="${s.slip}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" src="${s.slip}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; gap:6px;">
+                  <span class="mono" style="font-weight:700; font-size:13px;">฿${fmt(s.total)}</span>
+                  <span style="font-size:10px; color:#948a78; flex:none;">${timeStr} · ${s.seller||'-'}</span>
+                </div>
+                <div style="font-size:11px; color:#5A4433; margin-top:2px; line-height:1.4;">${itemsStr || '-'}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('')}
+    ${days.length ? slipMonthDashboardHTML(byDay, days, monthTotal, inMonth.length) : ''}
+  `;
+
+  document.getElementById('slipGalPrevBtn').onclick = ()=>{
+    window._slipGalleryMonth--;
+    if(window._slipGalleryMonth<0){ window._slipGalleryMonth=11; window._slipGalleryYear--; }
+    slipGalleryOpenDay = null;
+    renderSlipGallery();
+  };
+  document.getElementById('slipGalNextBtn').onclick = ()=>{
+    window._slipGalleryMonth++;
+    if(window._slipGalleryMonth>11){ window._slipGalleryMonth=0; window._slipGalleryYear++; }
+    slipGalleryOpenDay = null;
+    renderSlipGallery();
+  };
+  document.getElementById('slipGalJumpBtn').onclick = ()=>{
+    const picked = document.getElementById('slipGalDatePicker').value;
+    if(!picked) return;
+    const [py, pm] = picked.split('-').map(Number);
+    window._slipGalleryYear = py;
+    window._slipGalleryMonth = pm - 1;
+    slipGalleryOpenDay = picked;
+    renderSlipGallery();
+    setTimeout(()=>{
+      const target = document.querySelector(`.slip-day-row[data-day="${picked}"]`);
+      if(target) target.scrollIntoView({ behavior:'smooth', block:'center' });
+    }, 50);
+  };
+  box.querySelectorAll('.slip-day-row').forEach(row=>{
+    row.onclick = ()=>{
+      const d = row.dataset.day;
+      slipGalleryOpenDay = (slipGalleryOpenDay === d) ? null : d;
+      renderSlipGallery();
+    };
+  });
+  box.querySelectorAll('.slip-gallery-item').forEach(item=>{
+    item.onclick = (e)=>{
+      e.stopPropagation();
+      document.getElementById('reportModalBody').innerHTML = `
+        <h3>📎 สลิปการโอน</h3>
+        <p class="hint">${item.dataset.date} · ฿${fmt(item.dataset.total)} · ${item.dataset.seller}</p>
+        ${item.dataset.items ? `<div style="font-size:12.5px; color:#5A4433; background:var(--cream); border-radius:10px; padding:8px 12px; margin-top:8px;">${item.dataset.items}</div>` : ''}
+        <div style="text-align:center; margin-top:10px;"><img src="${item.dataset.slip}" style="max-width:100%; border-radius:12px;"></div>
+      `;
+      openModal('reportModalOverlay');
+    };
+  });
+}
+
 function openEditSaleModal(idx){
   const sale = standaloneSales[idx];
   if(!sale) return;
@@ -5372,6 +5619,7 @@ function openEditSaleModal(idx){
 
     closeModal('reportModalOverlay');
     renderTodaySalesList();
+    renderSlipGallery();
     if(document.getElementById('stockWarehouseBody')) renderStockTab();
   };
   document.getElementById('deleteSaleBtn').onclick = async ()=>{
@@ -5388,6 +5636,7 @@ function openEditSaleModal(idx){
     await saveStandaloneSales();
     closeModal('reportModalOverlay');
     renderTodaySalesList();
+    renderSlipGallery();
     if(document.getElementById('stockWarehouseBody')) renderStockTab();
   };
   openModal('reportModalOverlay');
@@ -5460,10 +5709,51 @@ async function refreshAllSharedData(){
     loadStockMovements(),
     loadSharedEvalFormUrl(),
     loadQcLots(),
+    loadPromptPayId(),
+    loadCustomCategories(),
   ]);
   renderAll();
   flashSaved('รีเฟรชข้อมูลแล้ว ✓');
 }
+
+/* ---------- background auto-sync (no manual refresh needed) ---------- */
+const AUTO_SYNC_INTERVAL_MS = 15000; // 15 seconds
+let autoSyncTimerId = null;
+function isUserBusy(){
+  // don't yank the screen out from under someone mid-typing or mid-modal
+  if(document.querySelector('.modal-overlay.open')) return true;
+  const el = document.activeElement;
+  if(el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.tagName==='SELECT')) return true;
+  return false;
+}
+async function silentBackgroundSync(){
+  if(document.hidden) return;       // tab not visible, skip
+  if(!currentUser) return;          // not logged in yet
+  if(isUserBusy()) return;          // don't disturb active input/modal
+  try{
+    await Promise.all([
+      loadSharedBookings(),
+      loadInstructorPhotos(),
+      loadInstructorPins(),
+      loadSharedAdminPin(),
+      loadRetailProducts(),
+      loadStandaloneSales(),
+      loadStockMovements(),
+      loadSharedEvalFormUrl(),
+      loadQcLots(),
+      loadPromptPayId(),
+      loadCustomCategories(),
+    ]);
+    if(!isUserBusy()) renderAll(); // re-check in case typing started while awaiting
+  }catch(e){ /* silent — a failed background sync just tries again next tick */ }
+}
+function startAutoSync(){
+  if(autoSyncTimerId) return;
+  autoSyncTimerId = setInterval(silentBackgroundSync, AUTO_SYNC_INTERVAL_MS);
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden) silentBackgroundSync(); // catch up immediately when tab becomes active again
+});
 
 /* ---------- pull-to-refresh (mobile gesture) ---------- */
 (function setupPullToRefresh(){
