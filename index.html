@@ -2743,7 +2743,7 @@ async function loadSharedAdminPin(){
   try{
     const res = await window.storage.get('shared_admin_pin', true);
     sharedAdminPin = (res && res.value) ? res.value : '';
-  }catch(e){ sharedAdminPin = ''; }
+  }catch(e){ console.error('load admin pin failed, keeping existing data', e); }
 }
 async function saveSharedAdminPin(){
   try{ await window.storage.set('shared_admin_pin', sharedAdminPin, true); }catch(e){}
@@ -2755,7 +2755,7 @@ async function loadSharedEvalFormUrl(){
   try{
     const res = await window.storage.get('shared_eval_form_url', true);
     sharedEvalFormUrl = (res && res.value) ? res.value : DEFAULT_EVAL_FORM_URL;
-  }catch(e){ sharedEvalFormUrl = DEFAULT_EVAL_FORM_URL; }
+  }catch(e){ console.error('load eval form url failed, keeping existing value', e); }
 }
 async function saveSharedEvalFormUrl(){
   try{ await window.storage.set('shared_eval_form_url', sharedEvalFormUrl, true); }catch(e){}
@@ -3424,7 +3424,7 @@ async function loadSharedBookings(){
     const res = await window.storage.get('shared_teaching_bookings', true);
     if(res && res.value) sharedBookings = JSON.parse(res.value);
     else sharedBookings = [];
-  }catch(e){ sharedBookings = []; }
+  }catch(e){ console.error('load shared bookings failed, keeping existing data', e); }
 }
 async function saveSharedBookings(){
   try{
@@ -3439,7 +3439,7 @@ async function loadInstructorPhotos(){
     const res = await window.storage.get('shared_instructor_photos', true);
     if(res && res.value) instructorPhotos = JSON.parse(res.value);
     else instructorPhotos = {};
-  }catch(e){ instructorPhotos = {}; }
+  }catch(e){ console.error('load instructor photos failed, keeping existing data', e); }
 }
 async function saveInstructorPhotos(){
   try{
@@ -3454,7 +3454,7 @@ async function loadInstructorPins(){
     const res = await window.storage.get('shared_instructor_pins', true);
     if(res && res.value) instructorPins = JSON.parse(res.value);
     else instructorPins = {};
-  }catch(e){ instructorPins = {}; }
+  }catch(e){ console.error('load instructor pins failed, keeping existing data', e); }
 }
 async function saveInstructorPins(){
   try{
@@ -3497,7 +3497,7 @@ async function loadRetailProducts(){
   try{
     const res = await window.storage.get('shared_retail_products', true);
     retailProducts = (res && res.value) ? JSON.parse(res.value) : [];
-  }catch(e){ retailProducts = []; }
+  }catch(e){ console.error('load retail products failed, keeping existing data', e); return; }
 
   let changed = false;
 
@@ -3535,7 +3535,7 @@ async function loadStandaloneSales(){
   try{
     const res = await window.storage.get('shared_standalone_sales', true);
     standaloneSales = (res && res.value) ? JSON.parse(res.value) : [];
-  }catch(e){ standaloneSales = []; }
+  }catch(e){ console.error('load standalone sales failed, keeping existing data', e); }
 }
 async function saveStandaloneSales(){
   try{
@@ -3549,7 +3549,7 @@ async function loadStockMovements(){
   try{
     const res = await window.storage.get('shared_stock_movements', true);
     stockMovements = (res && res.value) ? JSON.parse(res.value) : [];
-  }catch(e){ stockMovements = []; }
+  }catch(e){ console.error('load stock movements failed, keeping existing data', e); }
 }
 async function saveStockMovements(){
   try{ await window.storage.set('shared_stock_movements', JSON.stringify(stockMovements), true); }catch(e){ console.error('shared stock movements save failed', e); }
@@ -3571,7 +3571,7 @@ async function loadPromptPayId(){
   try{
     const res = await window.storage.get('shared_promptpay_id', true);
     sharedPromptPayId = (res && res.value) ? res.value : DEFAULT_PROMPTPAY_ID;
-  }catch(e){ sharedPromptPayId = DEFAULT_PROMPTPAY_ID; }
+  }catch(e){ console.error('load promptpay id failed, keeping existing value', e); }
 }
 async function savePromptPayId(){
   try{ await window.storage.set('shared_promptpay_id', sharedPromptPayId, true); }catch(e){ console.error('shared promptpay id save failed', e); }
@@ -3649,7 +3649,7 @@ async function loadQcLots(){
   try{
     const res = await window.storage.get('shared_qc_lots', true);
     qcLots = (res && res.value) ? JSON.parse(res.value) : [];
-  }catch(e){ qcLots = []; }
+  }catch(e){ console.error('load qc lots failed, keeping existing data', e); }
 }
 async function saveQcLots(){
   try{ await window.storage.set('shared_qc_lots', JSON.stringify(qcLots), true); flashSaved(); }catch(e){ console.error('shared qc lots save failed', e); }
@@ -3672,7 +3672,7 @@ async function loadCustomCategories(){
   try{
     const res = await window.storage.get('shared_custom_categories', true);
     customCategories = (res && res.value) ? JSON.parse(res.value) : [];
-  }catch(e){ customCategories = []; }
+  }catch(e){ console.error('load custom categories failed, keeping existing data', e); }
 }
 async function saveCustomCategories(){
   try{ await window.storage.set('shared_custom_categories', JSON.stringify(customCategories), true); }catch(e){ console.error('shared custom categories save failed', e); }
