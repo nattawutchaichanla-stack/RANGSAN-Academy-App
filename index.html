@@ -1326,6 +1326,7 @@ async function syncBookingsFromGoogleForm(){
   if(!sharedEvalFormUrl) return { error: 'ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน' };
   const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
   if(!csvUrl) return { error: 'ลิงก์ไม่ถูกต้อง' };
+  criticalOpInProgress = true; // pause background auto-sync so it can't interleave with this read-modify-save
   try{
     const res = await fetch(csvUrl);
     if(!res.ok) throw new Error('status ' + res.status);
@@ -1376,6 +1377,8 @@ async function syncBookingsFromGoogleForm(){
     return { added, skipped, unmatched };
   }catch(err){
     return { error: err.message };
+  }finally{
+    criticalOpInProgress = false;
   }
 }
 
@@ -5250,29 +5253,34 @@ function openPaymentModal(items){
   });
 
   document.getElementById('confirmPaymentBtn').onclick = async ()=>{
-    const saleRecord = {
-      date: new Date().toISOString().slice(0,10),
-      time: new Date().toISOString(),
-      seller: currentUser || '-',
-      items,
-      total,
-      slip: pendingSlipDataUrl || ''
-    };
-    standaloneSales.push(saleRecord);
-    await saveStandaloneSales();
+    criticalOpInProgress = true;
+    try{
+      const saleRecord = {
+        date: new Date().toISOString().slice(0,10),
+        time: new Date().toISOString(),
+        seller: currentUser || '-',
+        items,
+        total,
+        slip: pendingSlipDataUrl || ''
+      };
+      standaloneSales.push(saleRecord);
+      await saveStandaloneSales();
 
-    items.forEach(sp=>{
-      const prod = retailProducts.find(p=> p.name === sp.name);
-      if(prod){
-        prod.stock = Math.max(0, (prod.stock||0) - sp.qty);
-        logStockMovement(prod.name, 'sale', sp.qty, 'ขายหน้าร้าน');
-      }
-    });
-    await saveRetailProducts();
+      items.forEach(sp=>{
+        const prod = retailProducts.find(p=> p.name === sp.name);
+        if(prod){
+          prod.stock = Math.max(0, (prod.stock||0) - sp.qty);
+          logStockMovement(prod.name, 'sale', sp.qty, 'ขายหน้าร้าน');
+        }
+      });
+      await saveRetailProducts();
 
-    renderSellTab();
-    if(document.getElementById('stockWarehouseBody')) renderStockTab();
-    openSaleReceipt(saleRecord);
+      renderSellTab();
+      if(document.getElementById('stockWarehouseBody')) renderStockTab();
+      openSaleReceipt(saleRecord);
+    }finally{
+      criticalOpInProgress = false;
+    }
   };
 
   openModal('reportModalOverlay');
@@ -5596,48 +5604,58 @@ function openEditSaleModal(idx){
   wire();
 
   document.getElementById('saveEditSaleBtn').onclick = async ()=>{
-    const oldItems = sale.items;
-    const newItems = workingItems.filter(it=> it.qty > 0);
-    // adjust stock by the delta per product name
-    const deltaMap = {};
-    oldItems.forEach(it=> deltaMap[it.name] = (deltaMap[it.name]||0) - it.qty);
-    newItems.forEach(it=> deltaMap[it.name] = (deltaMap[it.name]||0) + it.qty);
-    Object.keys(deltaMap).forEach(name=>{
-      const delta = deltaMap[name];
-      if(delta === 0) return;
-      const prod = retailProducts.find(p=> p.name===name);
-      if(prod){
-        prod.stock = Math.max(0, (prod.stock||0) - delta); // delta>0 means more sold -> stock down further
-        logStockMovement(name, delta>0?'sale':'in', Math.abs(delta), 'แก้ไขบิลขายโดยแอดมิน');
-      }
-    });
-    await saveRetailProducts();
+    criticalOpInProgress = true;
+    try{
+      const oldItems = sale.items;
+      const newItems = workingItems.filter(it=> it.qty > 0);
+      // adjust stock by the delta per product name
+      const deltaMap = {};
+      oldItems.forEach(it=> deltaMap[it.name] = (deltaMap[it.name]||0) - it.qty);
+      newItems.forEach(it=> deltaMap[it.name] = (deltaMap[it.name]||0) + it.qty);
+      Object.keys(deltaMap).forEach(name=>{
+        const delta = deltaMap[name];
+        if(delta === 0) return;
+        const prod = retailProducts.find(p=> p.name===name);
+        if(prod){
+          prod.stock = Math.max(0, (prod.stock||0) - delta); // delta>0 means more sold -> stock down further
+          logStockMovement(name, delta>0?'sale':'in', Math.abs(delta), 'แก้ไขบิลขายโดยแอดมิน');
+        }
+      });
+      await saveRetailProducts();
 
-    sale.items = newItems;
-    sale.total = newItems.reduce((s,it)=> s + it.price*it.qty, 0);
-    await saveStandaloneSales();
+      sale.items = newItems;
+      sale.total = newItems.reduce((s,it)=> s + it.price*it.qty, 0);
+      await saveStandaloneSales();
 
-    closeModal('reportModalOverlay');
-    renderTodaySalesList();
-    renderSlipGallery();
-    if(document.getElementById('stockWarehouseBody')) renderStockTab();
+      closeModal('reportModalOverlay');
+      renderTodaySalesList();
+      renderSlipGallery();
+      if(document.getElementById('stockWarehouseBody')) renderStockTab();
+    }finally{
+      criticalOpInProgress = false;
+    }
   };
   document.getElementById('deleteSaleBtn').onclick = async ()=>{
     if(!confirm('ลบบิลนี้ทั้งหมดใช่หรือไม่? สต๊อกจะถูกคืนกลับให้อัตโนมัติ')) return;
-    sale.items.forEach(it=>{
-      const prod = retailProducts.find(p=> p.name===it.name);
-      if(prod){
-        prod.stock = (prod.stock||0) + it.qty;
-        logStockMovement(it.name, 'in', it.qty, 'ยกเลิกบิลขายโดยแอดมิน');
-      }
-    });
-    await saveRetailProducts();
-    standaloneSales.splice(idx,1);
-    await saveStandaloneSales();
-    closeModal('reportModalOverlay');
-    renderTodaySalesList();
-    renderSlipGallery();
-    if(document.getElementById('stockWarehouseBody')) renderStockTab();
+    criticalOpInProgress = true;
+    try{
+      sale.items.forEach(it=>{
+        const prod = retailProducts.find(p=> p.name===it.name);
+        if(prod){
+          prod.stock = (prod.stock||0) + it.qty;
+          logStockMovement(it.name, 'in', it.qty, 'ยกเลิกบิลขายโดยแอดมิน');
+        }
+      });
+      await saveRetailProducts();
+      standaloneSales.splice(idx,1);
+      await saveStandaloneSales();
+      closeModal('reportModalOverlay');
+      renderTodaySalesList();
+      renderSlipGallery();
+      if(document.getElementById('stockWarehouseBody')) renderStockTab();
+    }finally{
+      criticalOpInProgress = false;
+    }
   };
   openModal('reportModalOverlay');
 }
@@ -5719,8 +5737,10 @@ async function refreshAllSharedData(){
 /* ---------- background auto-sync (no manual refresh needed) ---------- */
 const AUTO_SYNC_INTERVAL_MS = 15000; // 15 seconds
 let autoSyncTimerId = null;
+let criticalOpInProgress = false; // set true around any multi-step read→modify→save on shared data
 function isUserBusy(){
-  // don't yank the screen out from under someone mid-typing or mid-modal
+  // don't yank the screen out from under someone mid-typing, mid-modal, or mid-save
+  if(criticalOpInProgress) return true;
   if(document.querySelector('.modal-overlay.open')) return true;
   const el = document.activeElement;
   if(el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.tagName==='SELECT')) return true;
