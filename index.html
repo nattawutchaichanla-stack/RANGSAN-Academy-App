@@ -1277,13 +1277,21 @@ function renderRegistrationList(listBoxId){
   if(regCourseFilter !== 'ทั้งหมด'){
     rows = rows.filter(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim() === regCourseFilter);
   }
-  rows = rows.slice(-50).reverse(); // most recent first, cap for performance
+  // sort by the day they'll actually attend class (soonest first), not by when they submitted the form
+  rows = rows.map(r=>({ r, iso: dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null }));
+  rows.sort((a,b)=>{
+    if(a.iso && b.iso) return a.iso.localeCompare(b.iso);
+    if(a.iso) return -1;  // rows with a parseable class date come first
+    if(b.iso) return 1;
+    return 0;
+  });
+  rows = rows.slice(0,50).map(x=> x.r); // 50 soonest upcoming classes
   if(!rows.length){
     box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ไม่มีผู้ลงทะเบียนในคอร์สนี้</div>`;
     return;
   }
   box.innerHTML = `
-    <p class="hint" style="margin-bottom:8px;">${rows.length} รายการล่าสุด</p>
+    <p class="hint" style="margin-bottom:8px;">${rows.length} รายการ เรียงตามวันที่จะมาเรียน</p>
     ${rows.map(r=>{
       const name = nameIdx>=0 ? r[nameIdx] : '-';
       const phone = phoneIdx>=0 ? r[phoneIdx] : '';
@@ -1294,11 +1302,11 @@ function renderRegistrationList(listBoxId){
       return `<div style="padding:9px 0; border-bottom:1px dashed var(--line);">
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
           <span style="font-weight:700; font-size:13px;">${name||'-'}</span>
-          <span style="font-size:10.5px; color:#948a78; flex:none;">สมัคร ${submitted||'-'}</span>
+          <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none;">${joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม'}</span>
         </div>
         <div style="font-size:11.5px; color:#5A4433; margin-top:2px;">${course||'-'}</div>
         <div style="font-size:11px; color:#948a78; margin-top:2px;">
-          ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} ${joinDate ? `· เข้าร่วม ${joinDate}` : ''}
+          ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} · สมัครเมื่อ ${submitted||'-'}
         </div>
       </div>`;
     }).join('')}
