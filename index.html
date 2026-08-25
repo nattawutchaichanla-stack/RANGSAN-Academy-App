@@ -3426,8 +3426,55 @@ async function loadSharedBookings(){
     else sharedBookings = [];
   }catch(e){ console.error('load shared bookings failed, keeping existing data', e); }
 }
+// snapshot the previous stored state before overwriting it, so data can be recovered if a bad write ever happens
+async function backupBeforeSave(storageKey){
+  try{
+    const prev = await window.storage.get(storageKey, true);
+    if(prev && prev.value){
+      await window.storage.set(storageKey + '_backup', prev.value, true);
+    }
+  }catch(e){ /* best-effort only — never block the real save on a failed backup */ }
+}
+async function restoreFromBackup(storageKey){
+  try{
+    const backup = await window.storage.get(storageKey + '_backup', true);
+    if(!backup || !backup.value) return { error: 'ไม่พบไฟล์สำรองสำหรับข้อมูลนี้' };
+    return { data: backup.value };
+  }catch(e){ return { error: e.message }; }
+}
+async function promptRestoreAllFromBackup(){
+  if(currentUser !== ADMIN_NAME){
+    alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่กู้คืนข้อมูลได้`);
+    return;
+  }
+  if(!(await checkAdminPin())) return;
+  if(!confirm('กู้คืนข้อมูล "การจองคิว" และ "สินค้าคลัง" กลับเป็นเวอร์ชันก่อนการบันทึกล่าสุด ใช่หรือไม่?\n\n(จะทับข้อมูลปัจจุบันด้วยข้อมูลสำรองล่าสุด ใช้เมื่อข้อมูลหายหรือผิดพลาดเท่านั้น)')) return;
+
+  const results = [];
+  const bookingsBackup = await restoreFromBackup('shared_teaching_bookings');
+  if(bookingsBackup.data){
+    sharedBookings = JSON.parse(bookingsBackup.data);
+    await window.storage.set('shared_teaching_bookings', bookingsBackup.data, true);
+    results.push(`✓ กู้คืนการจองคิว (${sharedBookings.length} รายการ)`);
+  } else {
+    results.push(`✕ การจองคิว: ${bookingsBackup.error}`);
+  }
+
+  const productsBackup = await restoreFromBackup('shared_retail_products');
+  if(productsBackup.data){
+    retailProducts = JSON.parse(productsBackup.data);
+    await window.storage.set('shared_retail_products', productsBackup.data, true);
+    results.push(`✓ กู้คืนสินค้าคลัง (${retailProducts.length} รายการ)`);
+  } else {
+    results.push(`✕ สินค้าคลัง: ${productsBackup.error}`);
+  }
+
+  renderAll();
+  alert('ผลการกู้คืน:\n\n' + results.join('\n'));
+}
 async function saveSharedBookings(){
   try{
+    await backupBeforeSave('shared_teaching_bookings');
     await window.storage.set('shared_teaching_bookings', JSON.stringify(sharedBookings), true);
     flashSaved();
   }catch(e){ console.error('shared save failed', e); }
@@ -3525,6 +3572,7 @@ async function loadRetailProducts(){
 }
 async function saveRetailProducts(){
   try{
+    await backupBeforeSave('shared_retail_products');
     await window.storage.set('shared_retail_products', JSON.stringify(retailProducts), true);
     flashSaved();
   }catch(e){ console.error('shared retail product save failed', e); }
@@ -3539,6 +3587,7 @@ async function loadStandaloneSales(){
 }
 async function saveStandaloneSales(){
   try{
+    await backupBeforeSave('shared_standalone_sales');
     await window.storage.set('shared_standalone_sales', JSON.stringify(standaloneSales), true);
     flashSaved();
   }catch(e){ console.error('shared standalone sales save failed', e); }
@@ -3825,6 +3874,7 @@ function renderLogTab(){
           <p class="hint">ใช้ร่วมกันทุกคน — อาจารย์แต่ละท่านลงคิวของตัวเองได้เลย ทุกคนที่เปิดลิงก์นี้จะเห็นตารางเดียวกัน</p>
         </div>
         <div style="display:flex; gap:8px; flex:none;">
+          ${currentUser===ADMIN_NAME ? `<button class="btn small ghost" id="restoreBackupBtn" title="กู้คืนข้อมูลจากสำรอง (แอดมินเท่านั้น)" style="color:var(--alert);">🛟</button>` : ''}
           <button class="btn small ghost" id="syncFromFormBtn" title="ดึงคิวจากฟอร์มลงทะเบียน">📋⟳</button>
           <button class="btn small ghost" id="refreshBookings" title="รีเฟรชตารางล่าสุด">⟳</button>
           <button class="add-fab" id="openBookingModalBtn" title="จองคิวสอน">+</button>
@@ -4270,6 +4320,8 @@ function renderLogTab(){
     renderCalendar();
     flashSaved();
   };
+  const restoreBtn = document.getElementById('restoreBackupBtn');
+  if(restoreBtn) restoreBtn.onclick = promptRestoreAllFromBackup;
   document.getElementById('syncFromFormBtn').onclick = async ()=>{
     const btn = document.getElementById('syncFromFormBtn');
     const banner = document.getElementById('syncFormResultBanner');
