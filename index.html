@@ -2758,12 +2758,20 @@ async function loadSharedEvalFormUrl(){
   }catch(e){ console.error('load eval form url failed, keeping existing value', e); }
 }
 async function saveSharedEvalFormUrl(){
-  try{ await window.storage.set('shared_eval_form_url', sharedEvalFormUrl, true); }catch(e){}
+  try{
+    await backupBeforeSave('shared_eval_form_url');
+    await window.storage.set('shared_eval_form_url', sharedEvalFormUrl, true);
+  }catch(e){}
 }
 async function promptSetEvalFormUrl(){
   const val = await askText('ลิงก์ชีทผู้ลงทะเบียน', 'วางลิงก์ Google Sheet ที่เก็บข้อมูลผู้ลงทะเบียนสมัครเรียน (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบลิงก์', sharedEvalFormUrl);
   if(val===null) return;
-  sharedEvalFormUrl = val.trim();
+  const trimmed = val.trim();
+  if(!trimmed && sharedEvalFormUrl){
+    // guard against accidentally wiping a link that was already working
+    if(!confirm('ช่องนี้ว่างเปล่า — ต้องการลบลิงก์ที่ตั้งไว้อยู่ตอนนี้จริงหรือไม่?\n(ถ้าแค่พิมพ์ผิดหรือเผลอลบ ให้กดยกเลิกแล้วลองใหม่)')) return;
+  }
+  sharedEvalFormUrl = trimmed;
   saveSharedEvalFormUrl();
   flashSaved(sharedEvalFormUrl ? 'บันทึกลิงก์ชีทผู้ลงทะเบียนแล้ว' : 'ลบลิงก์แล้ว');
 }
@@ -3469,6 +3477,15 @@ async function promptRestoreAllFromBackup(){
     results.push(`✕ สินค้าคลัง: ${productsBackup.error}`);
   }
 
+  const evalUrlBackup = await restoreFromBackup('shared_eval_form_url');
+  if(evalUrlBackup.data){
+    sharedEvalFormUrl = evalUrlBackup.data;
+    await window.storage.set('shared_eval_form_url', evalUrlBackup.data, true);
+    results.push(`✓ กู้คืนลิงก์ชีทผู้ลงทะเบียน`);
+  } else {
+    results.push(`✕ ลิงก์ชีทผู้ลงทะเบียน: ${evalUrlBackup.error}`);
+  }
+
   renderAll();
   alert('ผลการกู้คืน:\n\n' + results.join('\n'));
 }
@@ -3490,6 +3507,7 @@ async function loadInstructorPhotos(){
 }
 async function saveInstructorPhotos(){
   try{
+    await backupBeforeSave('shared_instructor_photos');
     await window.storage.set('shared_instructor_photos', JSON.stringify(instructorPhotos), true);
     flashSaved();
   }catch(e){ console.error('shared photo save failed', e); }
@@ -3505,6 +3523,7 @@ async function loadInstructorPins(){
 }
 async function saveInstructorPins(){
   try{
+    await backupBeforeSave('shared_instructor_pins');
     await window.storage.set('shared_instructor_pins', JSON.stringify(instructorPins), true);
   }catch(e){ console.error('shared pin save failed', e); }
 }
@@ -3623,7 +3642,10 @@ async function loadPromptPayId(){
   }catch(e){ console.error('load promptpay id failed, keeping existing value', e); }
 }
 async function savePromptPayId(){
-  try{ await window.storage.set('shared_promptpay_id', sharedPromptPayId, true); }catch(e){ console.error('shared promptpay id save failed', e); }
+  try{
+    await backupBeforeSave('shared_promptpay_id');
+    await window.storage.set('shared_promptpay_id', sharedPromptPayId, true);
+  }catch(e){ console.error('shared promptpay id save failed', e); }
 }
 async function promptSetPromptPayId(){
   const val = await askText('เลข PromptPay', 'วางเบอร์โทร หรือเลขบัตรประชาชน/นิติบุคคล ที่ผูก PromptPay (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบ', sharedPromptPayId);
