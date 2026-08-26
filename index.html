@@ -499,6 +499,7 @@
 
   /* ---------- agent-style booking card ---------- */
   .card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-top:4px; }
+  #productGrid{ grid-template-columns:repeat(4,1fr); gap:8px; }
 
   /* ---------- month calendar ---------- */
   .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
@@ -602,12 +603,12 @@
     border:1px solid var(--line); box-shadow:var(--shadow);
   }
   .product-card .pc-img{
-    width:100%; height:170px; background:var(--cream); display:flex; align-items:center; justify-content:center;
+    width:100%; height:90px; background:var(--cream); display:flex; align-items:center; justify-content:center;
     overflow:hidden; position:relative;
   }
   .product-card .pc-img img{ width:100%; height:100%; object-fit:contain; padding:4px; box-sizing:border-box; }
   .product-card .pc-img .pc-placeholder-wrap{ display:flex; flex-direction:column; align-items:center; gap:5px; }
-  .product-card .pc-img .pc-placeholder{ font-size:38px; color:#c9bfa8; }
+  .product-card .pc-img .pc-placeholder{ color:#c9bfa8; display:inline-flex; }
   .product-card .pc-img .pc-add-photo-hint{ font-size:10px; color:#a89a7c; font-weight:600; }
   .product-card .pc-img::after{
     content:'📷'; position:absolute; bottom:5px; right:5px; width:22px; height:22px; border-radius:50%;
@@ -618,11 +619,19 @@
   .product-card .pc-category{ font-size:10px; color:var(--gold); font-weight:600; margin-top:1px; }
   .product-card .pc-price{ font-family:'IBM Plex Mono'; font-weight:700; color:var(--gold); font-size:13px; margin-top:2px; }
   .product-card .pc-margin{ font-size:10px; color:#8a9c85; margin-top:3px; }
+  #productGrid .pc-body{ padding:7px 8px 9px; }
+  #productGrid .pc-name{ font-size:10.5px; line-height:1.35; word-break:break-word; margin-bottom:1px; }
+  #productGrid .pc-category{ font-size:8.5px; }
+  #productGrid .pc-price{ font-size:11.5px; margin-top:3px; }
+  #productGrid .pc-margin{ font-size:8.5px; line-height:1.3; }
+  #productGrid .pc-img .pc-add-photo-hint{ font-size:8.5px; }
+  #productGrid .pc-img::after{ width:18px; height:18px; font-size:9px; bottom:4px; right:4px; }
   .product-card .pc-del{
     position:absolute; top:6px; right:6px; z-index:2; width:22px; height:22px; border-radius:50%;
     background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.3); color:#fff; font-size:12px;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
   }
+  #productGrid .pc-del{ width:18px; height:18px; font-size:10px; top:4px; right:4px; }
 
   /* ---------- photo gallery sell tiles (confirm-taught modal) ---------- */
   .cat-filter-row{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
@@ -668,7 +677,7 @@
     overflow:hidden;
   }
   .sell-tile-img img{ width:100%; height:100%; object-fit:contain; padding:4px; box-sizing:border-box; }
-  .sell-tile-placeholder{ font-size:38px; opacity:.5; }
+  .sell-tile-placeholder{ opacity:.5; display:inline-flex; }
   .sell-tile-body{ padding:8px; }
   .sell-tile-name{ font-size:11.5px; font-weight:600; color:#fff; line-height:1.3; min-height:28px; }
   .sell-tile-price{ font-size:11px; color:var(--gold); font-weight:700; margin-top:2px; font-family:'IBM Plex Mono'; }
@@ -845,6 +854,7 @@
     .bottomnav .ic{ width:34px; height:34px; }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.0.3/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -1915,14 +1925,19 @@ function stockNeed(stockKey){
   return need;
 }
 function instructorKPI(name){
-  const rows = state.teachingLog.filter(l=>l.instructor===name);
-  let sessions=rows.length, students=0, revenue=0, profit=0, cost=0;
-  rows.forEach(l=>{
-    students += Number(l.students)||0;
-    const pl = coursePL_materials(l.courseId);
+  // count from the shared bookings (includes queues synced+assigned from the Google Form), not the personal-device log
+  const rows = sharedBookings.filter(b=> b.instructor===name && b.taught);
+  let sessions=rows.length, students=0, revenue=0, profit=0, cost=0, verifiedMaterialSales=0;
+  rows.forEach(b=>{
+    students += Number(b.taughtStudents)||0;
+    const pl = coursePL_materials(b.courseId);
     revenue += pl.revenue; profit += pl.profit; cost += pl.cost;
+    // only count material sales that have a payment slip attached as proof
+    if(b.soldProductsSlip && b.soldProducts && b.soldProducts.length){
+      verifiedMaterialSales += b.soldProducts.reduce((s,p)=> s + p.price*p.qty, 0);
+    }
   });
-  return { sessions, students, revenue, profit, cost, avg: sessions? profit/sessions:0 };
+  return { sessions, students, revenue, profit, cost, verifiedMaterialSales, avg: sessions? profit/sessions:0 };
 }
 
 function openInstructorProfile(name, booking){
@@ -1947,7 +1962,7 @@ function openInstructorProfile(name, booking){
   const studentsBar = Math.min(100, kpi.students*5);      // 20 คน = เต็ม
   const sessionsBar = Math.min(100, kpi.sessions*10);     // 10 รอบ = เต็ม
   const profitBar = Math.min(100, kpi.profit/300);        // 30,000 บาท = เต็ม
-  const costBar = Math.min(100, kpi.cost/50);              // 5,000 บาท = เต็ม
+  const costBar = Math.min(100, kpi.verifiedMaterialSales/50);   // 5,000 บาท = เต็ม
 
   document.getElementById('profileModalBody').innerHTML = `
     <div class="profile-photo-pop" style="${photoBoxStyle}">
@@ -1973,9 +1988,9 @@ function openInstructorProfile(name, booking){
       </div>
       <div class="stat-exp-track"><div class="stat-exp-fill" id="statExp"></div></div>
       <div class="stat-row"><span class="stat-icon">👥</span><span class="stat-name">นักเรียนสะสม</span><div class="stat-track"><div class="stat-fill f1" id="statTeach"></div></div><span class="stat-val">${kpi.students}</span></div>
-      <div class="stat-row"><span class="stat-icon">📘</span><span class="stat-name">คอร์สสะสม</span><div class="stat-track"><div class="stat-fill f2" id="statPop"></div></div><span class="stat-val">${kpi.sessions}</span></div>
+      <div class="stat-row"><span class="stat-icon">📘</span><span class="stat-name">คอร์สสอนสะสม</span><div class="stat-track"><div class="stat-fill f2" id="statPop"></div></div><span class="stat-val">${kpi.sessions}</span></div>
       <div class="stat-row"><span class="stat-icon">💰</span><span class="stat-name">กำไรสะสม</span><div class="stat-track"><div class="stat-fill f3" id="statProfit"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.profit)}</span></div>
-      <div class="stat-row"><span class="stat-icon">📦</span><span class="stat-name">ต้นทุนวัตถุดิบสะสม</span><div class="stat-track"><div class="stat-fill f4" id="statEff"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.cost)}</span></div>
+      <div class="stat-row"><span class="stat-icon">📦</span><span class="stat-name">ยอดขายวัตถุดิบในคอร์สสอน</span><div class="stat-track"><div class="stat-fill f4" id="statEff"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.verifiedMaterialSales)}</span></div>
     </div>
     <div style="margin-top:16px; text-align:left;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -2020,7 +2035,7 @@ function switchTab(tab){
     Promise.all([loadRetailProducts(), loadSharedBookings(), loadStandaloneSales(), loadStockMovements(), loadCustomCategories()]).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
   }
   if(tab==='sell'){
-    Promise.all([loadRetailProducts(), loadPromptPayId()]).then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
+    loadRetailProducts().then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
   }
 }
 document.getElementById('tabs').addEventListener('click', e=>{
@@ -2149,7 +2164,7 @@ function instructorBookingBarSVG(perInstructor){
 function courseTeachCounts(){
   const counts = {};
   state.courses.forEach(c=> counts[c.id] = 0);
-  state.teachingLog.forEach(l=>{ if(counts[l.courseId]!==undefined) counts[l.courseId]++; });
+  sharedBookings.filter(b=>b.taught).forEach(b=>{ if(counts[b.courseId]!==undefined) counts[b.courseId]++; });
   return state.courses
     .map(c=>({ c, count: counts[c.id] }))
     .sort((a,b)=> b.count - a.count);
@@ -2743,7 +2758,9 @@ async function promptLineRelayUrl(){
   if(val===null) return;
   state.lineRelayUrl = val.trim();
   scheduleSave();
-  renderPLTab();
+  flashSaved(state.lineRelayUrl ? 'ตั้งค่า LINE สำเร็จ — ปุ่มส่งเข้ากลุ่มอัตโนมัติเปิดใช้งานแล้ว ✓' : 'ลบการตั้งค่า LINE แล้ว');
+  if(document.getElementById('tab-pl')) renderPLTab();
+  if(document.getElementById('tab-log')) renderLogTab();
 }
 const ADMIN_NAME = 'อาจารย์โจ';
 let sharedAdminPin = '';
@@ -3003,6 +3020,8 @@ function computeMonthSummary(year, month){ // month 0-11
 }
 
 let confirmCart = {}; // { idx: qty } — shopping cart state for the confirm-taught modal
+let confirmTileCategoryFilter = 'ทั้งหมด'; // active category chip in the confirm-taught product gallery
+let pendingConfirmSlipDataUrl = null; // slip attached to materials sold during a taught class
 
 function renderConfirmCart(){
   const wrap = document.getElementById('confirmCartWrap');
@@ -3082,15 +3101,56 @@ function openConfirmTaughtModal(booking){
     ? new Date(booking.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'})
     : '-';
   confirmCart = {};
-  const productRows = retailProducts.map((p,i)=>`
-    <div class="sell-tile" data-idx="${i}">
-      <div class="sell-tile-cartbadge"></div>
-      <div class="sell-tile-img">${p.photo ? `<img src="${p.photo}">` : `<span class="sell-tile-placeholder">☕</span>`}</div>
-      <div class="sell-tile-body">
-        <div class="sell-tile-name">${p.name}</div>
-        <div class="sell-tile-price">฿${fmt(p.price)}</div>
-      </div>
-    </div>`).join('');
+  confirmTileCategoryFilter = 'ทั้งหมด';
+  let confirmTilePage = 0;
+  const CONFIRM_TILE_PAGE_SIZE = 6; // 2 columns x 3 rows per page
+  const usedCategories = ['ทั้งหมด', ...new Set(retailProducts.map(p=> p.category || 'อื่นๆ'))];
+
+  const renderConfirmProductRows = ()=>{
+    const filtered = retailProducts
+      .map((p,i)=>({p,i}))
+      .filter(({p})=> confirmTileCategoryFilter==='ทั้งหมด' || (p.category||'อื่นๆ')===confirmTileCategoryFilter);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / CONFIRM_TILE_PAGE_SIZE));
+    if(confirmTilePage >= totalPages) confirmTilePage = totalPages - 1;
+    if(confirmTilePage < 0) confirmTilePage = 0;
+    const pageItems = filtered.slice(confirmTilePage*CONFIRM_TILE_PAGE_SIZE, confirmTilePage*CONFIRM_TILE_PAGE_SIZE + CONFIRM_TILE_PAGE_SIZE);
+
+    const tilesHtml = pageItems.map(({p,i})=>`
+      <div class="sell-tile ${confirmCart[i]>0?'on':''}" data-idx="${i}">
+        <div class="sell-tile-cartbadge">${confirmCart[i]>0?confirmCart[i]:''}</div>
+        <div class="sell-tile-img">${p.photo ? `<img src="${p.photo}">` : `<span class="sell-tile-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>`}</div>
+        <div class="sell-tile-body">
+          <div class="sell-tile-name">${p.name}</div>
+          <div class="sell-tile-price">฿${fmt(p.price)}</div>
+        </div>
+      </div>`).join('') || `<div style="grid-column:1/-1; text-align:center; color:#948a78; font-size:12px; padding:14px;">ไม่มีสินค้าในหมวดนี้</div>`;
+
+    return { tilesHtml, totalPages };
+  };
+  const renderConfirmPager = ()=>{
+    const pager = document.getElementById('confirmGalleryPager');
+    if(!pager) return;
+    const { totalPages } = renderConfirmProductRows();
+    if(totalPages > 1){
+      pager.innerHTML = `
+        <button class="btn small ghost" id="confirmPagePrev" ${confirmTilePage===0?'disabled':''}>‹</button>
+        <span style="font-size:11.5px; color:#C9C2B6; font-weight:600;">หน้า ${confirmTilePage+1} / ${totalPages}</span>
+        <button class="btn small ghost" id="confirmPageNext" ${confirmTilePage>=totalPages-1?'disabled':''}>›</button>
+      `;
+      const prevBtn = document.getElementById('confirmPagePrev');
+      const nextBtn = document.getElementById('confirmPageNext');
+      if(prevBtn) prevBtn.onclick = ()=>{ confirmTilePage--; refreshConfirmGallery(); };
+      if(nextBtn) nextBtn.onclick = ()=>{ confirmTilePage++; refreshConfirmGallery(); };
+    } else {
+      pager.innerHTML = '';
+    }
+  };
+  const refreshConfirmGallery = ()=>{
+    document.getElementById('confirmSellGallery').innerHTML = renderConfirmProductRows().tilesHtml;
+    renderConfirmPager();
+    wireConfirmTiles();
+  };
 
   document.getElementById('reportModalBody').innerHTML = `
     <h3>✓ ยืนยันว่าสอนแล้ว</h3>
@@ -3101,7 +3161,9 @@ function openConfirmTaughtModal(booking){
     <div style="margin-top:16px; padding-top:12px; border-top:1px dashed rgba(255,255,255,.2);">
       <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom:8px;">🛍️ แตะสินค้าเพื่อใส่ตะกร้า (ถ้ามี)</div>
       ${retailProducts.length
-        ? `<div class="sell-gallery">${productRows}</div>`
+        ? `<div class="cat-filter-row" id="confirmCatFilterRow">${usedCategories.map(c=>`<button type="button" class="cat-chip ${c==='ทั้งหมด'?'on':''}" data-cat="${c}">${c}</button>`).join('')}</div>
+           <div class="sell-gallery" id="confirmSellGallery">${renderConfirmProductRows().tilesHtml}</div>
+           <div id="confirmGalleryPager" style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px;"></div>`
         : `<div style="text-align:center; color:#948a78; font-size:12px; padding:14px; background:rgba(255,255,255,.05); border-radius:10px;">
              ยังไม่มีสินค้าในระบบ — ไปเพิ่มที่แท็บ "คลัง" ก่อน แล้วกลับมายืนยันใหม่จะเห็นรายการสินค้าตรงนี้
            </div>`}
@@ -3110,19 +3172,61 @@ function openConfirmTaughtModal(booking){
     <div class="cart-box">
       <div class="cart-title">🛒 ตะกร้าสินค้า</div>
       <div id="confirmCartWrap"></div>
-    </div>` : ''}
+    </div>
+    <div style="margin-top:14px;">
+      <div class="modal-field-label">แนบสลิปการโอน (ต้องแนบถ้ามีขายสินค้า — ใช้คำนวณยอดขายวัตถุดิบในสถิติอาจารย์)</div>
+      <label class="btn ghost" style="cursor:pointer; text-align:center; display:block;">
+        📎 เลือกรูปสลิป
+        <input type="file" accept="image/*" id="confirmSlipInput" style="display:none;">
+      </label>
+      <div id="confirmSlipPreview" style="display:none; text-align:center; margin-top:8px;"></div>
+    </div>
+    ` : ''}
     <button class="btn-arrow" id="confirmTaughtBtn" style="justify-content:center; width:100%; margin-top:16px;">ยืนยัน & สร้างใบสรุป<span class="circ">✓</span></button>
   `;
 
+  pendingConfirmSlipDataUrl = null;
+  const confirmSlipInput = document.getElementById('confirmSlipInput');
+  if(confirmSlipInput){
+    confirmSlipInput.addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        pendingConfirmSlipDataUrl = await resizeImageFile(file, 500, 0.85);
+        const prev = document.getElementById('confirmSlipPreview');
+        prev.style.display = 'block';
+        prev.innerHTML = `<img src="${pendingConfirmSlipDataUrl}" style="max-width:160px; border-radius:10px;">`;
+      }catch(err){ console.error('confirm slip resize failed', err); }
+    });
+  }
+
   // tap a tile to add one unit to the cart
-  document.querySelectorAll('.sell-tile').forEach(tile=>{
-    tile.onclick = ()=>{
-      const i = tile.dataset.idx;
-      confirmCart[i] = (confirmCart[i]||0) + 1;
-      syncSellTileFromCart(i);
-      renderConfirmCart();
-    };
-  });
+  const wireConfirmTiles = ()=>{
+    document.querySelectorAll('#confirmSellGallery .sell-tile').forEach(tile=>{
+      tile.onclick = ()=>{
+        const i = tile.dataset.idx;
+        confirmCart[i] = (confirmCart[i]||0) + 1;
+        const badge = tile.querySelector('.sell-tile-cartbadge');
+        if(badge) badge.textContent = confirmCart[i];
+        tile.classList.add('on');
+        renderConfirmCart();
+      };
+    });
+  };
+  wireConfirmTiles();
+  renderConfirmPager();
+  const confirmCatFilterRow = document.getElementById('confirmCatFilterRow');
+  if(confirmCatFilterRow){
+    confirmCatFilterRow.querySelectorAll('.cat-chip').forEach(chip=>{
+      chip.onclick = ()=>{
+        confirmTileCategoryFilter = chip.dataset.cat;
+        confirmTilePage = 0;
+        confirmCatFilterRow.querySelectorAll('.cat-chip').forEach(c=> c.classList.remove('on'));
+        chip.classList.add('on');
+        refreshConfirmGallery();
+      };
+    });
+  }
   renderConfirmCart();
 
   document.getElementById('confirmTaughtBtn').onclick = ()=>{
@@ -3133,12 +3237,15 @@ function openConfirmTaughtModal(booking){
       const p = retailProducts[i];
       if(p && qty > 0) soldProducts.push({ name:p.name, price:p.price, qty });
     });
-    confirmBookingTaught(booking, students, soldProducts);
+    if(soldProducts.length && !pendingConfirmSlipDataUrl){
+      if(!confirm('ยังไม่ได้แนบสลิปการโอนสำหรับสินค้าที่ขาย ยอดนี้จะไม่ถูกนับเข้าสถิติ "ยอดขายวัตถุดิบในคอร์สสอน"\n\nต้องการดำเนินการต่อโดยไม่แนบสลิปหรือไม่?')) return;
+    }
+    confirmBookingTaught(booking, students, soldProducts, pendingConfirmSlipDataUrl);
   };
   openModal('reportModalOverlay');
 }
 
-function confirmBookingTaught(booking, students, soldProducts){
+function confirmBookingTaught(booking, students, soldProducts, soldProductsSlip){
   const idx = sharedBookings.findIndex(b=>
     b.date===booking.date && b.courseId===booking.courseId && b.instructor===booking.instructor && b.note===booking.note && !b.taught
   );
@@ -3146,6 +3253,7 @@ function confirmBookingTaught(booking, students, soldProducts){
     sharedBookings[idx].taught = true;
     sharedBookings[idx].taughtStudents = students;
     sharedBookings[idx].soldProducts = soldProducts || [];
+    sharedBookings[idx].soldProductsSlip = soldProductsSlip || '';
     saveSharedBookings();
   }
   state.teachingLog.push({
@@ -3497,6 +3605,66 @@ async function promptRestoreAllFromBackup(){
   renderAll();
   alert('ผลการกู้คืน:\n\n' + results.join('\n'));
 }
+
+// ---------- export / import all shared data (for moving between domains, e.g. Vercel <-> GitHub Pages) ----------
+const ALL_SHARED_STORAGE_KEYS = [
+  'shared_teaching_bookings', 'shared_instructor_photos', 'shared_instructor_pins',
+  'shared_admin_pin', 'shared_retail_products', 'shared_standalone_sales',
+  'shared_stock_movements', 'shared_eval_form_url', 'shared_qc_lots',
+  'shared_promptpay_id', 'shared_custom_categories',
+];
+async function exportAllData(){
+  if(currentUser !== ADMIN_NAME){
+    alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่ส่งออกข้อมูลได้`);
+    return;
+  }
+  if(!(await checkAdminPin())) return;
+  const bundle = { exportedAt: new Date().toISOString(), domain: location.hostname, data: {} };
+  for(const key of ALL_SHARED_STORAGE_KEYS){
+    try{
+      const res = await window.storage.get(key, true);
+      if(res && res.value) bundle.data[key] = res.value;
+    }catch(e){ /* skip keys that fail to read */ }
+  }
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rangsan-academy-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  alert('ส่งออกข้อมูลสำเร็จ \u2713\nไฟล์ถูกดาวน์โหลดแล้ว \u2014 เก็บไว้ใช้นำเข้าที่โดเมนอื่นได้เลย');
+}
+async function importAllData(file){
+  if(currentUser !== ADMIN_NAME){
+    alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่นำเข้าข้อมูลได้`);
+    return;
+  }
+  if(!(await checkAdminPin())) return;
+  if(!confirm('นำเข้าข้อมูลจากไฟล์นี้ จะ "ทับข้อมูลปัจจุบันทั้งหมด" ในโดเมนนี้ ใช่หรือไม่?\n\n(แนะนำให้กด "\ud83d\udce4 ส่งออก" สำรองข้อมูลปัจจุบันไว้ก่อน เผื่อพลาด)')) return;
+
+  try{
+    const text = await file.text();
+    const bundle = JSON.parse(text);
+    if(!bundle || !bundle.data) throw new Error('ไฟล์ไม่ถูกต้อง หรือไม่ใช่ไฟล์สำรองของแอพนี้');
+
+    let imported = 0;
+    for(const key of ALL_SHARED_STORAGE_KEYS){
+      if(bundle.data[key] !== undefined){
+        await window.storage.set(key, bundle.data[key], true);
+        imported++;
+      }
+    }
+
+    await refreshAllSharedData();
+    alert(`นำเข้าข้อมูลสำเร็จ \u2713\nนำเข้า ${imported} รายการ จากไฟล์วันที่ ${bundle.exportedAt ? new Date(bundle.exportedAt).toLocaleDateString('th-TH') : '-'}`);
+  }catch(err){
+    alert('นำเข้าข้อมูลไม่สำเร็จ: ' + err.message);
+  }
+}
+
 async function saveSharedBookings(){
   try{
     await backupBeforeSave('shared_teaching_bookings');
@@ -3630,38 +3798,131 @@ async function loadStockMovements(){
 async function saveStockMovements(){
   try{ await window.storage.set('shared_stock_movements', JSON.stringify(stockMovements), true); }catch(e){ console.error('shared stock movements save failed', e); }
 }
-function logStockMovement(productName, type, qty, note){
+function logStockMovement(productName, type, qty, note, evidencePhoto){
   stockMovements.push({
     date: new Date().toISOString(),
     productName, type, qty,
     note: note || '',
-    who: currentUser || '-'
+    who: currentUser || '-',
+    evidencePhoto: evidencePhoto || ''
   });
   saveStockMovements();
 }
 
+let pendingStockEvidencePhoto = null;
+function openStockAdjustEvidenceModal(i, before, val, sourceInput){
+  pendingStockEvidencePhoto = null;
+  const productName = retailProducts[i].name;
+
+  const computeDelta = (newVal)=> newVal - before;
+
+  document.getElementById('reportModalBody').innerHTML = `
+    <div style="background:linear-gradient(165deg, #123D24 0%, #0C2E1B 55%, #081F12 100%); margin:-24px; padding:22px; border-radius:22px;">
+      <h3 style="margin:0 0 4px; color:#fff;">📦 ปรับสต๊อก</h3>
+      <p style="color:#9FCDAE; font-size:12px; margin:0 0 16px;">${productName} · ปัจจุบันมี ${before} ชิ้น</p>
+
+      <div style="background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:14px; margin-bottom:10px;">
+        <div style="color:#8FBF9E; font-size:11px; font-weight:700; margin-bottom:10px;">จำนวนใหม่ (คงเหลือหลังปรับ)</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:16px;">
+          <button type="button" id="stockAdjustMinusBtn" style="width:44px; height:44px; border-radius:50%; border:none; background:#fff; color:#123D24; font-size:22px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none;">−</button>
+          <span id="stockAdjustNewValDisplay" class="mono" style="font-size:30px; font-weight:800; color:#fff; min-width:64px; text-align:center;">${val!==null && val!==undefined ? val : before}</span>
+          <button type="button" id="stockAdjustPlusBtn" style="width:44px; height:44px; border-radius:50%; border:none; background:#9CCC65; color:#123D24; font-size:22px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none;">+</button>
+        </div>
+        <input type="hidden" id="stockAdjustNewVal" value="${val!==null && val!==undefined ? val : before}">
+        <div id="stockAdjustDeltaPreview" style="margin-top:10px; font-size:12.5px; font-weight:700; text-align:center;"></div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:14px; margin-bottom:10px;">
+        <div style="color:#8FBF9E; font-size:11px; font-weight:700; margin-bottom:8px;">เหตุผล (เช่น "รับของเข้าใหม่", "สินค้าเสีย", "นับสต๊อกจริงไม่ตรง")</div>
+        <input type="text" id="stockAdjustNote" style="width:100%; background:#fff; border:none; border-radius:12px; padding:12px 14px; font-size:13.5px; color:#1a1a1a; box-sizing:border-box;" placeholder="ระบุเหตุผล...">
+      </div>
+
+      <div style="background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:14px; margin-bottom:18px;">
+        <div style="color:#FFD54F; font-size:11px; font-weight:700; margin-bottom:8px;">📎 แนบรูปหลักฐาน (บังคับ — ต้องแนบก่อนถึงจะยืนยันได้)</div>
+        <label id="stockEvidenceLabel" style="cursor:pointer; text-align:center; display:block; background:#FFE0B2; border:2px solid #FFA726; border-radius:999px; padding:10px; font-weight:700; color:#8A4B00; font-size:13px;">
+          📎 เลือกรูปหลักฐาน
+          <input type="file" accept="image/*" id="stockEvidenceInput" style="display:none;">
+        </label>
+        <div id="stockEvidencePreview" style="display:none; text-align:center; margin-top:8px;"></div>
+        <div id="stockEvidenceRequiredWarning" style="display:none; margin-top:10px; padding:8px 12px; border-radius:10px; background:rgba(255,167,38,.15); color:#FFB74D; font-size:12px; font-weight:600; text-align:center;">⚠️ กรุณาแนบรูปหลักฐานก่อน ถึงจะยืนยันได้</div>
+      </div>
+
+      <button id="confirmStockAdjustBtn" style="width:100%; background:#5a6b57; opacity:.75; border:none; border-radius:999px; padding:14px 16px; color:#0F2A17; font-weight:800; font-size:14.5px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.3);">
+        ยืนยันการปรับสต๊อก
+        <span style="width:26px;height:26px;border-radius:50%;background:#0F2A17;color:#9CCC65;display:flex;align-items:center;justify-content:center;font-size:13px;">✓</span>
+      </button>
+    </div>
+  `;
+
+  const newValInput = document.getElementById('stockAdjustNewVal');
+  const newValDisplay = document.getElementById('stockAdjustNewValDisplay');
+  const deltaPreview = document.getElementById('stockAdjustDeltaPreview');
+  const updateDeltaPreview = ()=>{
+    const newVal = Number(newValInput.value);
+    const delta = computeDelta(newVal);
+    if(delta === 0){ deltaPreview.textContent = 'ไม่มีการเปลี่ยนแปลง'; deltaPreview.style.color = '#8FBF9E'; return; }
+    deltaPreview.textContent = delta > 0 ? `📥 รับเข้า +${delta} ชิ้น` : `📤 เบิกออก ${delta} ชิ้น`;
+    deltaPreview.style.color = delta > 0 ? '#9CCC65' : '#FFB74D';
+  };
+  const setNewVal = (n)=>{
+    n = Math.max(0, n);
+    newValInput.value = n;
+    newValDisplay.textContent = n;
+    updateDeltaPreview();
+  };
+  document.getElementById('stockAdjustMinusBtn').onclick = ()=> setNewVal(Number(newValInput.value) - 1);
+  document.getElementById('stockAdjustPlusBtn').onclick = ()=> setNewVal(Number(newValInput.value) + 1);
+  updateDeltaPreview();
+
+  const handleStockEvidenceChange = async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      pendingStockEvidencePhoto = await resizeImageFile(file, 500, 0.85);
+      const prev = document.getElementById('stockEvidencePreview');
+      prev.style.display = 'block';
+      prev.innerHTML = `<img src="${pendingStockEvidencePhoto}" style="max-width:160px; border-radius:10px;">`;
+      document.getElementById('stockEvidenceRequiredWarning').style.display = 'none';
+      const label = document.getElementById('stockEvidenceLabel');
+      label.style.background = '#C5E1A5';
+      label.style.borderColor = '#689F38';
+      label.style.color = '#123D24';
+      label.innerHTML = `✓ แนบรูปหลักฐานแล้ว — แตะเพื่อเปลี่ยนรูป<input type="file" accept="image/*" id="stockEvidenceInput" style="display:none;">`;
+      document.getElementById('stockEvidenceInput').addEventListener('change', handleStockEvidenceChange);
+      const confirmBtn = document.getElementById('confirmStockAdjustBtn');
+      confirmBtn.style.background = 'linear-gradient(135deg,#9CCC65,#689F38)';
+      confirmBtn.style.opacity = '1';
+    }catch(err){ console.error('stock evidence resize failed', err); }
+  };
+  document.getElementById('stockEvidenceInput').addEventListener('change', handleStockEvidenceChange);
+
+  document.getElementById('confirmStockAdjustBtn').onclick = async ()=>{
+    if(!pendingStockEvidencePhoto){
+      const warnBox = document.getElementById('stockEvidenceRequiredWarning');
+      warnBox.style.display = 'block';
+      warnBox.scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+    const newVal = Number(newValInput.value);
+    const delta = computeDelta(newVal);
+    if(delta === 0){ closeModal('reportModalOverlay'); return; }
+    const type = delta > 0 ? 'in' : 'out';
+    const note = document.getElementById('stockAdjustNote').value.trim() || `ตั้งจำนวนใหม่: ${before} → ${newVal}`;
+    logStockMovement(productName, type, Math.abs(delta), note, pendingStockEvidencePhoto);
+    retailProducts[i].stock = newVal;
+    await saveRetailProducts();
+    closeModal('reportModalOverlay');
+    if(window._renderStockWarehouse) window._renderStockWarehouse();
+    flashSaved('ปรับสต๊อกแล้ว ✓');
+  };
+
+  openModal('reportModalOverlay');
+}
+
 // ---------- PromptPay QR payment ----------
-const DEFAULT_PROMPTPAY_ID = '0105567121929';
-let sharedPromptPayId = '';
-async function loadPromptPayId(){
-  try{
-    const res = await window.storage.get('shared_promptpay_id', true);
-    sharedPromptPayId = (res && res.value) ? res.value : DEFAULT_PROMPTPAY_ID;
-  }catch(e){ console.error('load promptpay id failed, keeping existing value', e); }
-}
-async function savePromptPayId(){
-  try{
-    await backupBeforeSave('shared_promptpay_id');
-    await window.storage.set('shared_promptpay_id', sharedPromptPayId, true);
-  }catch(e){ console.error('shared promptpay id save failed', e); }
-}
-async function promptSetPromptPayId(){
-  const val = await askText('เลข PromptPay', 'วางเบอร์โทร หรือเลขบัตรประชาชน/นิติบุคคล ที่ผูก PromptPay (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบ', sharedPromptPayId);
-  if(val===null) return;
-  sharedPromptPayId = val.trim();
-  savePromptPayId();
-  flashSaved(sharedPromptPayId ? 'บันทึกเลข PromptPay แล้ว' : 'ลบเลข PromptPay แล้ว');
-}
+// locked permanently — not configurable, not stored, not overridable by anyone (per owner request)
+const LOCKED_PROMPTPAY_ID = '0105567121929';
+const sharedPromptPayId = LOCKED_PROMPTPAY_ID;
 function crc16ccitt(str){
   let crc = 0xFFFF;
   for(let c=0; c<str.length; c++){
@@ -3703,6 +3964,27 @@ function promptPayQrImgUrl(id, amount){
   const payload = buildPromptPayPayload(id, amount);
   if(!payload) return null;
   return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(payload);
+}
+// generates the QR code entirely in-browser (no external network call) so it never breaks from a third-party outage
+function promptPayQrSvg(id, amount){
+  const payload = buildPromptPayPayload(id, amount);
+  if(!payload || typeof qrcode !== 'function') return null;
+  try{
+    const qr = qrcode(0, 'M'); // type 0 = auto-detect size, M = medium error correction
+    qr.addData(payload);
+    qr.make();
+    const count = qr.getModuleCount();
+    const cell = 200 / count;
+    let cells = '';
+    for(let r=0; r<count; r++){
+      for(let c=0; c<count; c++){
+        if(qr.isDark(r,c)){
+          cells += `<rect x="${(c*cell).toFixed(2)}" y="${(r*cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}"/>`;
+        }
+      }
+    }
+    return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%; shape-rendering:crispEdges;"><rect width="200" height="200" fill="#fff"/><g fill="#000">${cells}</g></svg>`;
+  }catch(e){ console.error('local QR generation failed', e); return null; }
 }
 
 // ---------- Coffee Lot QC ----------
@@ -3904,13 +4186,18 @@ function renderLogTab(){
           <p class="hint">ใช้ร่วมกันทุกคน — อาจารย์แต่ละท่านลงคิวของตัวเองได้เลย ทุกคนที่เปิดลิงก์นี้จะเห็นตารางเดียวกัน</p>
         </div>
         <div style="display:flex; gap:8px; flex:none;">
-          ${currentUser===ADMIN_NAME ? `<button class="btn small ghost" id="restoreBackupBtn" title="กู้คืนข้อมูลจากสำรอง (แอดมินเท่านั้น)" style="color:var(--alert);">🛟</button>` : ''}
+          ${currentUser===ADMIN_NAME ? `
+            <button class="btn small ghost" id="exportDataBtn" title="ส่งออกข้อมูลทั้งหมด (แอดมินเท่านั้น)">📤</button>
+            <button class="btn small ghost" id="importDataBtn" title="นำเข้าข้อมูล (แอดมินเท่านั้น)">📥</button>
+            <button class="btn small ghost" id="restoreBackupBtn" title="กู้คืนข้อมูลจากสำรอง (แอดมินเท่านั้น)" style="color:var(--alert);">🛟</button>
+          ` : ''}
           <button class="btn small ghost" id="syncFromFormBtn" title="ดึงคิวจากฟอร์มลงทะเบียน">📋⟳</button>
           <button class="btn small ghost" id="refreshBookings" title="รีเฟรชตารางล่าสุด">⟳</button>
           <button class="add-fab" id="openBookingModalBtn" title="จองคิวสอน">+</button>
         </div>
       </div>
       <div id="syncFormResultBanner" style="display:none;"></div>
+      <input type="file" id="importDataFileInput" accept="application/json" style="display:none;">
       <div class="cal-nav">
         <button id="calPrevBtn">‹</button>
         <div class="cal-title" id="calTitle"></div>
@@ -4352,6 +4639,18 @@ function renderLogTab(){
   };
   const restoreBtn = document.getElementById('restoreBackupBtn');
   if(restoreBtn) restoreBtn.onclick = promptRestoreAllFromBackup;
+  const exportBtn = document.getElementById('exportDataBtn');
+  if(exportBtn) exportBtn.onclick = exportAllData;
+  const importBtn = document.getElementById('importDataBtn');
+  const importFileInput = document.getElementById('importDataFileInput');
+  if(importBtn && importFileInput){
+    importBtn.onclick = ()=> importFileInput.click();
+    importFileInput.onchange = async (e)=>{
+      const file = e.target.files[0];
+      if(file) await importAllData(file);
+      importFileInput.value = '';
+    };
+  }
   document.getElementById('syncFromFormBtn').onclick = async ()=>{
     const btn = document.getElementById('syncFromFormBtn');
     const banner = document.getElementById('syncFormResultBanner');
@@ -4423,6 +4722,7 @@ function renderStockTab(){
         <button class="add-fab" id="openProductModalBtn" title="เพิ่มสินค้า">+</button>
       </div>
       <div class="card-grid" id="productGrid"></div>
+      <div id="productGridPager" style="display:flex; align-items:center; justify-content:center; gap:12px; margin-top:14px;"></div>
     </div>
     <div class="card">
       <h2>คลังสินค้าขาย</h2>
@@ -4431,6 +4731,7 @@ function renderStockTab(){
         <thead><tr><th></th><th>สินค้า</th><th class="num">ต้นทุน</th><th class="num">ราคาขาย</th><th class="num">กำไร/ชิ้น</th><th class="num">คงเหลือ</th><th class="center">สถานะ</th><th></th></tr></thead>
         <tbody id="stockWarehouseBody"></tbody>
       </table>
+      <div id="stockWarehousePager" style="display:flex; align-items:center; justify-content:center; gap:12px; margin-top:14px;"></div>
     </div>
     <div class="card">
       <h2>ประวัติเข้า-เบิกสต๊อก</h2>
@@ -4459,26 +4760,46 @@ function renderStockTab(){
     listEl.innerHTML = sorted.map(m=>{
       const d = new Date(m.date);
       const dateStr = isNaN(d) ? '-' : d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px;">
-        <div>
-          <div style="font-weight:600;">${m.productName}
-            <span class="badge" style="background:${typeColor[m.type]}22; color:${typeColor[m.type]};">${typeLabel[m.type]||m.type}</span>
+      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+          ${m.evidencePhoto ? `<img src="${m.evidencePhoto}" class="stock-evidence-thumb" data-evidence="${m.evidencePhoto}" style="width:34px; height:34px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer; border:1px solid var(--line);">` : ''}
+          <div style="min-width:0;">
+            <div style="font-weight:600;">${m.productName}
+              <span class="badge" style="background:${typeColor[m.type]}22; color:${typeColor[m.type]};">${typeLabel[m.type]||m.type}</span>
+            </div>
+            <div style="color:#948a78; font-size:11px;">${dateStr} · ${m.who}${m.note ? ' · '+m.note : ''}</div>
           </div>
-          <div style="color:#948a78; font-size:11px;">${dateStr} · ${m.who}${m.note ? ' · '+m.note : ''}</div>
         </div>
-        <div class="mono" style="font-weight:700; color:${m.type==='in'?'var(--sage)':'var(--alert)'};">${m.type==='in'?'+':'−'}${m.qty}</div>
+        <div class="mono" style="font-weight:700; color:${m.type==='in'?'var(--sage)':'var(--alert)'}; flex:none;">${m.type==='in'?'+':'−'}${m.qty}</div>
       </div>`;
     }).join('');
+    listEl.querySelectorAll('.stock-evidence-thumb').forEach(img=>{
+      img.onclick = ()=>{
+        document.getElementById('reportModalBody').innerHTML = `
+          <h3>📎 รูปหลักฐานการปรับสต๊อก</h3>
+          <div style="text-align:center; margin-top:10px;"><img src="${img.dataset.evidence}" style="max-width:100%; border-radius:12px;"></div>
+        `;
+        openModal('reportModalOverlay');
+      };
+    });
   })();
 
 
   const productGrid = document.getElementById('productGrid');
+  const PRODUCT_PAGE_SIZE = 8; // 2 rows x 4 columns per page
+  let productGridPage = 0;
   const renderProductGrid = ()=>{
-    productGrid.innerHTML = retailProducts.length ? retailProducts.map((p,i)=>`
+    const withIdx = retailProducts.map((p,i)=>({p,i}));
+    const totalPages = Math.max(1, Math.ceil(withIdx.length / PRODUCT_PAGE_SIZE));
+    if(productGridPage >= totalPages) productGridPage = totalPages - 1;
+    if(productGridPage < 0) productGridPage = 0;
+    const pageItems = withIdx.slice(productGridPage*PRODUCT_PAGE_SIZE, productGridPage*PRODUCT_PAGE_SIZE + PRODUCT_PAGE_SIZE);
+
+    productGrid.innerHTML = retailProducts.length ? pageItems.map(({p,i})=>`
       <div class="product-card">
         <button class="pc-del" data-del-product="${i}" title="ลบสินค้านี้">✕</button>
         <label class="pc-img" data-photo-idx="${i}" style="cursor:pointer;">
-          ${p.photo ? `<img src="${p.photo}">` : `<span class="pc-placeholder-wrap"><span class="pc-placeholder">☕</span><span class="pc-add-photo-hint">แตะเพื่อใส่รูป</span></span>`}
+          ${p.photo ? `<img src="${p.photo}">` : `<span class="pc-placeholder-wrap"><span class="pc-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="pc-add-photo-hint">แตะเพื่อใส่รูป</span></span>`}
           <input type="file" accept="image/*" data-photo-input="${i}" style="display:none;">
         </label>
         <div class="pc-body">
@@ -4488,6 +4809,24 @@ function renderStockTab(){
           ${p.cost ? `<div class="pc-margin">ต้นทุน ฿${fmt(p.cost)} · กำไร ${fmt(p.price-p.cost)}/ชิ้น</div>` : ''}
         </div>
       </div>`).join('') : `<div style="grid-column:1/-1; text-align:center; color:#948a78; padding:20px 10px;">ยังไม่มีสินค้า — กด "+" เพื่อเพิ่มรายการแรก</div>`;
+
+    const pager = document.getElementById('productGridPager');
+    if(pager){
+      if(totalPages > 1){
+        pager.innerHTML = `
+          <button class="btn small ghost" id="productPagePrev" ${productGridPage===0?'disabled':''}>‹</button>
+          <span style="font-size:12px; color:#5A4433; font-weight:600;">หน้า ${productGridPage+1} / ${totalPages}</span>
+          <button class="btn small ghost" id="productPageNext" ${productGridPage>=totalPages-1?'disabled':''}>›</button>
+        `;
+        const prevBtn = document.getElementById('productPagePrev');
+        const nextBtn = document.getElementById('productPageNext');
+        if(prevBtn) prevBtn.onclick = ()=>{ productGridPage--; renderProductGrid(); };
+        if(nextBtn) nextBtn.onclick = ()=>{ productGridPage++; renderProductGrid(); };
+      } else {
+        pager.innerHTML = '';
+      }
+    }
+
     productGrid.querySelectorAll('[data-del-product]').forEach(btn=>{
       btn.onclick = ()=>{
         if(!confirm(`ลบสินค้า "${retailProducts[btn.dataset.delProduct].name}" ใช่หรือไม่?`)) return;
@@ -4515,9 +4854,18 @@ function renderStockTab(){
 
   // ---------- Retail stock warehouse (separate from the product catalog) ----------
   const stockBody = document.getElementById('stockWarehouseBody');
+  const STOCK_TABLE_PAGE_SIZE = 8;
+  let stockTablePage = 0;
   const renderStockWarehouse = ()=>{
     if(!stockBody) return;
-    stockBody.innerHTML = retailProducts.length ? retailProducts.map((p,i)=>{
+    window._renderStockWarehouse = renderStockWarehouse; // exposed globally so modals opened outside this closure can refresh this table
+    const withIdx = retailProducts.map((p,i)=>({p,i}));
+    const totalPages = Math.max(1, Math.ceil(withIdx.length / STOCK_TABLE_PAGE_SIZE));
+    if(stockTablePage >= totalPages) stockTablePage = totalPages - 1;
+    if(stockTablePage < 0) stockTablePage = 0;
+    const pageItems = withIdx.slice(stockTablePage*STOCK_TABLE_PAGE_SIZE, stockTablePage*STOCK_TABLE_PAGE_SIZE + STOCK_TABLE_PAGE_SIZE);
+
+    stockBody.innerHTML = retailProducts.length ? pageItems.map(({p,i})=>{
       const stock = p.stock || 0;
       const low = stock <= 0;
       return `
@@ -4540,10 +4888,32 @@ function renderStockTab(){
         </td>
         <td class="center"><span class="badge ${low?'low':'ok'}">${low?'หมดสต๊อก':'พอขาย'}</span></td>
         <td>
-          <input type="number" class="num" data-stock-set="${i}" placeholder="ตั้งจำนวน" style="width:70px;">
+          <button class="btn small ghost" data-stock-adjust-btn="${i}" style="white-space:nowrap; display:inline-flex; align-items:center; gap:6px;">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; background:var(--sage-soft); border:1px solid var(--sage); flex:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--sage)" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+            เพิ่มสต๊อก
+          </button>
         </td>
       </tr>`;
     }).join('') : `<tr><td colspan="8" style="text-align:center;color:#948a78;padding:16px;">ยังไม่มีสินค้าในคลัง — เพิ่มสินค้าที่การ์ดด้านบนก่อน</td></tr>`;
+
+    const pager = document.getElementById('stockWarehousePager');
+    if(pager){
+      if(totalPages > 1){
+        pager.innerHTML = `
+          <button class="btn small ghost" id="stockTablePagePrev" ${stockTablePage===0?'disabled':''}>‹</button>
+          <span style="font-size:12px; color:#5A4433; font-weight:600;">หน้า ${stockTablePage+1} / ${totalPages}</span>
+          <button class="btn small ghost" id="stockTablePageNext" ${stockTablePage>=totalPages-1?'disabled':''}>›</button>
+        `;
+        const prevBtn = document.getElementById('stockTablePagePrev');
+        const nextBtn = document.getElementById('stockTablePageNext');
+        if(prevBtn) prevBtn.onclick = ()=>{ stockTablePage--; renderStockWarehouse(); };
+        if(nextBtn) nextBtn.onclick = ()=>{ stockTablePage++; renderStockWarehouse(); };
+      } else {
+        pager.innerHTML = '';
+      }
+    }
 
     stockBody.querySelectorAll('[data-cost-set]').forEach(inp=>{
       inp.onchange = ()=>{
@@ -4588,20 +4958,11 @@ function renderStockTab(){
         renderStockWarehouse();
       };
     });
-    stockBody.querySelectorAll('[data-stock-set]').forEach(inp=>{
-      inp.onchange = ()=>{
-        const i = Number(inp.dataset.stockSet);
-        const val = Number(inp.value);
-        if(!isNaN(val) && val>=0){
-          const before = retailProducts[i].stock||0;
-          const delta = val - before;
-          if(delta !== 0){
-            logStockMovement(retailProducts[i].name, delta>0?'in':'out', Math.abs(delta), `ตั้งจำนวนใหม่: ${before} → ${val}`);
-          }
-          retailProducts[i].stock = val;
-          saveRetailProducts();
-          renderStockWarehouse();
-        }
+    stockBody.querySelectorAll('[data-stock-adjust-btn]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const i = Number(btn.dataset.stockAdjustBtn);
+        const before = retailProducts[i].stock||0;
+        openStockAdjustEvidenceModal(i, before, null, null);
       };
     });
   };
@@ -4858,7 +5219,7 @@ function renderSellTab(){
     gallery.innerHTML = pageItems.map(({p,i})=>`
       <div class="sell-tile ${sellTabCart[i]>0?'on':''}" data-idx="${i}">
         <div class="sell-tile-cartbadge">${sellTabCart[i]>0?sellTabCart[i]:''}</div>
-        <div class="sell-tile-img">${p.photo ? `<img src="${p.photo}">` : `<span class="sell-tile-placeholder">☕</span>`}</div>
+        <div class="sell-tile-img">${p.photo ? `<img src="${p.photo}">` : `<span class="sell-tile-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>`}</div>
         <div class="sell-tile-body">
           <div class="sell-tile-name">${p.name}</div>
           <div class="sell-tile-price">฿${fmt(p.price)}</div>
@@ -5242,7 +5603,7 @@ let pendingSlipDataUrl = null;
 function openPaymentModal(items){
   const total = items.reduce((s,p)=> s+p.price*p.qty, 0);
   pendingSlipDataUrl = null;
-  const qrUrl = sharedPromptPayId ? promptPayQrImgUrl(sharedPromptPayId, total) : null;
+  const qrSvg = promptPayQrSvg(sharedPromptPayId, total); // generated locally, no external network call
 
   document.getElementById('reportModalBody').innerHTML = `
     <div style="text-align:center; margin-bottom:4px;">
@@ -5253,12 +5614,12 @@ function openPaymentModal(items){
       </div>
       <div style="font-size:13px; font-weight:700; color:#fff; margin-top:4px;">รับชำระเงิน · ${items.length} รายการ</div>
     </div>
-    ${!qrUrl ? `
+    ${!qrSvg ? `
     <div style="text-align:center; margin:12px 0 18px;">
       <div class="mono" style="font-size:36px; font-weight:800; color:#fff; letter-spacing:.5px;">฿${fmt(total)}</div>
     </div>
     ` : ''}
-    ${qrUrl ? `
+    ${qrSvg ? `
       <div style="max-width:280px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.35); background:#fff;">
         <div style="background:#1B3A5C; padding:22px 18px; display:flex; align-items:center; justify-content:center; gap:12px;">
           <svg width="46" height="46" viewBox="0 0 46 46">
@@ -5281,8 +5642,8 @@ function openPaymentModal(items){
               <span style="background:#1B3A5C; color:#fff; font-size:17px; font-weight:800; font-style:italic; padding:0 6px; display:flex; align-items:center; border-radius:2px;">Pay</span>
             </div>
           </div>
-          <div style="position:relative; display:inline-block; line-height:0;">
-            <img src="${qrUrl}" alt="PromptPay QR" style="width:100%; max-width:230px; display:block;">
+          <div style="position:relative; display:inline-block; line-height:0; width:100%; max-width:230px;">
+            ${qrSvg}
             <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:42px; height:42px; background:#fff; border:2.5px solid #1B3A5C; border-radius:9px; display:flex; align-items:center; justify-content:center;">
               <svg width="22" height="22" viewBox="0 0 46 46">
                 <rect x="1" y="1" width="44" height="44" rx="10" fill="none" stroke="#1B3A5C" stroke-width="3"/>
@@ -5298,32 +5659,28 @@ function openPaymentModal(items){
           </div>
         </div>
       </div>
-      <div style="text-align:center; margin-top:10px;">
-        <button class="btn ghost small" id="ppEditBtn" style="font-size:11px; border-radius:999px;">⚙️ เปลี่ยนเลข PromptPay</button>
-      </div>
     ` : `
       <div style="text-align:center; padding:18px; background:rgba(255,255,255,.05); border:1px dashed rgba(220,167,61,.35); border-radius:16px; font-size:12.5px; color:#C9C2B6;">
-        ยังไม่ได้ตั้งค่าเลข PromptPay
-        <div style="margin-top:10px;"><button class="btn small" id="ppSetBtn">⚙️ ตั้งค่าเลข PromptPay</button></div>
+        สร้าง QR ไม่สำเร็จ (ตัวสร้าง QR อาจยังโหลดไม่เสร็จ) — ลองใหม่อีกครั้ง
+        <div style="margin-top:10px;"><button class="btn small" id="retryQrBtn">🔄 ลองสร้าง QR ใหม่</button></div>
       </div>
     `}
     <div style="margin-top:20px;">
-      <div class="modal-field-label">แนบสลิปการโอน (ไม่บังคับ แต่แนะนำให้แนบเป็นหลักฐาน)</div>
-      <label class="btn ghost" style="cursor:pointer; text-align:center; display:block; border-radius:999px;">
+      <div class="modal-field-label" style="color:var(--alert);">📎 แนบสลิปการโอน (บังคับ — ต้องแนบก่อนถึงจะยืนยันได้)</div>
+      <label class="btn ghost" id="slipSelectLabel" style="cursor:pointer; text-align:center; display:block; border-radius:999px; background:var(--alert-soft); border-color:var(--alert); color:var(--alert); font-weight:700;">
         📎 เลือกรูปสลิป
         <input type="file" accept="image/*" id="slipInput" style="display:none;">
       </label>
       <div id="slipPreview" style="display:none; text-align:center; margin-top:8px;"></div>
+      <div id="slipRequiredWarning" style="display:none; margin-top:10px; padding:9px 14px; border-radius:10px; background:var(--alert-soft); color:var(--alert); font-size:12.5px; font-weight:600; text-align:center;">⚠️ กรุณาแนบรูปสลิปการโอนก่อน ถึงจะบันทึกการขายได้</div>
     </div>
-    <button class="btn-arrow" id="confirmPaymentBtn" style="justify-content:center; width:100%; margin-top:18px;">ยืนยันชำระแล้ว & บันทึกการขาย<span class="circ">✓</span></button>
+    <button class="btn-arrow" id="confirmPaymentBtn" style="justify-content:center; width:100%; margin-top:18px; background:#9a9488; opacity:.75;">ยืนยันชำระแล้ว & บันทึกการขาย<span class="circ">✓</span></button>
   `;
 
-  const ppSetBtn = document.getElementById('ppSetBtn');
-  if(ppSetBtn) ppSetBtn.onclick = ()=>{ promptSetPromptPayId(); openPaymentModal(items); };
-  const ppEditBtn = document.getElementById('ppEditBtn');
-  if(ppEditBtn) ppEditBtn.onclick = ()=>{ promptSetPromptPayId(); openPaymentModal(items); };
+  const retryQrBtn = document.getElementById('retryQrBtn');
+  if(retryQrBtn) retryQrBtn.onclick = ()=> openPaymentModal(items);
 
-  document.getElementById('slipInput').addEventListener('change', async (e)=>{
+  const handleSlipFileChange = async (e)=>{
     const file = e.target.files[0];
     if(!file) return;
     try{
@@ -5331,10 +5688,34 @@ function openPaymentModal(items){
       const prev = document.getElementById('slipPreview');
       prev.style.display = 'block';
       prev.innerHTML = `<img src="${pendingSlipDataUrl}" style="max-width:160px; border-radius:10px;">`;
+      const warnBox = document.getElementById('slipRequiredWarning');
+      if(warnBox) warnBox.style.display = 'none';
+      const selectLabel = document.getElementById('slipSelectLabel');
+      if(selectLabel){
+        selectLabel.style.background = 'var(--sage-soft)';
+        selectLabel.style.borderColor = 'var(--sage)';
+        selectLabel.style.color = 'var(--sage)';
+        selectLabel.innerHTML = `✓ แนบสลิปแล้ว — แตะเพื่อเปลี่ยนรูป<input type="file" accept="image/*" id="slipInput" style="display:none;">`;
+        document.getElementById('slipInput').addEventListener('change', handleSlipFileChange);
+      }
+      const confirmBtn = document.getElementById('confirmPaymentBtn');
+      if(confirmBtn){
+        confirmBtn.style.background = '';
+        confirmBtn.style.opacity = '1';
+      }
     }catch(err){ console.error('slip resize failed', err); }
-  });
+  };
+  document.getElementById('slipInput').addEventListener('change', handleSlipFileChange);
 
   document.getElementById('confirmPaymentBtn').onclick = async ()=>{
+    if(!pendingSlipDataUrl){
+      const warnBox = document.getElementById('slipRequiredWarning');
+      if(warnBox){
+        warnBox.style.display = 'block';
+        warnBox.scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+      return;
+    }
     criticalOpInProgress = true;
     try{
       const saleRecord = {
@@ -5496,9 +5877,88 @@ function slipMonthDashboardHTML(byDay, days, monthTotal, txnCount){
     </div>`;
 }
 
+function renderSlipGalleryCompare4(box){
+  const withSlips = standaloneSales.filter(s=> s.slip);
+  const monthNamesShort = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+  // build the 4 months ending at the currently-selected month (oldest first)
+  const months = [];
+  for(let i=3; i>=0; i--){
+    let y = window._slipGalleryYear, m = window._slipGalleryMonth - i;
+    while(m < 0){ m += 12; y--; }
+    months.push({ y, m });
+  }
+
+  const monthStats = months.map(({y,m})=>{
+    const prefix = `${y}-${String(m+1).padStart(2,'0')}`;
+    const rows = withSlips.filter(s=> (s.date||'').startsWith(prefix));
+    const total = rows.reduce((s,x)=> s+x.total, 0);
+    return { y, m, total, count: rows.length, label: `${monthNamesShort[m]} ${String(y+543).slice(-2)}` };
+  });
+
+  const maxVal = Math.max(1, ...monthStats.map(x=> x.total));
+  const grandTotal = monthStats.reduce((s,x)=> s+x.total, 0);
+  const grandCount = monthStats.reduce((s,x)=> s+x.count, 0);
+
+  box.innerHTML = `
+    <div class="cat-filter-row" style="margin-bottom:10px;">
+      <button type="button" class="cat-chip" id="slipViewMonthBtn">รายเดือน</button>
+      <button type="button" class="cat-chip on" id="slipViewCompare4Btn">เทียบ 4 เดือนย้อนหลัง</button>
+    </div>
+    <div class="cal-nav" style="margin-bottom:12px;">
+      <button id="slipCompare4PrevBtn">‹</button>
+      <div class="cal-title" style="font-size:14px;">${monthStats[0].label} — ${monthStats[3].label}</div>
+      <button id="slipCompare4NextBtn">›</button>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi"><div class="label">ยอดรวม 4 เดือน</div><div class="value">${fmt(grandTotal)}</div></div>
+      <div class="kpi"><div class="label">จำนวนสลิปรวม</div><div class="value">${grandCount}</div></div>
+    </div>
+    <div style="display:flex; align-items:flex-end; gap:12px; justify-content:center; padding:0 4px 8px;">
+      ${monthStats.map(ms=>{
+        const pct = Math.max(4, (ms.total/maxVal)*100);
+        return `<div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; max-width:90px;">
+          <div class="mono" style="font-size:11px; font-weight:700; color:var(--gold);">${fmt(ms.total)}</div>
+          <div style="width:100%; background:var(--sage-soft); border-radius:8px 8px 0 0; height:130px; display:flex; align-items:flex-end; overflow:hidden;">
+            <div style="width:100%; background:linear-gradient(180deg,#4C8A3A,#1E4A30); border-radius:8px 8px 0 0; height:${pct}%;"></div>
+          </div>
+          <div style="font-size:11.5px; font-weight:700; color:var(--ink);">${ms.label}</div>
+          <div style="font-size:9.5px; color:#948a78;">${ms.count} สลิป</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  document.getElementById('slipViewMonthBtn').onclick = ()=>{
+    window._slipGalleryViewMode = 'month';
+    renderSlipGallery();
+  };
+  document.getElementById('slipViewCompare4Btn').onclick = ()=>{
+    window._slipGalleryViewMode = 'compare4';
+    renderSlipGallery();
+  };
+  document.getElementById('slipCompare4PrevBtn').onclick = ()=>{
+    window._slipGalleryMonth -= 4;
+    while(window._slipGalleryMonth < 0){ window._slipGalleryMonth += 12; window._slipGalleryYear--; }
+    renderSlipGallery();
+  };
+  document.getElementById('slipCompare4NextBtn').onclick = ()=>{
+    window._slipGalleryMonth += 4;
+    while(window._slipGalleryMonth > 11){ window._slipGalleryMonth -= 12; window._slipGalleryYear++; }
+    renderSlipGallery();
+  };
+}
+
 function renderSlipGallery(){
   const box = document.getElementById('slipGalleryBox');
   if(!box) return;
+  if(typeof window._slipGalleryViewMode === 'undefined') window._slipGalleryViewMode = 'month'; // 'month' | 'compare4'
+
+  if(window._slipGalleryViewMode === 'compare4'){
+    renderSlipGalleryCompare4(box);
+    return;
+  }
+
   const withSlips = standaloneSales
     .map((s,i)=>({...s, _idx:i}))
     .filter(s=> s.slip);
@@ -5520,6 +5980,10 @@ function renderSlipGallery(){
   const monthTotal = inMonth.reduce((sum,s)=> sum+s.total, 0);
 
   box.innerHTML = `
+    <div class="cat-filter-row" style="margin-bottom:10px;">
+      <button type="button" class="cat-chip on" id="slipViewMonthBtn">รายเดือน</button>
+      <button type="button" class="cat-chip" id="slipViewCompare4Btn">เทียบ 4 เดือนย้อนหลัง</button>
+    </div>
     <div class="cal-nav" style="margin-bottom:10px;">
       <button id="slipGalPrevBtn">‹</button>
       <div class="cal-title">${monthNames[m]} ${y+543}</div>
@@ -5573,6 +6037,14 @@ function renderSlipGallery(){
     ${days.length ? slipMonthDashboardHTML(byDay, days, monthTotal, inMonth.length) : ''}
   `;
 
+  document.getElementById('slipViewMonthBtn').onclick = ()=>{
+    window._slipGalleryViewMode = 'month';
+    renderSlipGallery();
+  };
+  document.getElementById('slipViewCompare4Btn').onclick = ()=>{
+    window._slipGalleryViewMode = 'compare4';
+    renderSlipGallery();
+  };
   document.getElementById('slipGalPrevBtn').onclick = ()=>{
     window._slipGalleryMonth--;
     if(window._slipGalleryMonth<0){ window._slipGalleryMonth=11; window._slipGalleryYear--; }
@@ -5809,7 +6281,6 @@ async function refreshAllSharedData(){
     loadStockMovements(),
     loadSharedEvalFormUrl(),
     loadQcLots(),
-    loadPromptPayId(),
     loadCustomCategories(),
   ]);
   renderAll();
@@ -5843,7 +6314,6 @@ async function silentBackgroundSync(){
       loadStockMovements(),
       loadSharedEvalFormUrl(),
       loadQcLots(),
-      loadPromptPayId(),
       loadCustomCategories(),
     ]);
     if(!isUserBusy()) renderAll(); // re-check in case typing started while awaiting
@@ -5922,7 +6392,6 @@ document.addEventListener('visibilitychange', ()=>{
   await loadStandaloneSales();
   await loadStockMovements();
   await loadQcLots();
-  await loadPromptPayId();
   await loadSharedEvalFormUrl();
   await loadCurrentUser();
   renderShell();
