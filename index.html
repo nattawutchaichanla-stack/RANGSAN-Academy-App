@@ -6810,32 +6810,10 @@ document.addEventListener('visibilitychange', ()=>{
 })();
 
 (async function init(){
-  // first-run check: if this is a standalone deployment (no real Claude window.storage) and
-  // no backend has been configured on this device yet, walk the person through setup immediately —
-  // otherwise the app would silently load empty with nothing explaining why.
-  if(window.storage.__isBackendShim && !getStorageBackendUrl()){
-    alert('ยินดีต้อนรับสู่ RANGSAN Academy! 🎉\n\nก่อนเริ่มใช้งาน ต้องตั้งค่า "ฐานข้อมูลกลาง" ก่อน 1 ครั้ง (ทำครั้งเดียวต่อเครื่อง/เบราว์เซอร์ที่ใช้) เพื่อให้ข้อมูลซิงก์กันได้ทุกอุปกรณ์\n\nกด OK แล้ววาง URL ที่ได้รับมาจากแอดมิน');
-    await promptSetStorageBackendUrl();
-    return; // promptSetStorageBackendUrl reloads the page once a URL is entered
-  }
-  state = await loadState();
-  await loadSharedBookings();
-  await loadInstructorPhotos();
-  await loadInstructorPins();
-  await loadSharedAdminPin();
-  await loadCustomCategories();
-  await loadRetailProducts();
-  await loadStandaloneSales();
-  await loadStockMovements();
-  await loadQcLots();
-  await loadSharedEvalFormUrl();
-  await loadSharedLineRelayUrl();
-  await loadCurrentUser();
-  renderShell();
-  renderAll();
-  playHeroIntro();
-
-  // play the brand intro video; if it fails to load (e.g. file wasn't uploaded), fall back to the CSS animation instead
+  // set up the splash screen dismissal FIRST and independently of everything else below —
+  // otherwise if the app takes an unusual path early on (e.g. the first-run setup prompt),
+  // the splash overlay (z-index 300) would stay stuck on top of any dialog underneath it (z-index 150),
+  // making the whole app look like it's frozen on a black screen.
   const splash = document.getElementById('splashScreen');
   const splashVideo = document.getElementById('splashVideo');
   const splashFallback = document.getElementById('splashFallback');
@@ -6859,6 +6837,32 @@ document.addEventListener('visibilitychange', ()=>{
     }
   }
   setTimeout(dismissSplash, SPLASH_MAX_MS);
+
+  // first-run check: if this is a standalone deployment (no real Claude window.storage) and
+  // no backend has been configured on this device yet, walk the person through setup immediately —
+  // otherwise the app would silently load empty with nothing explaining why.
+  if(window.storage.__isBackendShim && !getStorageBackendUrl()){
+    dismissSplash(); // make sure the setup prompt is actually visible, not hidden behind the splash overlay
+    alert('ยินดีต้อนรับสู่ RANGSAN Academy! 🎉\n\nก่อนเริ่มใช้งาน ต้องตั้งค่า "ฐานข้อมูลกลาง" ก่อน 1 ครั้ง (ทำครั้งเดียวต่อเครื่อง/เบราว์เซอร์ที่ใช้) เพื่อให้ข้อมูลซิงก์กันได้ทุกอุปกรณ์\n\nกด OK แล้ววาง URL ที่ได้รับมาจากแอดมิน');
+    await promptSetStorageBackendUrl();
+    return; // promptSetStorageBackendUrl reloads the page once a URL is entered
+  }
+  state = await loadState();
+  await loadSharedBookings();
+  await loadInstructorPhotos();
+  await loadInstructorPins();
+  await loadSharedAdminPin();
+  await loadCustomCategories();
+  await loadRetailProducts();
+  await loadStandaloneSales();
+  await loadStockMovements();
+  await loadQcLots();
+  await loadSharedEvalFormUrl();
+  await loadSharedLineRelayUrl();
+  await loadCurrentUser();
+  renderShell();
+  renderAll();
+  playHeroIntro();
 
   if(currentUser && state.instructors.includes(currentUser)){
     hideLoginScreen();
