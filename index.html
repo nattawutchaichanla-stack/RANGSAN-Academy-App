@@ -1277,6 +1277,60 @@
 
 <script>
 
+/* ============================= STORAGE BACKEND FALLBACK =============================
+   window.storage only exists when this file is viewed inside Claude's own artifact
+   viewer. When deployed as a standalone website (GitHub Pages / Vercel), that API
+   does not exist at all — so we provide a drop-in replacement backed by a Google
+   Sheet (via the same Apps Script used for the LINE relay). Every existing call in
+   this app — window.storage.get(key, shared) / .set(key, value, shared) — keeps
+   working unchanged; only the underlying transport changes.
+   ⚙️ ตั้งค่า URL นี้จากปุ่ม "ตั้งค่าฐานข้อมูลกลาง" ในแท็บ "กำไร" ครับ
+*/
+const STORAGE_BACKEND_URL_KEY = 'rangsan_storage_backend_url'; // localStorage key, per-device config
+if(!window.storage){
+  const backendUrl = localStorage.getItem(STORAGE_BACKEND_URL_KEY) || '';
+  window.storage = {
+    __isBackendShim: true, // marks this as the standalone-deployment fallback, not Claude's real window.storage
+    async get(key, shared){
+      if(!backendUrl) return null;
+      try{
+        const res = await fetch(backendUrl + '?key=' + encodeURIComponent(key));
+        const data = await res.json();
+        if(!data.ok || data.value === null || data.value === undefined) return null;
+        return { key, value: data.value };
+      }catch(err){
+        console.error('storage backend get failed', key, err);
+        throw err;
+      }
+    },
+    async set(key, value, shared){
+      if(!backendUrl) throw new Error('ยังไม่ได้ตั้งค่าฐานข้อมูลกลาง — กดปุ่ม ⚙️ ตั้งค่าฐานข้อมูลกลาง ในแท็บกำไรก่อน');
+      const res = await fetch(backendUrl, {
+        method: 'POST',
+        body: JSON.stringify({ type:'storage_set', key, value })
+      });
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || 'save failed');
+      return { key, value };
+    }
+  };
+}
+function getStorageBackendUrl(){ return localStorage.getItem(STORAGE_BACKEND_URL_KEY) || ''; }
+function setStorageBackendUrl(url){ localStorage.setItem(STORAGE_BACKEND_URL_KEY, url); }
+async function promptSetStorageBackendUrl(){
+  const current = getStorageBackendUrl();
+  const val = await askText('ตั้งค่าฐานข้อมูลกลาง', 'วาง Web App URL ของ Google Apps Script เดียวกับที่ใช้ตั้งค่า LINE (ต้องตั้งค่านี้ในทุกเครื่อง/ทุกเบราว์เซอร์ที่จะใช้แอพนี้ ครั้งเดียวต่อเครื่อง)', current);
+  if(val===null) return;
+  const trimmed = val.trim();
+  setStorageBackendUrl(trimmed);
+  if(trimmed){
+    flashSaved('ตั้งค่าฐานข้อมูลกลางแล้ว — กำลังโหลดข้อมูล...');
+    location.reload(); // simplest way to re-init window.storage with the new backend and reload all data fresh
+  } else {
+    flashSaved('ลบการตั้งค่าฐานข้อมูลกลางแล้ว');
+  }
+}
+
 function openModal(id){
   const el = document.getElementById(id);
   el.classList.add('open');
@@ -3568,6 +3622,7 @@ function renderPLTab(){
       </button>`}
       <button class="btn ghost" id="copyBtn">คัดลอกข้อความ</button>
       <button class="btn ghost" id="lineSettingsBtn" title="ตั้งค่าการส่งเข้ากลุ่มอัตโนมัติ">⚙️ ตั้งค่า LINE</button>
+      <button class="btn ghost" id="storageSettingsBtn" title="ตั้งค่าที่เก็บข้อมูลกลาง (ต้องตั้งครั้งเดียวต่อเครื่อง)">🗄️ ตั้งค่าฐานข้อมูลกลาง</button>
     </div>
   `;
 
@@ -3628,6 +3683,7 @@ function renderPLTab(){
   if(autoBtn) autoBtn.onclick = (e)=> sendToLineGroupAuto(activePLCourse, e.currentTarget);
   document.getElementById('copyBtn').onclick = (e)=> copySummary(activePLCourse, e.currentTarget);
   document.getElementById('lineSettingsBtn').onclick = promptLineRelayUrl;
+  document.getElementById('storageSettingsBtn').onclick = promptSetStorageBackendUrl;
 }
 
 /* ============================= RENDER: MATERIALS & STOCK ============================= */
@@ -6754,6 +6810,14 @@ document.addEventListener('visibilitychange', ()=>{
 })();
 
 (async function init(){
+  // first-run check: if this is a standalone deployment (no real Claude window.storage) and
+  // no backend has been configured on this device yet, walk the person through setup immediately —
+  // otherwise the app would silently load empty with nothing explaining why.
+  if(window.storage.__isBackendShim && !getStorageBackendUrl()){
+    alert('ยินดีต้อนรับสู่ RANGSAN Academy! 🎉\n\nก่อนเริ่มใช้งาน ต้องตั้งค่า "ฐานข้อมูลกลาง" ก่อน 1 ครั้ง (ทำครั้งเดียวต่อเครื่อง/เบราว์เซอร์ที่ใช้) เพื่อให้ข้อมูลซิงก์กันได้ทุกอุปกรณ์\n\nกด OK แล้ววาง URL ที่ได้รับมาจากแอดมิน');
+    await promptSetStorageBackendUrl();
+    return; // promptSetStorageBackendUrl reloads the page once a URL is entered
+  }
   state = await loadState();
   await loadSharedBookings();
   await loadInstructorPhotos();
