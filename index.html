@@ -6698,6 +6698,7 @@ function playHeroIntro(){
 /* ============================= INIT ============================= */
 async function refreshAllSharedData(){
   await Promise.all([
+    loadState().then(s=> state = s),
     loadSharedBookings(),
     loadInstructorPhotos(),
     loadInstructorPins(),
@@ -6732,6 +6733,7 @@ async function silentBackgroundSync(){
   if(isUserBusy()) return;          // don't disturb active input/modal
   try{
     await Promise.all([
+      loadState().then(s=> state = s), // courses/pricing/recipes/menu — now synced live like everything else
       loadSharedBookings(),
       loadInstructorPhotos(),
       loadInstructorPins(),
