@@ -2958,7 +2958,8 @@ async function saveSharedEvalFormUrl(){
   try{
     await backupBeforeSave('shared_eval_form_url');
     await window.storage.set('shared_eval_form_url', sharedEvalFormUrl, true);
-  }catch(e){}
+    return true;
+  }catch(e){ console.error('save eval form url failed', e); return false; }
 }
 async function promptSetEvalFormUrl(){
   const val = await askText('ลิงก์ชีทผู้ลงทะเบียน', 'วางลิงก์ Google Sheet ที่เก็บข้อมูลผู้ลงทะเบียนสมัครเรียน (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบลิงก์', sharedEvalFormUrl);
@@ -2968,9 +2969,15 @@ async function promptSetEvalFormUrl(){
     // guard against accidentally wiping a link that was already working
     if(!confirm('ช่องนี้ว่างเปล่า — ต้องการลบลิงก์ที่ตั้งไว้อยู่ตอนนี้จริงหรือไม่?\n(ถ้าแค่พิมพ์ผิดหรือเผลอลบ ให้กดยกเลิกแล้วลองใหม่)')) return;
   }
+  const previous = sharedEvalFormUrl;
   sharedEvalFormUrl = trimmed;
-  saveSharedEvalFormUrl();
-  flashSaved(sharedEvalFormUrl ? 'บันทึกลิงก์ชีทผู้ลงทะเบียนแล้ว' : 'ลบลิงก์แล้ว');
+  const ok = await saveSharedEvalFormUrl();
+  if(ok){
+    flashSaved(sharedEvalFormUrl ? 'บันทึกลิงก์ชีทผู้ลงทะเบียนแล้ว (ใช้ร่วมกันทุกเครื่อง) ✓' : 'ลบลิงก์แล้ว');
+  } else {
+    sharedEvalFormUrl = previous; // roll back the local value so the UI doesn't lie about what's actually saved
+    alert('บันทึกไม่สำเร็จ — เครื่องอื่นจะยังไม่เห็นลิงก์นี้ กรุณาลองใหม่อีกครั้ง (เช็คว่าเชื่อมต่ออินเทอร์เน็ตอยู่)');
+  }
 }
 async function promptSetAdminPin(){
   if(currentUser !== ADMIN_NAME){
