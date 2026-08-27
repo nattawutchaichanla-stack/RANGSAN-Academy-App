@@ -1361,6 +1361,12 @@ async function loadRegistrationList(filterRowId, listBoxId){
   box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">กำลังโหลดข้อมูล...</div>`;
   if(filterRow) filterRow.innerHTML = '';
 
+  // always re-check the live shared value first — never trust a possibly-stale local variable for this
+  try{
+    const urlRes = await window.storage.get('shared_eval_form_url', true);
+    sharedEvalFormUrl = (urlRes && urlRes.value) ? urlRes.value : '';
+  }catch(e){ /* keep whatever was already loaded if this check fails */ }
+
   if(!sharedEvalFormUrl){
     box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน — ตั้งค่าได้ที่ ⚙️</div>`;
     return;
@@ -2962,7 +2968,17 @@ async function saveSharedEvalFormUrl(){
   }catch(e){ console.error('save eval form url failed', e); return false; }
 }
 async function promptSetEvalFormUrl(){
-  const val = await askText('ลิงก์ชีทผู้ลงทะเบียน', 'วางลิงก์ Google Sheet ที่เก็บข้อมูลผู้ลงทะเบียนสมัครเรียน (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบลิงก์', sharedEvalFormUrl);
+  // fetch fresh from shared storage first (not the possibly-stale local variable) so we always show the true current value
+  let liveValue = sharedEvalFormUrl;
+  try{
+    const res = await window.storage.get('shared_eval_form_url', true);
+    liveValue = (res && res.value) ? res.value : '';
+    sharedEvalFormUrl = liveValue; // sync the local variable to match reality
+  }catch(e){
+    alert('ดึงค่าปัจจุบันจากส่วนกลางไม่ได้ (' + e.message + ') — อาจไม่มีอินเทอร์เน็ต ลองใหม่อีกครั้ง');
+    return;
+  }
+  const val = await askText('ลิงก์ชีทผู้ลงทะเบียน', 'วางลิงก์ Google Sheet ที่เก็บข้อมูลผู้ลงทะเบียนสมัครเรียน (ใช้ร่วมกันทุกคน) เว้นว่างเพื่อลบลิงก์', liveValue);
   if(val===null) return;
   const trimmed = val.trim();
   if(!trimmed && sharedEvalFormUrl){
@@ -2973,7 +2989,13 @@ async function promptSetEvalFormUrl(){
   sharedEvalFormUrl = trimmed;
   const ok = await saveSharedEvalFormUrl();
   if(ok){
-    flashSaved(sharedEvalFormUrl ? 'บันทึกลิงก์ชีทผู้ลงทะเบียนแล้ว (ใช้ร่วมกันทุกเครื่อง) ✓' : 'ลบลิงก์แล้ว');
+    // verify by reading it straight back from storage — proves the write actually landed, not just the local variable
+    let verified = false;
+    try{
+      const check = await window.storage.get('shared_eval_form_url', true);
+      verified = check && check.value === trimmed;
+    }catch(e){}
+    flashSaved(sharedEvalFormUrl ? `บันทึกลิงก์ชีทผู้ลงทะเบียนแล้ว (ใช้ร่วมกันทุกเครื่อง) ${verified ? '✓ ยืนยันแล้ว' : '⚠️ ยังไม่ยืนยัน ลองเช็คอีกครั้ง'}` : 'ลบลิงก์แล้ว');
   } else {
     sharedEvalFormUrl = previous; // roll back the local value so the UI doesn't lie about what's actually saved
     alert('บันทึกไม่สำเร็จ — เครื่องอื่นจะยังไม่เห็นลิงก์นี้ กรุณาลองใหม่อีกครั้ง (เช็คว่าเชื่อมต่ออินเทอร์เน็ตอยู่)');
