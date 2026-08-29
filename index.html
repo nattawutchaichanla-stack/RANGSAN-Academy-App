@@ -1267,7 +1267,7 @@
     <button class="modal-close" id="textInputModalClose">✕</button>
     <h3 id="textInputModalTitle">กรอกข้อความ</h3>
     <p class="hint" id="textInputModalSub"></p>
-    <input type="text" id="textInputModalField" class="pill" style="width:100%; margin-top:10px;">
+    <textarea id="textInputModalField" class="pill" style="width:100%; margin-top:10px; min-height:38px; max-height:160px; resize:vertical; font-family:inherit; box-sizing:border-box; padding-top:9px;" rows="1"></textarea>
     <div style="display:flex; gap:10px; margin-top:18px;">
       <button class="btn ghost" id="textInputModalCancel" style="flex:1;">ยกเลิก</button>
       <button class="btn-arrow" id="textInputModalOk" style="flex:1; justify-content:center;">ยืนยัน<span class="circ">✓</span></button>
@@ -1289,12 +1289,17 @@
 const SUPABASE_URL_KEY = 'rangsan_supabase_url';       // localStorage key, per-device config
 const SUPABASE_ANON_KEY_KEY = 'rangsan_supabase_anon_key'; // localStorage key, per-device config
 const SUPABASE_TABLE = 'storage';
+// ค่าเริ่มต้นของ RANGSAN Academy — ฝังไว้เพื่อไม่ต้องกรอกเองทุกเครื่อง (anon key ออกแบบมาให้ฝังในโค้ดฝั่งหน้าเว็บได้ ความปลอดภัยมาจาก Row Level Security ไม่ใช่การซ่อนคีย์)
+const DEFAULT_SUPABASE_URL = 'https://fidvmovostpqyfawzbyu.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZHZtb3Zvc3RwcXlmYXd6Ynl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MTgyMTEsImV4cCI6MjEwMzQ5NDIxMX0.7rJHyRccmZpziiMr2IlLnwceG7UQ2Ss0oehdFiMS6z8';
 function normalizeUrl(url){
   return url.trim().replace(/\/+$/, ''); // strip any trailing slash so path-building below is consistent
 }
 if(!window.storage){
-  const supabaseUrl = normalizeUrl(localStorage.getItem(SUPABASE_URL_KEY) || '');
-  const supabaseAnonKey = (localStorage.getItem(SUPABASE_ANON_KEY_KEY) || '').trim();
+  // per-device override in localStorage wins if set (e.g. someone deliberately points at a different database);
+  // otherwise every device automatically uses RANGSAN Academy's shared database with no setup step needed
+  const supabaseUrl = normalizeUrl(localStorage.getItem(SUPABASE_URL_KEY) || DEFAULT_SUPABASE_URL);
+  const supabaseAnonKey = (localStorage.getItem(SUPABASE_ANON_KEY_KEY) || DEFAULT_SUPABASE_ANON_KEY).trim();
   const supabaseHeaders = ()=> ({
     apikey: supabaseAnonKey,
     Authorization: 'Bearer ' + supabaseAnonKey,
@@ -1331,7 +1336,10 @@ if(!window.storage){
   };
 }
 function getSupabaseConfig(){
-  return { url: localStorage.getItem(SUPABASE_URL_KEY) || '', anonKey: localStorage.getItem(SUPABASE_ANON_KEY_KEY) || '' };
+  return {
+    url: localStorage.getItem(SUPABASE_URL_KEY) || DEFAULT_SUPABASE_URL,
+    anonKey: localStorage.getItem(SUPABASE_ANON_KEY_KEY) || DEFAULT_SUPABASE_ANON_KEY,
+  };
 }
 function getStorageBackendUrl(){ return getSupabaseConfig().url; } // kept for the first-run onboarding check elsewhere
 function setSupabaseConfig(url, anonKey){
@@ -1340,19 +1348,82 @@ function setSupabaseConfig(url, anonKey){
 }
 async function promptSetStorageBackendUrl(){
   const current = getSupabaseConfig();
-  const url = await askText('ตั้งค่าฐานข้อมูลกลาง (1/2)', 'วาง Supabase Project URL (เช่น https://xxxxxxxx.supabase.co) — ต้องตั้งค่านี้ในทุกเครื่อง/ทุกเบราว์เซอร์ที่จะใช้แอพนี้ ครั้งเดียวต่อเครื่อง', current.url);
-  if(url===null) return;
-  const trimmedUrl = normalizeUrl(url);
-  if(!trimmedUrl){
+  const pasted = await askText(
+    'ตั้งค่าฐานข้อมูลกลาง',
+    'คัดลอกทั้งหน้า Project Settings → API ของ Supabase (ลากคลุมทั้งหมดแล้ว Ctrl+C หรือกด "Select All" บนมือถือ) แล้ววางตรงนี้ทีเดียว — ระบบจะแยก URL กับ key ให้เองอัตโนมัติ',
+    current.url && current.anonKey ? (current.url + '\n' + current.anonKey) : ''
+  );
+  if(pasted===null) return;
+  const trimmedAll = pasted.trim();
+  if(!trimmedAll){
     setSupabaseConfig('', '');
     flashSaved('ลบการตั้งค่าฐานข้อมูลกลางแล้ว');
     return;
   }
-  const anonKey = await askText('ตั้งค่าฐานข้อมูลกลาง (2/2)', 'วาง Supabase anon/public API key (หน้า Project Settings → API)', current.anonKey);
-  if(anonKey===null) return;
-  setSupabaseConfig(trimmedUrl, anonKey.trim());
-  flashSaved('ตั้งค่าฐานข้อมูลกลางแล้ว — กำลังโหลดข้อมูล...');
+  // pull the Project URL and anon/public key out of whatever text was pasted —
+  // works whether the person pasted just the two values or the whole settings page
+  const urlMatch = trimmedAll.match(/https:\/\/[a-z0-9-]+\.supabase\.co/i);
+  const allJwts = trimmedAll.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) || [];
+  // if both anon and service_role keys are present (e.g. the whole settings page was pasted),
+  // specifically pick the one whose role claim is "anon" — never trust position/ordering alone,
+  // and never fall back to service_role even if it's the only key matched, since that key must
+  // stay private and would give this public web page full database access if used here.
+  let anonKey = null;
+  for(const jwt of allJwts){
+    try{
+      const payload = JSON.parse(atob(jwt.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      if(payload.role === 'anon'){ anonKey = jwt; break; }
+    }catch(e){ /* not a decodable Supabase JWT, skip it */ }
+  }
+  if(!urlMatch || !anonKey){
+    const foundServiceRoleOnly = allJwts.length > 0 && !anonKey;
+    alert(
+      !urlMatch || allJwts.length===0
+        ? 'หา URL หรือ key ไม่เจอในข้อความที่วางมาครับ\n\nลองคัดลอกใหม่จากหน้า Project Settings → API ให้แน่ใจว่ามีทั้งบรรทัด Project URL (https://...supabase.co) และ anon public key (ขึ้นต้นด้วย eyJ...) อยู่ในสิ่งที่คัดลอกมาด้วย'
+        : 'เจอ key ในข้อความที่วางมา แต่ไม่ใช่ "anon public" key ครับ (อาจเผลอคัดลอกแต่ service_role มา) กรุณาคัดลอกใหม่ ให้มีบรรทัด "anon public" รวมอยู่ด้วย'
+    );
+    return;
+  }
+  setSupabaseConfig(urlMatch[0], anonKey);
+  flashSaved(`ตั้งค่าฐานข้อมูลกลางแล้ว (พบ URL และ anon key ถูกต้อง) — กำลังโหลดข้อมูล...`);
   location.reload(); // simplest way to re-init window.storage with the new backend and reload all data fresh
+}
+async function testStorageBackendConnection(){
+  const { url, anonKey } = getSupabaseConfig();
+  if(!url || !anonKey){
+    alert('ยังไม่ได้ตั้งค่าฐานข้อมูลกลางเลยครับ กด 🗄️ ตั้งค่าฐานข้อมูลกลาง ก่อน');
+    return;
+  }
+  let report = `Project URL: ${url}\nanon key: ${anonKey.slice(0,20)}...(ตัดให้สั้นลง)\n\n`;
+  try{
+    const writeRes = await fetch(url + '/rest/v1/storage', {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: 'Bearer ' + anonKey,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ key: 'connection_test', value: 'ทดสอบเมื่อ ' + new Date().toLocaleString('th-TH') })
+    });
+    const writeText = await writeRes.text();
+    report += `ทดสอบเขียนข้อมูล (POST):\nHTTP ${writeRes.status} ${writeRes.statusText}\n${writeText || '(ไม่มีเนื้อหาตอบกลับ — ปกติของ POST ที่สำเร็จ)'}\n\n`;
+
+    const readRes = await fetch(url + '/rest/v1/storage?key=eq.connection_test&select=*', {
+      headers: { apikey: anonKey, Authorization: 'Bearer ' + anonKey }
+    });
+    const readText = await readRes.text();
+    report += `ทดสอบอ่านข้อมูล (GET):\nHTTP ${readRes.status} ${readRes.statusText}\n${readText}\n\n`;
+
+    if(writeRes.ok && readRes.ok && readText.includes('connection_test')){
+      report += '✅ เชื่อมต่อสำเร็จ! เขียนและอ่านข้อมูลได้ปกติ';
+    } else {
+      report += '⚠️ มีบางอย่างผิดปกติ ดูรายละเอียด error ด้านบน';
+    }
+  }catch(err){
+    report += `❌ เกิด error ตอนเชื่อมต่อ:\n${err.message}\n\n(อาจเป็นเพราะ URL ผิด, เน็ตหลุด, หรือ Supabase บล็อกการเชื่อมต่อจากเว็บนี้)`;
+  }
+  alert(report);
 }
 
 function openModal(id){
@@ -1855,7 +1926,7 @@ function askText(title, sub, defaultValue){
       closeModal('textInputModalOverlay');
       resolve(val);
     };
-    input.onkeydown = (e)=>{ if(e.key==='Enter') finish(input.value); };
+    input.onkeydown = (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); finish(input.value); } };
     okBtn.onclick = ()=> finish(input.value);
     cancelBtn.onclick = ()=> finish(null);
     closeBtn.onclick = ()=> finish(null);
@@ -3647,6 +3718,7 @@ function renderPLTab(){
       <button class="btn ghost" id="copyBtn">คัดลอกข้อความ</button>
       <button class="btn ghost" id="lineSettingsBtn" title="ตั้งค่าการส่งเข้ากลุ่มอัตโนมัติ">⚙️ ตั้งค่า LINE</button>
       <button class="btn ghost" id="storageSettingsBtn" title="ตั้งค่าที่เก็บข้อมูลกลาง (ต้องตั้งครั้งเดียวต่อเครื่อง)">🗄️ ตั้งค่าฐานข้อมูลกลาง</button>
+      <button class="btn ghost" id="storageTestBtn" title="ทดสอบว่าเชื่อมต่อฐานข้อมูลกลางได้จริงไหม">🧪 ทดสอบการเชื่อมต่อ</button>
     </div>
   `;
 
@@ -3708,6 +3780,7 @@ function renderPLTab(){
   document.getElementById('copyBtn').onclick = (e)=> copySummary(activePLCourse, e.currentTarget);
   document.getElementById('lineSettingsBtn').onclick = promptLineRelayUrl;
   document.getElementById('storageSettingsBtn').onclick = promptSetStorageBackendUrl;
+  document.getElementById('storageTestBtn').onclick = testStorageBackendConnection;
 }
 
 /* ============================= RENDER: MATERIALS & STOCK ============================= */
