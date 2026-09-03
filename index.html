@@ -3392,7 +3392,7 @@ function shakePinDots(){
     s.classList.add('shake');
   });
 }
-function askPin(title, sub, allowClear){
+function askPin(title, sub, clearLinkOption){
   return new Promise((resolve)=>{
     document.getElementById('pinModalTitle').textContent = title || 'กรอกรหัส';
     document.getElementById('pinModalSub').textContent = sub || '';
@@ -3410,7 +3410,12 @@ function askPin(title, sub, allowClear){
     const clearBtn = document.getElementById('pinModalClearBtn');
     const PIN_LENGTH = 6;
 
-    clearWrap.style.display = allowClear ? 'block' : 'none';
+    // clearLinkOption: pass `true` for the standard "cancel lock (don't set a PIN)" link text,
+    // or a custom string (e.g. "ลืมรหัส?") to reuse this same link for a different purpose —
+    // whichever it resolves to, the caller gets back an empty string ('') to distinguish it from cancel (null)
+    const clearLinkText = clearLinkOption === true ? 'ยกเลิกการล็อก (ไม่ตั้งรหัส)' : clearLinkOption;
+    clearWrap.style.display = clearLinkText ? 'block' : 'none';
+    if(clearLinkText) clearBtn.textContent = clearLinkText;
 
     const finish = (val)=>{
       digitKeys.forEach(k=> k.onclick = null);
@@ -5021,11 +5026,15 @@ function syncSellTileFromCart(idx){
   }
 }
 
-function openConfirmTaughtModal(booking){
+function openConfirmTaughtModal(bookingGroup){
+  // accepts an array of bookings that share the same date/course/instructor — confirming applies to all of them at once
+  const bookings = Array.isArray(bookingGroup) ? bookingGroup : [bookingGroup]; // stay compatible if ever called with a single booking
+  const booking = bookings[0]; // course/instructor/date/note are identical across the group by construction
   const course = courseById(booking.courseId);
   const dateStr = booking.date
     ? new Date(booking.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'})
     : '-';
+  const groupSize = bookings.length;
   confirmCart = {};
   confirmTileCategoryFilter = 'ทั้งหมด';
   let confirmTilePage = 0;
@@ -5079,10 +5088,10 @@ function openConfirmTaughtModal(booking){
   };
 
   document.getElementById('reportModalBody').innerHTML = `
-    <h3>✓ ยืนยันว่าสอนแล้ว</h3>
+    <h3>✓ ยืนยันว่าสอนแล้ว${groupSize>1?` (${groupSize} คน)`:''}</h3>
     <p class="hint">${booking.instructor} · ${course ? course.name : '-'} · ${dateStr}</p>
     <div style="display:flex; flex-direction:column; gap:10px;">
-      <input type="number" id="confirmStudentsInput" class="pill" min="1" value="${course ? course.students : 1}" placeholder="จำนวนผู้เรียนจริง">
+      <input type="number" id="confirmStudentsInput" class="pill" min="1" value="${groupSize>1 ? groupSize : (course ? course.students : 1)}" placeholder="จำนวนผู้เรียนจริง">
     </div>
     <div style="margin-top:16px; padding-top:12px; border-top:1px dashed rgba(255,255,255,.2);">
       <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom:8px;">🛍️ แตะสินค้าเพื่อใส่ตะกร้า (ถ้ามี)</div>
@@ -5166,28 +5175,37 @@ function openConfirmTaughtModal(booking){
     if(soldProducts.length && !pendingConfirmSlipDataUrl){
       if(!confirm('ยังไม่ได้แนบสลิปการโอนสำหรับสินค้าที่ขาย ยอดนี้จะไม่ถูกนับเข้าสถิติ "ยอดขายวัตถุดิบในคอร์สสอน"\n\nต้องการดำเนินการต่อโดยไม่แนบสลิปหรือไม่?')) return;
     }
-    confirmBookingTaught(booking, students, soldProducts, pendingConfirmSlipDataUrl);
+    confirmBookingTaught(bookings, students, soldProducts, pendingConfirmSlipDataUrl);
   };
   openModal('reportModalOverlay');
 }
 
-function confirmBookingTaught(booking, students, soldProducts, soldProductsSlip){
-  const idx = sharedBookings.findIndex(b=>
-    b.date===booking.date && b.courseId===booking.courseId && b.instructor===booking.instructor && b.note===booking.note && !b.taught
-  );
-  if(idx>=0){
-    sharedBookings[idx].taught = true;
-    sharedBookings[idx].taughtStudents = students;
-    sharedBookings[idx].soldProducts = soldProducts || [];
-    sharedBookings[idx].soldProductsSlip = soldProductsSlip || '';
-    saveSharedBookings();
-  }
+function confirmBookingTaught(bookingGroup, students, soldProducts, soldProductsSlip){
+  // accepts an array of bookings (same date/course/instructor) that all get confirmed together —
+  // the full student count and any product sale only gets attributed ONCE (to the first booking)
+  // so per-instructor stats that sum taughtStudents/soldProducts across bookings aren't double-counted
+  const bookings = Array.isArray(bookingGroup) ? bookingGroup : [bookingGroup];
+  const booking = bookings[0];
+
+  bookings.forEach((b, i)=>{
+    const idx = sharedBookings.findIndex(sb=>
+      sb.date===b.date && sb.courseId===b.courseId && sb.instructor===b.instructor && sb.note===b.note && !sb.taught
+    );
+    if(idx>=0){
+      sharedBookings[idx].taught = true;
+      sharedBookings[idx].taughtStudents = i===0 ? students : 0; // avoid inflating group-summed stats
+      sharedBookings[idx].soldProducts = i===0 ? (soldProducts || []) : [];
+      sharedBookings[idx].soldProductsSlip = i===0 ? (soldProductsSlip || '') : '';
+    }
+  });
+  saveSharedBookings();
+
   state.teachingLog.push({
     date: booking.date || new Date().toISOString().slice(0,10),
     courseId: booking.courseId,
     instructor: booking.instructor,
     students,
-    note: booking.note || ''
+    note: bookings.length>1 ? `${booking.note||''} (+${bookings.length-1} คนในกลุ่มเดียวกัน)`.trim() : (booking.note || '')
   });
   scheduleSave();
 
@@ -5632,7 +5650,8 @@ async function saveInstructorPins(){
   try{
     await backupBeforeSave('shared_instructor_pins');
     await window.storage.set('shared_instructor_pins', JSON.stringify(instructorPins), true);
-  }catch(e){ console.error('shared pin save failed', e); }
+    return true;
+  }catch(e){ console.error('shared pin save failed', e); return false; }
 }
 
 let retailProducts = []; // [{ id, name, price, photo }] — shared, sold as add-on during class
@@ -6127,8 +6146,9 @@ document.getElementById('instructorManageSaveBtn').onclick = saveInstructorChang
 async function attemptLogin(name){
   const hasPin = !!instructorPins[name];
   if(hasPin){
-    const val = await askPin(`สวัสดี ${name}`, 'กรอกรหัสของคุณเพื่อเข้าสู่ระบบ');
+    const val = await askPin(`สวัสดี ${name}`, 'กรอกรหัสของคุณเพื่อเข้าสู่ระบบ', 'ลืมรหัส?');
     if(val===null) return;
+    if(val===''){ await requestPinResetViaAdmin(name); return; } // clicked "ลืมรหัส?"
     if(val !== instructorPins[name]){ pinError('รหัสไม่ถูกต้อง'); alert('รหัสไม่ถูกต้อง'); return; }
     await saveCurrentUser(name);
     hideLoginScreen();
@@ -6142,6 +6162,30 @@ async function attemptLogin(name){
     await saveInstructorPins();
     await saveCurrentUser(name);
     hideLoginScreen();
+  }
+}
+// forgot-PIN recovery: only ADMIN_NAME (อาจารย์โจ) can authorize setting a brand new PIN for someone else
+async function requestPinResetViaAdmin(name){
+  if(!sharedAdminPin){
+    alert(`ยังไม่ได้ตั้งรหัสแอดมินในระบบ — ต้องให้ ${ADMIN_NAME} ตั้งรหัสแอดมินก่อน ถึงจะใช้ฟีเจอร์ "ลืมรหัส" ได้`);
+    return;
+  }
+  const adminVal = await askPin(`ยืนยันโดย ${ADMIN_NAME}`, `ให้ ${ADMIN_NAME} กรอกรหัสแอดมิน เพื่ออนุญาตให้ ${name} ตั้งรหัสใหม่`);
+  if(adminVal === null) return;
+  if(adminVal !== sharedAdminPin){ alert('รหัสแอดมินไม่ถูกต้อง'); return; }
+
+  // admin approved — let the person set a brand new PIN right now, same flow as first-time setup
+  const val1 = await askPin(`ตั้งรหัสใหม่ — ${name}`, 'อนุมัติแล้ว — กรอกรหัส 6 หลักใหม่ของคุณ');
+  if(val1===null || val1.trim()==='') return;
+  const val2 = await askPin('ยืนยันรหัส', 'กรอกรหัสเดิมอีกครั้งเพื่อยืนยัน');
+  if(val2===null) return;
+  if(val1 !== val2){ alert('รหัสทั้งสองครั้งไม่ตรงกัน กรุณาลองใหม่'); return; }
+  instructorPins[name] = val1;
+  const ok = await saveInstructorPins();
+  if(ok){
+    flashSaved(`ตั้งรหัสใหม่ให้ ${name} เรียบร้อยแล้ว ✓`);
+  } else {
+    alert('บันทึกรหัสใหม่ไม่สำเร็จ — กรุณาลองใหม่อีกครั้ง');
   }
 }
 
@@ -6571,6 +6615,21 @@ function renderLogTab(){
       ? new Date(dateKey+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'short'})
       : 'ไม่ระบุวันที่';
     const allTaught = bookings.every(b=> b.taught);
+
+    // group bookings that share the same course + instructor on this day — normally everyone on
+    // a given day is in the same class, so one "confirm taught" action should cover the whole group
+    // instead of requiring a separate click per person
+    const groupKey = b => `${b.courseId}__${b.instructor}`;
+    const untaughtGroupCounts = {};
+    bookings.forEach(b=>{
+      if(b.taught) return;
+      const needsInstructor = !b.instructor || b.instructor === 'ยังไม่ระบุ';
+      if(needsInstructor) return;
+      const key = groupKey(b);
+      untaughtGroupCounts[key] = (untaughtGroupCounts[key]||0) + 1;
+    });
+    const confirmedGroupKeys = new Set(); // only render the group's one confirm button on its first row
+
     const rows = bookings.map(b=>{
       const initial = (b.instructor||'?').replace('อาจารย์','').trim().charAt(0) || '?';
       const color = instructorColor(b.instructor);
@@ -6578,8 +6637,17 @@ function renderLogTab(){
       const avatarContent = photo
         ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
         : initial;
-      const bookingRef = JSON.stringify({courseId:b.courseId, date:b.date, instructor:b.instructor, note:b.note||''}).replace(/"/g,'&quot;');
       const needsInstructor = !b.instructor || b.instructor === 'ยังไม่ระบุ';
+      const key = groupKey(b);
+      const groupSize = untaughtGroupCounts[key] || 0;
+      let confirmButtonHtml = '';
+      if(!b.taught && !needsInstructor && !confirmedGroupKeys.has(key)){
+        confirmedGroupKeys.add(key);
+        const groupBookings = bookings.filter(bb=> !bb.taught && !(!bb.instructor || bb.instructor==='ยังไม่ระบุ') && groupKey(bb)===key);
+        const groupRefs = JSON.stringify(groupBookings.map(bb=>({courseId:bb.courseId, date:bb.date, instructor:bb.instructor, note:bb.note||''}))).replace(/"/g,'&quot;');
+        const label = groupSize > 1 ? `✓ ยืนยันสอนแล้ว (ทั้งหมด ${groupSize} คน)` : '✓ ยืนยันสอนแล้ว';
+        confirmButtonHtml = `<button class="btn small" data-confirm-taught-group="${groupRefs}" style="margin-top:8px; background:var(--sage);">${label}</button>`;
+      }
       return `
       <div style="display:flex; gap:10px; padding:12px 0; align-items:flex-start; ${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
@@ -6596,7 +6664,7 @@ function renderLogTab(){
           </div>
           ${b.note ? `<div class="ac-field"><b>NOTE</b> ${b.note}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
-          ${!b.taught && !needsInstructor ? `<button class="btn small" data-confirm-taught="${bookingRef}" style="margin-top:8px; background:var(--sage);">✓ ยืนยันสอนแล้ว</button>` : ''}
+          ${confirmButtonHtml}
         </div>
         ${needsInstructor ? '' : `<div class="ac-avatar" style="background:${color}; cursor:pointer; width:50px; height:50px;" data-profile-instructor="${b.instructor}" data-profile-course="${b.courseId}" data-profile-date="${b.date}" data-profile-note="${(b.note||'').replace(/"/g,'&quot;')}">${avatarContent}</div>`}
         <button class="ac-del" data-del-booking="${b._idx}" title="ลบการจองนี้" style="position:static; flex:none; margin-top:2px;">✕</button>
@@ -6639,12 +6707,12 @@ function renderLogTab(){
         renderCalendar();
       };
     });
-    container.querySelectorAll('[data-confirm-taught]').forEach(btn=>{
+    container.querySelectorAll('[data-confirm-taught-group]').forEach(btn=>{
       btn.onclick = async (e)=>{
         e.stopPropagation();
-        const booking = JSON.parse(btn.dataset.confirmTaught);
+        const bookingGroup = JSON.parse(btn.dataset.confirmTaughtGroup);
         await loadRetailProducts(); // make sure the product list is fresh no matter which tab was open last
-        openConfirmTaughtModal(booking);
+        openConfirmTaughtModal(bookingGroup);
       };
     });
     container.querySelectorAll('[data-assign-instructor]').forEach(sel=>{
