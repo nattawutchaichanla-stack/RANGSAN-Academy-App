@@ -6280,10 +6280,25 @@ function openQcDetail(id){
 }
 
 let pendingSlipDataUrl = null;
-function openPaymentModal(items){
+function waitForQrcodeLib(timeoutMs=4000){
+  return new Promise(resolve=>{
+    if(typeof qrcode === 'function'){ resolve(true); return; }
+    const start = Date.now();
+    const check = ()=>{
+      if(typeof qrcode === 'function'){ resolve(true); return; }
+      if(Date.now() - start >= timeoutMs){ resolve(false); return; }
+      setTimeout(check, 150);
+    };
+    check();
+  });
+}
+async function openPaymentModal(items){
   const total = items.reduce((s,p)=> s+p.price*p.qty, 0);
   pendingSlipDataUrl = null;
-  const qrSvg = promptPayQrSvg(sharedPromptPayId, total); // generated locally, no external network call
+  document.getElementById('reportModalBody').innerHTML = `<div style="text-align:center; padding:30px 10px; color:#948a78; font-size:12.5px;">กำลังเตรียม QR ชำระเงิน...</div>`;
+  openModal('reportModalOverlay');
+  await waitForQrcodeLib(); // give the QR-generator library a moment to finish loading before giving up
+  const qrSvg = promptPayQrSvg(sharedPromptPayId, total); // generated locally, no external network call once the library is ready
 
   document.getElementById('reportModalBody').innerHTML = `
     <div style="text-align:center; margin-bottom:4px;">
