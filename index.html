@@ -6297,8 +6297,14 @@ async function openPaymentModal(items){
   pendingSlipDataUrl = null;
   document.getElementById('reportModalBody').innerHTML = `<div style="text-align:center; padding:30px 10px; color:#948a78; font-size:12.5px;">กำลังเตรียม QR ชำระเงิน...</div>`;
   openModal('reportModalOverlay');
-  await waitForQrcodeLib(); // give the QR-generator library a moment to finish loading before giving up
-  const qrSvg = promptPayQrSvg(sharedPromptPayId, total); // generated locally, no external network call once the library is ready
+  let qrSvg = null;
+  try{
+    await waitForQrcodeLib(); // give the QR-generator library a moment to finish loading before giving up
+    qrSvg = promptPayQrSvg(sharedPromptPayId, total); // generated locally, no external network call once the library is ready
+  }catch(err){
+    console.error('QR preparation failed', err);
+    qrSvg = null; // fall through to the "failed, tap to retry" state below instead of hanging on the loading message forever
+  }
 
   document.getElementById('reportModalBody').innerHTML = `
     <div style="text-align:center; margin-bottom:4px;">
@@ -6435,8 +6441,6 @@ async function openPaymentModal(items){
       criticalOpInProgress = false;
     }
   };
-
-  openModal('reportModalOverlay');
 }
 
 let showAllSalesHistory = false;
