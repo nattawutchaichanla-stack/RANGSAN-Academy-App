@@ -3198,6 +3198,9 @@ async function syncBookingsFromGoogleForm(){
     const phoneIdx = findCol(['เบอร์โทร']);
     const lineIdx = findCol(['LINE']);
     const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
+    const allergyIdx = findCol(['แพ้นมวัว', 'แพ้อาหาร', 'แพ้']);
+    const occupationIdx = findCol(['กลุ่มอาชีพ', 'อาชีพ']);
+    const incomeIdx = findCol(['รายได้']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
     let added = 0, skipped = 0, unmatched = 0;
@@ -3208,6 +3211,14 @@ async function syncBookingsFromGoogleForm(){
       const phone = phoneIdx>=0 ? r[phoneIdx] : '';
       const line = lineIdx>=0 ? r[lineIdx] : '';
       const rawDate = dateIdx>=0 ? r[dateIdx] : '';
+      const rawAllergy = allergyIdx>=0 ? (r[allergyIdx]||'').trim() : '';
+      // only surface it as a special note when the answer actually indicates an allergy —
+      // skip blank / "ไม่แพ้..." (not allergic) style answers so the card isn't cluttered with negatives
+      // only suppress a plain "ไม่แพ้" (not allergic, nothing else) answer — keep anything with
+      // extra detail even if it starts with "ไม่แพ้" (e.g. "ไม่แพ้แต่มีปัญหาการย่อย"), since that's still useful to know
+      const allergy = (rawAllergy && rawAllergy !== 'ไม่แพ้') ? rawAllergy : '';
+      const occupation = occupationIdx>=0 ? (r[occupationIdx]||'').trim() : '';
+      const income = incomeIdx>=0 ? (r[incomeIdx]||'').trim() : '';
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
@@ -3220,6 +3231,8 @@ async function syncBookingsFromGoogleForm(){
         courseId,
         instructor: 'ยังไม่ระบุ',
         note: `จากฟอร์มลงทะเบียน: ${name}${phone ? ' · '+phone : ''}${line ? ' · LINE: '+line : ''}`,
+        allergy,
+        occupation, income,
         customerName: name, customerPhone: phone, customerLine: line,
         source: 'google_form',
         syncKey,
@@ -6678,6 +6691,8 @@ function renderLogTab(){
           </div>
           ${b.note ? `<div class="ac-field"><b>NOTE</b> ${b.note}</div>` : ''}
           ${b.allergy ? `<div class="ac-field" style="color:#ff9d8a;"><b style="color:#ff9d8a;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
+          ${b.occupation ? `<div class="ac-field"><b>อาชีพ</b> ${b.occupation}</div>` : ''}
+          ${b.income ? `<div class="ac-field"><b>รายได้</b> ${b.income}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${confirmButtonHtml}
         </div>
