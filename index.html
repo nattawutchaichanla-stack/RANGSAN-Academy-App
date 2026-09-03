@@ -2684,6 +2684,7 @@ var qrcode = function() {
       <select id="newBookingCourse" class="pill"></select>
       <select id="newBookingInstructor" class="pill"></select>
       <input type="text" id="newBookingNote" placeholder="หมายเหตุ เช่น ยืนยันแล้ว" class="pill">
+      <input type="text" id="newBookingAllergy" placeholder="ข้อความพิเศษ / แพ้อาหาร (ถ้ามี)" class="pill">
       <button class="btn-arrow" id="addBookingBtn" style="justify-content:center;">จองคิวสอน<span class="circ">+</span></button>
     </div>
   </div>
@@ -6676,6 +6677,7 @@ function renderLogTab(){
             </select>
           </div>
           ${b.note ? `<div class="ac-field"><b>NOTE</b> ${b.note}</div>` : ''}
+          ${b.allergy ? `<div class="ac-field" style="color:#ff9d8a;"><b style="color:#ff9d8a;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${confirmButtonHtml}
         </div>
@@ -6795,6 +6797,7 @@ function renderLogTab(){
     document.getElementById('newBookingCourse').innerHTML = state.courses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('newBookingInstructor').innerHTML = state.instructors.map(n=>`<option value="${n}" ${n===currentUser?'selected':''}>${n}</option>`).join('');
     document.getElementById('newBookingNote').value = '';
+    document.getElementById('newBookingAllergy').value = '';
     openModal('bookingModalOverlay');
   };
   document.getElementById('openBookingModalBtn').onclick = ()=> openBookingModalPrefilled();
@@ -6803,7 +6806,8 @@ function renderLogTab(){
     const courseId = document.getElementById('newBookingCourse').value;
     const instructor = document.getElementById('newBookingInstructor').value;
     const note = document.getElementById('newBookingNote').value.trim();
-    sharedBookings.push({ date, courseId, instructor, note });
+    const allergy = document.getElementById('newBookingAllergy').value.trim();
+    sharedBookings.push({ date, courseId, instructor, note, allergy });
     saveSharedBookings();
     renderBookingCards();
     renderCalendar();
