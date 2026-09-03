@@ -382,6 +382,53 @@
   .pin-key-icon{ background:none; color:#fff; }
   .pin-key-icon:active{ background:rgba(255,255,255,.1); }
 
+  /* ---------- instructor showcase (before the login screen) ---------- */
+  #instructorShowcase{
+    position:fixed; inset:0; z-index:250;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(220,167,61,.18), transparent 50%),
+      radial-gradient(circle at 85% 85%, rgba(84,43,13,.4), transparent 50%),
+      linear-gradient(165deg, #0B0908 0%, #0B2A15 60%, #0B0908 100%);
+    display:flex; align-items:center; justify-content:center; flex-direction:column; padding:20px;
+    transition:opacity .5s ease, visibility .5s ease;
+  }
+  #instructorShowcase.showcase-hide{ opacity:0; visibility:hidden; pointer-events:none; }
+  .showcase-frame{ width:100%; max-width:400px; overflow:hidden; position:relative; }
+  .showcase-photo-wrap{
+    width:min(260px,72vw); height:min(320px,88vw); flex:none;
+    display:flex; align-items:center; justify-content:center; margin:0 auto;
+    background:linear-gradient(150deg,#21201D,#131110);
+    font-family:'Fraunces',serif; font-weight:700; font-size:76px; color:#fff;
+    animation: showcaseSlideIn 1.3s cubic-bezier(.16,.84,.28,1);
+  }
+  .showcase-photo-wrap img{ width:100%; height:100%; object-fit:cover; }
+  @keyframes showcaseSlideIn{
+    0%{ transform:translateX(120%); opacity:0; }
+    65%{ opacity:1; }
+    100%{ transform:translateX(0); opacity:1; }
+  }
+  .showcase-name{
+    margin-top:26px; font-family:'Fraunces',serif; font-style:italic; font-weight:600;
+    font-size:26px; color:#fff; letter-spacing:.5px; text-align:center;
+    animation: showcaseFadeUp 1s cubic-bezier(.16,.84,.28,1) .25s both;
+  }
+  .showcase-role{
+    margin-top:6px; font-size:11px; letter-spacing:3px; color:var(--gold); text-transform:uppercase;
+    animation: showcaseFadeUp 1s cubic-bezier(.16,.84,.28,1) .38s both;
+  }
+  @keyframes showcaseFadeUp{
+    0%{ opacity:0; transform:translateX(50px); }
+    100%{ opacity:1; transform:translateX(0); }
+  }
+  .showcase-dots{ display:flex; gap:8px; margin-top:34px; }
+  .showcase-dots span{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.25); transition:.25s; }
+  .showcase-dots span.active{ background:var(--gold); width:22px; border-radius:4px; }
+  .showcase-skip{
+    position:absolute; bottom:34px; background:none; border:1px solid rgba(255,255,255,.3); color:rgba(255,255,255,.75);
+    padding:8px 22px; border-radius:999px; font-size:12px; cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .showcase-skip:active{ background:rgba(255,255,255,.1); }
+
   /* ---------- game-style stat panel ---------- */
   .stat-panel{
     background:linear-gradient(160deg,#1B1815,#0E0C0A); border:1px solid rgba(220,167,61,.3);
@@ -1019,6 +1066,16 @@
       <div class="splash-dots"><span></span><span></span><span></span></div>
     </div>
   </div>
+</div>
+
+<div id="instructorShowcase" class="showcase-hide">
+  <div class="showcase-frame">
+    <div class="showcase-photo-wrap" id="showcasePhotoWrap"></div>
+  </div>
+  <div class="showcase-name" id="showcaseName"></div>
+  <div class="showcase-role">RANGSAN ACADEMY · INSTRUCTOR</div>
+  <div class="showcase-dots" id="showcaseDots"></div>
+  <button type="button" class="showcase-skip" id="showcaseSkipBtn">ข้าม ›</button>
 </div>
 
 <div id="loginScreen" style="display:none;">
@@ -4648,6 +4705,43 @@ function resizeImageFile(file, maxSize=140, quality=0.82){
     reader.readAsDataURL(file);
   });
 }
+// instructor photos only: same resize as above, but also makes near-white background pixels
+// transparent (simple color-threshold cutout) so a plain white studio backdrop doesn't show as
+// a white box in the app — works best on photos with a clean, evenly-lit white/light background.
+function resizeInstructorPhoto(file, maxSize=220){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxSize / Math.max(w,h));
+        w = Math.round(w*scale); h = Math.round(h*scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try{
+          const imageData = ctx.getImageData(0, 0, w, h);
+          const data = imageData.data;
+          const threshold = 232; // pixels brighter than this on all channels are treated as background
+          for(let i=0; i<data.length; i+=4){
+            const r = data[i], g = data[i+1], b = data[i+2];
+            if(r > threshold && g > threshold && b > threshold){
+              data[i+3] = 0; // make fully transparent
+            }
+          }
+          ctx.putImageData(imageData, 0, 0);
+        }catch(e){ /* if pixel access fails for any reason, just keep the plain resized photo */ }
+        resolve(canvas.toDataURL('image/png')); // PNG needed to preserve the transparency
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 function renderLogTab(){
   const el = document.getElementById('tab-log');
@@ -4868,7 +4962,7 @@ function renderLogTab(){
       if(!file) return;
       const name = e.target.dataset.instructor;
       try{
-        const dataUrl = await resizeImageFile(file);
+        const dataUrl = await resizeInstructorPhoto(file);
         instructorPhotos[name] = dataUrl;
         await saveInstructorPhotos();
         renderLogTab();
@@ -6966,6 +7060,52 @@ function playHeroIntro(){
   });
 }
 
+// large sliding showcase of each instructor's photo, shown once right before the login screen
+function playInstructorShowcase(){
+  return new Promise(resolve=>{
+    const names = (state && state.instructors) ? state.instructors : [];
+    const showcase = document.getElementById('instructorShowcase');
+    if(!names.length || !showcase){ resolve(); return; }
+    const photoWrap = document.getElementById('showcasePhotoWrap');
+    const nameEl = document.getElementById('showcaseName');
+    const dotsEl = document.getElementById('showcaseDots');
+    const skipBtn = document.getElementById('showcaseSkipBtn');
+    const SLIDE_MS = 3200; // slower slide-in animation (1.3s) needs more time on screen before advancing
+
+    dotsEl.innerHTML = names.map(()=> `<span></span>`).join('');
+    showcase.classList.remove('showcase-hide');
+
+    let idx = 0;
+    let timer = null;
+    const finish = ()=>{
+      clearTimeout(timer);
+      showcase.classList.add('showcase-hide');
+      skipBtn.onclick = null;
+      setTimeout(resolve, 480); // let the fade-out transition finish before continuing to the login screen
+    };
+    const showSlide = ()=>{
+      const name = names[idx];
+      const photo = instructorPhotos[name];
+      const initial = (name||'?').replace('อาจารย์','').trim().charAt(0) || '?';
+      photoWrap.innerHTML = photo ? `<img src="${photo}">` : initial;
+      // restart the slide-in animation on every change
+      photoWrap.style.animation = 'none'; void photoWrap.offsetWidth; photoWrap.style.animation = '';
+      nameEl.style.animation = 'none'; void nameEl.offsetWidth; nameEl.style.animation = '';
+      nameEl.textContent = name;
+      dotsEl.querySelectorAll('span').forEach((d,i)=> d.classList.toggle('active', i===idx));
+    };
+    showSlide();
+    skipBtn.onclick = finish;
+    const advance = ()=>{
+      idx++;
+      if(idx >= names.length){ finish(); return; }
+      showSlide();
+      timer = setTimeout(advance, SLIDE_MS);
+    };
+    timer = setTimeout(advance, SLIDE_MS);
+  });
+}
+
 /* ============================= INIT ============================= */
 async function refreshAllSharedData(){
   await Promise.all([
@@ -7139,6 +7279,7 @@ document.addEventListener('visibilitychange', ()=>{
 
   // always require picking your name + entering your PIN on every app open — never auto-skip login,
   // even if a previous session was remembered, so the device can't stay silently logged in as someone else
+  await playInstructorShowcase();
   showLoginScreen();
 })();
 </script>
