@@ -279,10 +279,14 @@
 
   #loginScreen{
     position:fixed; inset:0; z-index:100;
-    background:
-      radial-gradient(circle at 20% 10%, rgba(220,167,61,.22), transparent 45%),
-      radial-gradient(circle at 85% 15%, rgba(84,43,13,.35), transparent 42%),
-      linear-gradient(160deg, #0B2A15 0%, #165028 55%, #0B2A15 100%);
+    background-color:#0B2A15; /* opaque fallback so the page behind never bleeds through, even if the photo below is slow to load or fails */
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(220,167,61,.3), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(84,43,13,.45), transparent 42%),
+      linear-gradient(160deg, rgba(11,42,21,.75) 0%, rgba(22,80,40,.68) 55%, rgba(11,42,21,.8) 100%),
+      url('https://images.unsplash.com/photo-1690983323458-ec4a54fc9552?fm=jpg&q=70&w=1200&auto=format&fit=crop');
+    background-size: cover, cover, cover, cover;
+    background-position: center, center, center, center;
     display:flex; align-items:center; justify-content:center; padding:20px;
   }
   .login-box{ width:100%; max-width:380px; text-align:center; }
@@ -291,10 +295,12 @@
   .user-picker{ display:flex; justify-content:center; gap:18px; flex-wrap:wrap; }
   .user-option{
     display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;
-    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:18px;
+    background:rgba(11,20,14,.55); border:1px solid rgba(255,255,255,.35); border-radius:18px;
     padding:16px 14px; width:100px; transition:.15s;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    box-shadow:0 4px 16px rgba(0,0,0,.35);
   }
-  .user-option:active{ transform:scale(.94); background:rgba(220,167,61,.22); }
+  .user-option:active{ transform:scale(.94); background:rgba(220,167,61,.35); }
   .user-option .uo-avatar{
     width:64px; height:64px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
     font-family:'IBM Plex Mono'; font-weight:700; font-size:24px; color:#fff; border:2px solid var(--gold);
@@ -334,15 +340,15 @@
 
   /* ---------- pin entry modal ---------- */
   .pin-lock{
-    width:56px; height:56px; margin:4px auto 10px; border-radius:50%;
+    width:44px; height:44px; margin:0 auto 6px; border-radius:50%;
     background:rgba(220,167,61,.16); border:1.5px solid rgba(220,167,61,.4);
-    display:flex; align-items:center; justify-content:center; font-size:24px;
+    display:flex; align-items:center; justify-content:center; font-size:19px;
   }
   .pin-dots{
-    display:flex; justify-content:center; gap:12px; margin:18px 0 6px;
+    display:flex; justify-content:center; gap:10px; margin:12px 0 4px;
   }
   .pin-dots span{
-    width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(220,167,61,.5);
+    width:13px; height:13px; border-radius:50%; border:1.5px solid rgba(220,167,61,.5);
     background:rgba(255,255,255,.04); transition:.15s;
   }
   .pin-dots span.filled{ background:var(--gold); border-color:var(--gold); transform:scale(1.1); }
@@ -355,22 +361,23 @@
   .pin-hidden-input{
     position:absolute; opacity:0; width:1px; height:1px; pointer-events:none;
   }
-  .pin-error{ min-height:16px; color:#ff9d8a; font-size:12px; font-weight:600; margin-top:6px; }
-  .pin-modal-box{ max-width:320px; }
+  .pin-error{ min-height:14px; color:#ff9d8a; font-size:11px; font-weight:600; margin-top:4px; }
+  .pin-modal-box{ max-width:300px; padding:18px !important; }
+  .pin-modal-box .hint{ margin:0 0 4px; font-size:11.5px; }
   .pin-keypad{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:14px 18px;
-    margin-top:22px; justify-items:center;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px 14px;
+    margin-top:14px; justify-items:center;
   }
   .pin-key{
-    width:68px; height:68px; border-radius:50%; border:none; cursor:pointer;
+    width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
     background:rgba(255,255,255,.07); color:#fff;
-    font-family:'IBM Plex Sans Thai',sans-serif; font-size:26px; font-weight:500;
+    font-family:'IBM Plex Sans Thai',sans-serif; font-size:22px; font-weight:500;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     line-height:1; -webkit-tap-highlight-color:transparent; transition:background .12s, transform .08s;
   }
   .pin-key:active{ background:rgba(255,255,255,.18); transform:scale(.94); }
-  .pin-key-sub{ font-size:8.5px; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,.65); margin-top:1px; }
-  .pin-key-text{ background:none; font-size:13px; font-weight:600; color:var(--gold); }
+  .pin-key-sub{ font-size:7.5px; font-weight:700; letter-spacing:1.2px; color:rgba(255,255,255,.65); margin-top:1px; }
+  .pin-key-text{ background:none; font-size:12px; font-weight:600; color:var(--gold); }
   .pin-key-text:active{ background:rgba(220,167,61,.12); }
   .pin-key-icon{ background:none; color:#fff; }
   .pin-key-icon:active{ background:rgba(255,255,255,.1); }
@@ -649,42 +656,54 @@
     .cal-dow{ font-size:9px; }
   }
   .agent-card{
-    position:relative; border-radius:14px; overflow:hidden; color:#EDEAE2;
+    position:relative; border-radius:12px; overflow:hidden; color:#EDEAE2;
     background:
-      repeating-linear-gradient(-45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 14px),
-      linear-gradient(155deg, #21201D 0%, #131110 100%);
-    border:1px solid rgba(220,167,61,.28);
-    box-shadow:0 8px 22px rgba(0,0,0,.28);
+      radial-gradient(circle at 15% 0%, rgba(220,167,61,.10), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(220,167,61,.06), transparent 50%),
+      linear-gradient(155deg, #1C1917 0%, #0C0A09 100%);
+    border:1px solid rgba(220,167,61,.55);
+    box-shadow:0 10px 28px rgba(0,0,0,.4), inset 0 0 0 3px rgba(11,9,8,.9), inset 0 0 0 4px rgba(220,167,61,.22);
     font-family:'IBM Plex Sans Thai';
   }
-  .ac-header{
-    display:flex; align-items:center; gap:8px; padding:9px 12px;
-    background:rgba(220,167,61,.14); border-bottom:1px solid rgba(220,167,61,.3);
+  .agent-card::before, .agent-card::after{
+    content:''; position:absolute; width:9px; height:9px; border:1.5px solid rgba(220,167,61,.65); z-index:2; pointer-events:none;
   }
-  .ac-logo{ width:20px; height:20px; flex:none; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-weight:700; font-size:11px; color:var(--ink); }
-  .ac-title{ font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:2px; font-weight:600; color:var(--gold); flex:1; }
-  .ac-id{ font-family:'IBM Plex Mono'; font-size:10.5px; color:#9c9488; }
+  .agent-card::before{ top:7px; left:7px; border-right:none; border-bottom:none; }
+  .agent-card::after{ bottom:7px; right:7px; border-left:none; border-top:none; }
+  .ac-header{
+    display:flex; align-items:center; gap:9px; padding:12px 16px 10px;
+    border-bottom:1px solid rgba(220,167,61,.32);
+  }
+  .ac-logo{
+    width:22px; height:22px; flex:none; border-radius:50%;
+    background:linear-gradient(150deg,#F0CB6E,var(--gold)); display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:12.5px; color:var(--ink);
+    box-shadow:0 1px 4px rgba(220,167,61,.5);
+  }
+  .ac-title{ font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:13.5px; letter-spacing:1.4px; color:var(--gold); flex:1; }
+  .ac-id{ font-family:'Fraunces',serif; font-size:10.5px; letter-spacing:1.2px; color:#8a8178; font-style:italic; }
   .ac-del{
     position:absolute; top:8px; right:8px; z-index:2; width:22px; height:22px; border-radius:50%;
     background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); color:#EDEAE2; font-size:12px;
     cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;
   }
   .ac-del:hover{ background:var(--alert); border-color:var(--alert); }
-  .ac-body{ display:flex; gap:10px; padding:14px; align-items:center; }
-  .ac-info{ flex:1; min-width:0; }
-  .ac-name{ font-size:16px; font-weight:700; margin-bottom:6px; color:#fff; }
-  .ac-field{ font-size:11.5px; color:#C9C2B6; margin:3px 0; }
-  .ac-field b{ display:inline-block; min-width:58px; font-family:'IBM Plex Mono'; font-size:9.5px; letter-spacing:1px; color:#9c9488; font-weight:600; }
-  .ac-hr{ border:none; border-top:1px dashed rgba(220,167,61,.3); margin:8px 0; }
+  .ac-body{ display:flex; gap:12px; padding:16px; align-items:flex-start; }
+  .ac-info{ flex:1; min-width:0; font-family:'Noto Serif Thai',serif; }
+  .ac-name{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin-bottom:8px; color:#fff; letter-spacing:.3px; }
+  .ac-field{ font-size:12px; color:#D9D2C4; margin:6px 0; line-height:1.55; }
+  .ac-field b{ display:inline-block; min-width:62px; font-family:'Fraunces',serif; font-style:italic; font-size:10.5px; letter-spacing:1px; color:var(--gold); font-weight:600; }
+  .ac-hr{ border:none; border-top:1px dashed rgba(220,167,61,.35); margin:9px 0; }
   .ac-stamp{
-    display:inline-flex; align-items:center; gap:5px; margin-top:8px; padding:3px 10px;
-    border:1.5px solid var(--sage); border-radius:5px; transform:rotate(-3deg);
-    font-family:'IBM Plex Mono'; font-size:10px; font-weight:700; letter-spacing:1.5px; color:#8FCB9E;
+    display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:5px 14px 5px 12px;
+    border:1.5px solid var(--sage); border-radius:999px; transform:rotate(-2deg);
+    font-family:'Fraunces',serif; font-size:10.5px; font-weight:700; letter-spacing:1.4px; color:#8FCB9E;
+    background:rgba(143,203,158,.06);
   }
   .ac-avatar{
-    flex:none; width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-family:'IBM Plex Mono'; font-weight:700; font-size:20px; color:#fff;
-    border:2px solid rgba(220,167,61,.5);
+    flex:none; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:21px; color:#fff;
+    border:2px solid var(--gold); box-shadow:0 0 0 3px rgba(220,167,61,.18), 0 2px 10px rgba(0,0,0,.35); margin-top:2px;
   }
 
   /* ---------- retail product card ---------- */
@@ -825,26 +844,47 @@
 
   /* ---------- light/elegant cart variant (used on light card backgrounds, e.g. Sell tab) ---------- */
   .cart-box.light{
+    position:relative; margin-top:16px; padding:16px;
     background:linear-gradient(160deg,#FFFDF8,#FBF3E0);
-    border:1.5px solid rgba(220,167,61,.5);
-    box-shadow:0 2px 10px rgba(139,110,43,.08);
+    border:1px solid rgba(220,167,61,.6); border-radius:16px;
+    box-shadow:0 4px 16px rgba(139,110,43,.12), inset 0 0 0 3px #fff, inset 0 0 0 4px rgba(220,167,61,.35);
   }
-  .cart-box.light .cart-title{ color:#8F5A26; }
-  .cart-box.light .cart-empty{ color:#a8987a; }
-  .cart-box.light .cart-line-img{ background:rgba(139,110,43,.08); }
-  .cart-box.light .cart-line-name{ color:var(--ink); }
-  .cart-box.light .cart-line-price{ color:#948a78; }
+  .cart-box.light::before, .cart-box.light::after{
+    content:''; position:absolute; width:9px; height:9px; border:1.5px solid rgba(220,167,61,.7); z-index:1; pointer-events:none;
+  }
+  .cart-box.light::before{ top:7px; left:7px; border-right:none; border-bottom:none; }
+  .cart-box.light::after{ bottom:7px; right:7px; border-left:none; border-top:none; }
+  .cart-box.light .cart-title{ font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:14px; letter-spacing:.5px; color:#8F5A26; }
+  .cart-box.light .cart-empty{ color:#a8987a; font-family:'Noto Serif Thai',serif; }
+  .cart-box.light .cart-line-img{ background:rgba(139,110,43,.08); border:1px solid rgba(220,167,61,.3); }
+  .cart-box.light .cart-line-name{ font-family:'Noto Serif Thai',serif; font-weight:600; color:var(--ink); }
+  .cart-box.light .cart-line-price{ font-family:'Noto Serif Thai',serif; color:#948a78; }
   .cart-box.light .cart-line-stepper button{
-    border:1px solid rgba(139,110,43,.3); background:#fff; color:var(--ink);
+    border:1px solid rgba(220,167,61,.5); background:#fff; color:#8F5A26; box-shadow:0 1px 3px rgba(139,110,43,.15);
   }
   .cart-box.light .cart-line-stepper button:active{ background:var(--gold); color:#fff; border-color:var(--gold); }
-  .cart-box.light .cart-line-stepper span{ color:var(--ink); }
+  .cart-box.light .cart-line-stepper span{ color:var(--ink); font-family:'Fraunces',serif; font-weight:600; }
   .cart-box.light .cart-remove{ color:#b5a688; }
   .cart-box.light .cart-remove:active{ color:var(--alert); }
   .cart-box.light .cart-total-row{
     border-top:1px dashed rgba(220,167,61,.4); color:var(--ink);
+    align-items:baseline;
   }
-  .cart-box.light .cart-total-row .mono{ color:#8F5A26; }
+  .cart-box.light .cart-total-row span:first-child{ font-family:'Fraunces',serif; font-style:italic; font-size:12px; letter-spacing:.5px; color:#8F5A26; font-weight:600; }
+  .cart-box.light .cart-total-row .mono{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; color:#8F5A26; letter-spacing:.3px; }
+
+  .btn-arrow-luxe{
+    display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:16px;
+    padding:12px 20px; border-radius:999px; border:1px solid rgba(220,167,61,.6); cursor:pointer;
+    background:linear-gradient(160deg,#21201D 0%,#131110 100%);
+    color:#fff; font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:15px; letter-spacing:.4px;
+    box-shadow:0 6px 18px rgba(0,0,0,.25); transition:.15s;
+  }
+  .btn-arrow-luxe:active{ transform:scale(.97); background:linear-gradient(160deg,#2A2824,#1a1815); }
+  .btn-arrow-luxe .circ{
+    width:30px; height:30px; border-radius:50%; background:var(--gold); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; flex:none; font-style:normal;
+  }
 
   /* ---------- quick-pick name card ---------- */
   .name-card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:9px; margin-bottom:16px; }
@@ -986,6 +1026,23 @@
     <div class="login-title">RANGSAN Academy</div>
     <div class="login-sub">เลือกผู้ใช้งานของคุณเพื่อเข้าสู่แอพ</div>
     <div class="user-picker" id="userPicker"></div>
+    <div style="margin-top:22px;">
+      <button type="button" id="manageInstructorsLink" style="background:none; border:none; color:rgba(255,255,255,.65); font-size:12px; text-decoration:underline; cursor:pointer;">แก้ไขรายชื่ออาจารย์</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="instructorManageModalOverlay" style="z-index:150;">
+  <div class="modal-box" style="max-width:400px;">
+    <button class="modal-close" id="instructorManageModalClose">✕</button>
+    <h3>แก้ไขรายชื่ออาจารย์</h3>
+    <p class="hint">แก้ชื่อ, ลบ, หรือเพิ่มอาจารย์ใหม่ — มีผลกับทุกคนที่ใช้แอพนี้</p>
+    <div id="instructorManageList" style="display:flex; flex-direction:column; gap:8px; margin:14px 0;"></div>
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <input type="text" id="instructorManageNewName" placeholder="ชื่ออาจารย์ใหม่" style="flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:10px;">
+      <button class="btn ghost" id="instructorManageAddBtn">+ เพิ่ม</button>
+    </div>
+    <button class="btn-arrow" id="instructorManageSaveBtn" style="width:100%; justify-content:center;">บันทึกการเปลี่ยนแปลง<span class="circ">✓</span></button>
   </div>
 </div>
 
@@ -1256,8 +1313,8 @@
         <svg width="22" height="16" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 1h14v16H8L1 9l7-8Z"/><path d="M13 6l6 6M19 6l-6 6"/></svg>
       </button>
     </div>
-    <div id="pinModalClearWrap" style="display:none; margin-top:14px;">
-      <button type="button" class="pin-key-text" id="pinModalClearBtn" style="background:none; border:none; font-size:12.5px; color:var(--gold); font-weight:600; cursor:pointer; text-decoration:underline;">ยกเลิกการล็อก (ไม่ตั้งรหัส)</button>
+    <div id="pinModalClearWrap" style="display:none; margin-top:8px;">
+      <button type="button" class="pin-key-text" id="pinModalClearBtn" style="background:none; border:none; font-size:11.5px; color:var(--gold); font-weight:600; cursor:pointer; text-decoration:underline;">ยกเลิกการล็อก (ไม่ตั้งรหัส)</button>
     </div>
   </div>
 </div>
@@ -1619,10 +1676,21 @@ function renderRegistrationList(listBoxId){
 // ---------- Sync bookings from Google Form registration sheet ----------
 function matchCourseIdFromText(text){
   const t = (text||'').toLowerCase();
+  // primary: match by the price written in the form text (฿ X,XXX) — most reliable since course prices are distinct.
+  // keyword matching alone is fragile: e.g. the real form option for "Specialty Latte Art" is just "Latte Art — Private ฿ 6,500"
+  // (no word "Specialty" at all), which used to get misassigned to the wrong Latte Art course by keyword rules below.
+  const priceMatch = t.match(/฿\s*([\d,]+)/);
+  if(priceMatch){
+    const price = Number(priceMatch[1].replace(/,/g, ''));
+    const byPrice = state.courses.find(c => c.price === price);
+    if(byPrice) return byPrice.id;
+  }
+  // fallback: keyword matching, for when the price in the form text doesn't match any course's current price
+  // (e.g. a course's price changed on one side but not the other)
   if(t.includes('business model')) return state.courses.find(c=> c.name.includes('Business Model'))?.id || null;
-  if(t.includes('workshop') || t.includes('group')) return state.courses.find(c=> c.name.includes('Workshop') || c.name.includes('Group'))?.id || null;
   if(t.includes('specialty')) return state.courses.find(c=> c.name.includes('Specialty'))?.id || null;
-  if(t.includes('latte art')) return state.courses.find(c=> c.name.includes('Latte Art') && !c.name.includes('Specialty'))?.id || state.courses[0]?.id || null;
+  if(t.includes('workshop') || t.includes('group')) return state.courses.find(c=> c.name.includes('Workshop') || c.name.includes('Group'))?.id || null;
+  if(t.includes('latte art')) return state.courses.find(c=> c.name.includes('Latte Art'))?.id || state.courses[0]?.id || null;
   return null;
 }
 function parseThaiFormDate(text){
@@ -4307,6 +4375,7 @@ function buildPromptPayPayload(id, amount){
   payload += tlv('00','01');
   payload += tlv('01', amount ? '12' : '11');
   payload += merchantField;
+  payload += tlv('52','0000'); // Merchant Category Code (unclassified) — several banking apps require this field to be present to accept the QR as valid, even when generic
   payload += tlv('53','764');
   if(amount) payload += tlv('54', Number(amount).toFixed(2));
   payload += tlv('58','TH');
@@ -4416,19 +4485,18 @@ const PRODUCT_NAME_CATALOG = [
 
 
 let currentUser = null; // remembered per device
+// current_user is deliberately per-device (like which browser tab you're in) — never routed through the
+// shared backend, so logging in/out on one device can never affect what another device shows or remembers.
 async function loadCurrentUser(){
-  try{
-    const res = await window.storage.get('current_user', false);
-    currentUser = (res && res.value) ? res.value : null;
-  }catch(e){ currentUser = null; }
+  try{ currentUser = localStorage.getItem('rangsan_current_user') || null; }catch(e){ currentUser = null; }
 }
 async function saveCurrentUser(name){
   currentUser = name;
-  try{ await window.storage.set('current_user', name || '', false); }catch(e){}
+  try{ localStorage.setItem('rangsan_current_user', name || ''); }catch(e){}
 }
 async function logoutCurrentUser(){
   currentUser = null;
-  try{ await window.storage.set('current_user', '', false); }catch(e){}
+  try{ localStorage.removeItem('rangsan_current_user'); }catch(e){}
   showLoginScreen();
 }
 
@@ -4454,11 +4522,89 @@ function showLoginScreen(){
     el.onclick = ()=> attemptLogin(el.dataset.loginName);
   });
   document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('manageInstructorsLink').onclick = promptManageInstructors;
 }
 function hideLoginScreen(){
   document.getElementById('loginScreen').style.display = 'none';
   startAutoSync();
 }
+let instructorManageDraft = []; // working copy while the modal is open: [{original, current, markedDelete}]
+async function promptManageInstructors(){
+  if(sharedAdminPin){
+    const val = await askPin('ยืนยันตัวตน', 'กรอกรหัสแอดมินเพื่อแก้ไขรายชื่ออาจารย์');
+    if(val === null) return;
+    if(val !== sharedAdminPin){ alert('รหัสไม่ถูกต้อง'); return; }
+  }
+  instructorManageDraft = (state.instructors || []).map(name => ({ original: name, current: name, markedDelete: false }));
+  renderInstructorManageList();
+  document.getElementById('instructorManageNewName').value = '';
+  openModal('instructorManageModalOverlay');
+}
+function renderInstructorManageList(){
+  const box = document.getElementById('instructorManageList');
+  box.innerHTML = instructorManageDraft.map((row, i)=>{
+    if(row.markedDelete) return '';
+    return `
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="text" data-idx="${i}" class="instructor-edit-input" value="${row.current.replace(/"/g,'&quot;')}" style="flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:8px;">
+      <button type="button" data-idx="${i}" class="instructor-delete-btn" title="ลบ" style="background:none;border:none;color:#c0392b;font-size:18px;cursor:pointer;">🗑️</button>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.instructor-edit-input').forEach(inp=>{
+    inp.oninput = ()=>{ instructorManageDraft[Number(inp.dataset.idx)].current = inp.value; };
+  });
+  box.querySelectorAll('.instructor-delete-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      instructorManageDraft[Number(btn.dataset.idx)].markedDelete = true;
+      renderInstructorManageList();
+    };
+  });
+}
+async function saveInstructorChanges(){
+  const active = instructorManageDraft.filter(r=>!r.markedDelete);
+  if(!active.length){ alert('ต้องมีอาจารย์อย่างน้อย 1 คน'); return; }
+  const trimmedNames = active.map(r=>r.current.trim());
+  if(trimmedNames.some(n=>!n)){ alert('ชื่อห้ามเว้นว่าง'); return; }
+  if(new Set(trimmedNames).size !== trimmedNames.length){ alert('มีชื่อซ้ำกัน กรุณาตั้งชื่อให้ไม่ซ้ำ'); return; }
+
+  // cascade renames to everywhere the old name is referenced
+  active.forEach(row=>{
+    const newName = row.current.trim();
+    if(row.original && row.original !== newName){
+      if(instructorPhotos[row.original]){ instructorPhotos[newName] = instructorPhotos[row.original]; delete instructorPhotos[row.original]; }
+      if(instructorPins[row.original]){ instructorPins[newName] = instructorPins[row.original]; delete instructorPins[row.original]; }
+      sharedBookings.forEach(b=>{ if(b.instructor === row.original) b.instructor = newName; });
+      if(currentUser === row.original) currentUser = newName;
+    }
+  });
+  // clean up photo/pin for anyone removed (their past bookings keep the old name as historical record)
+  instructorManageDraft.filter(r=>r.markedDelete && r.original).forEach(row=>{
+    delete instructorPhotos[row.original];
+    delete instructorPins[row.original];
+  });
+
+  state.instructors = active.map(r=>r.current.trim());
+  scheduleSave();
+  await saveInstructorPhotos();
+  await saveInstructorPins();
+  await saveSharedBookings();
+  if(currentUser) await saveCurrentUser(currentUser);
+
+  closeModal('instructorManageModalOverlay');
+  showLoginScreen();
+  flashSaved('บันทึกรายชื่ออาจารย์แล้ว ✓');
+}
+document.getElementById('instructorManageModalClose').onclick = ()=> closeModal('instructorManageModalOverlay');
+document.getElementById('instructorManageAddBtn').onclick = ()=>{
+  const input = document.getElementById('instructorManageNewName');
+  const name = input.value.trim();
+  if(!name) return;
+  if(instructorManageDraft.some(r=>!r.markedDelete && r.current.trim()===name)){ alert('มีชื่อนี้อยู่แล้ว'); return; }
+  instructorManageDraft.push({ original: null, current: name, markedDelete: false });
+  input.value = '';
+  renderInstructorManageList();
+};
+document.getElementById('instructorManageSaveBtn').onclick = saveInstructorChanges;
 async function attemptLogin(name){
   const hasPin = !!instructorPins[name];
   if(hasPin){
@@ -4856,42 +5002,52 @@ function renderLogTab(){
     const idx = state.instructors.indexOf(name);
     return INSTRUCTOR_COLORS[idx>=0 ? idx%INSTRUCTOR_COLORS.length : 0];
   };
-  const bookingCardHTML = (b)=>{
-    const course = courseById(b.courseId);
-    const dateStr = b.date ? new Date(b.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
-    const initial = (b.instructor||'?').replace('อาจารย์','').trim().charAt(0) || '?';
-    const color = instructorColor(b.instructor);
-    const photo = instructorPhotos[b.instructor];
-    const avatarContent = photo
-      ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-      : initial;
-    const isPast = b.date && b.date < new Date().toISOString().slice(0,10);
-    const bookingRef = JSON.stringify({courseId:b.courseId, date:b.date, instructor:b.instructor, note:b.note||''}).replace(/"/g,'&quot;');
-    const needsInstructor = !b.instructor || b.instructor === 'ยังไม่ระบุ';
-    return `
-    <div class="agent-card" style="${b.taught?'opacity:.72;':''}">
-      <button class="ac-del" data-del-booking="${b._idx}" title="ลบการจองนี้">✕</button>
-      <div class="ac-header">
-        <div class="ac-logo">R</div>
-        <div class="ac-title">${b.taught?'TEACHING HISTORY':'TEACHING CARD'}</div>
-        <div class="ac-id">#${String(b._idx+1).padStart(4,'0')}</div>
-      </div>
-      <div class="ac-body">
-        <div class="ac-info">
-          ${needsInstructor ? `
-            <div class="ac-name" style="color:#e0a94a;">⚠️ ยังไม่ระบุอาจารย์</div>
-            <select data-assign-instructor="${b._idx}" class="pill" style="margin:4px 0 8px; font-size:11.5px; padding:5px 8px; width:100%;">
-              <option value="">— เลือกอาจารย์ผู้สอน —</option>
-              ${state.instructors.map(n=>`<option value="${n}">${n}</option>`).join('')}
+  const dayGroupCardHTML = (dateKey, bookings)=>{
+    const dateStr = dateKey && dateKey !== 'no-date'
+      ? new Date(dateKey+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'short'})
+      : 'ไม่ระบุวันที่';
+    const allTaught = bookings.every(b=> b.taught);
+    const rows = bookings.map(b=>{
+      const initial = (b.instructor||'?').replace('อาจารย์','').trim().charAt(0) || '?';
+      const color = instructorColor(b.instructor);
+      const photo = instructorPhotos[b.instructor];
+      const avatarContent = photo
+        ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : initial;
+      const bookingRef = JSON.stringify({courseId:b.courseId, date:b.date, instructor:b.instructor, note:b.note||''}).replace(/"/g,'&quot;');
+      const needsInstructor = !b.instructor || b.instructor === 'ยังไม่ระบุ';
+      return `
+      <div style="display:flex; gap:10px; padding:12px 0; align-items:flex-start; ${b.taught?'opacity:.68;':''}">
+        <div style="flex:1; min-width:0;">
+          ${needsInstructor ? `<div class="ac-name" style="color:#e0a94a; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
+          <select data-assign-instructor="${b._idx}" class="pill" style="margin:0 0 8px; font-family:'Noto Serif Thai',serif; font-size:11.5px; padding:5px 8px; width:100%;">
+            <option value="">— เลือกอาจารย์ผู้สอน —</option>
+            ${state.instructors.map(n=>`<option value="${n}" ${n===b.instructor?'selected':''}>${n}</option>`).join('')}
+          </select>
+          <div class="ac-field" style="display:flex; align-items:center; gap:6px; min-width:0;">
+            <b style="flex:none;">COURSE</b>
+            <select data-assign-course="${b._idx}" style="flex:1; min-width:0; max-width:100%; font-family:'Noto Serif Thai',serif; font-size:11px; padding:3px 6px; border:1px solid var(--line); border-radius:6px; background:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              ${state.courses.map(c=>`<option value="${c.id}" ${c.id===b.courseId?'selected':''}>${c.name}</option>`).join('')}
             </select>
-          ` : `<div class="ac-name">${b.instructor}</div>`}
-          <div class="ac-field"><b>COURSE</b> ${course ? course.name : '-'}</div>
-          <div class="ac-field"><b>DATE</b> ${dateStr}</div>
+          </div>
           ${b.note ? `<div class="ac-field"><b>NOTE</b> ${b.note}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${!b.taught && !needsInstructor ? `<button class="btn small" data-confirm-taught="${bookingRef}" style="margin-top:8px; background:var(--sage);">✓ ยืนยันสอนแล้ว</button>` : ''}
         </div>
-        ${needsInstructor ? '' : `<div class="ac-avatar" style="background:${color}; cursor:pointer;" data-profile-instructor="${b.instructor}" data-profile-course="${b.courseId}" data-profile-date="${b.date}" data-profile-note="${(b.note||'').replace(/"/g,'&quot;')}">${avatarContent}</div>`}
+        ${needsInstructor ? '' : `<div class="ac-avatar" style="background:${color}; cursor:pointer; width:50px; height:50px;" data-profile-instructor="${b.instructor}" data-profile-course="${b.courseId}" data-profile-date="${b.date}" data-profile-note="${(b.note||'').replace(/"/g,'&quot;')}">${avatarContent}</div>`}
+        <button class="ac-del" data-del-booking="${b._idx}" title="ลบการจองนี้" style="position:static; flex:none; margin-top:2px;">✕</button>
+      </div>`;
+    }).join('<div style="border-top:1px dashed rgba(220,167,61,.3);"></div>');
+
+    return `
+    <div class="agent-card" style="grid-column:1/-1; ${allTaught?'opacity:.72;':''}">
+      <div class="ac-header">
+        <div class="ac-logo">R</div>
+        <div class="ac-title">${dateStr}</div>
+        <div class="ac-id">${bookings.length} คิว</div>
+      </div>
+      <div class="ac-body" style="flex-direction:column; padding:2px 16px 12px;">
+        ${rows}
       </div>
     </div>`;
   };
@@ -4937,6 +5093,16 @@ function renderLogTab(){
         renderCalendar();
       };
     });
+    container.querySelectorAll('[data-assign-course]').forEach(sel=>{
+      sel.onchange = ()=>{
+        const idx = Number(sel.dataset.assignCourse);
+        if(!sel.value) return;
+        sharedBookings[idx].courseId = sel.value;
+        saveSharedBookings();
+        renderBookingCards();
+        renderCalendar();
+      };
+    });
   };
 
   const renderBookingCards = ()=>{
@@ -4945,8 +5111,21 @@ function renderLogTab(){
     const upcoming = sorted.filter(b=> !b.date || b.date >= todayStr);
     const history = sorted.filter(b=> b.date && b.date < todayStr).sort((a,b)=> (b.date||'').localeCompare(a.date||'')); // newest-first
 
-    grid.innerHTML = upcoming.length
-      ? upcoming.map(bookingCardHTML).join('')
+    // group same-day bookings into a single card, preserving the date ordering already applied above
+    const groupByDate = (list)=>{
+      const map = {}; const order = [];
+      list.forEach(b=>{
+        const key = b.date || 'no-date';
+        if(!map[key]){ map[key] = []; order.push(key); }
+        map[key].push(b);
+      });
+      return order.map(key=> ({ key, bookings: map[key] }));
+    };
+    const upcomingGroups = groupByDate(upcoming);
+    const historyGroups = groupByDate(history);
+
+    grid.innerHTML = upcomingGroups.length
+      ? upcomingGroups.map(g=> dayGroupCardHTML(g.key, g.bookings)).join('')
       : `<div style="grid-column:1/-1; text-align:center; color:#948a78; padding:26px 10px;">ยังไม่มีการจองที่กำลังจะถึง — กด "+" เพื่อเริ่มลงตาราง</div>`;
     wireCardButtons(grid);
 
@@ -4954,7 +5133,7 @@ function renderLogTab(){
       historySection.style.display = 'block';
       toggleHistoryBtn.textContent = `${historyOpen?'ซ่อน':'ดู'}ประวัติการสอนย้อนหลัง (${history.length}) ${historyOpen?'▲':'▼'}`;
       historyGrid.style.display = historyOpen ? 'grid' : 'none';
-      historyGrid.innerHTML = history.map(bookingCardHTML).join('');
+      historyGrid.innerHTML = historyGroups.map(g=> dayGroupCardHTML(g.key, g.bookings)).join('');
       wireCardButtons(historyGrid);
       toggleHistoryBtn.onclick = ()=>{
         historyOpen = !historyOpen;
@@ -5527,7 +5706,7 @@ function renderSellTab(){
         <div class="cart-title">🛒 ตะกร้าสินค้า</div>
         <div id="sellCartWrap"></div>
       </div>
-      <button class="btn-arrow" id="recordSaleBtn" style="justify-content:center; width:100%; margin-top:16px;">บันทึกการขาย<span class="circ">✓</span></button>
+      <button class="btn-arrow-luxe" id="recordSaleBtn">บันทึกการขาย<span class="circ">✓</span></button>
       <div id="sellWarning" style="display:none; margin-top:10px; padding:9px 14px; border-radius:10px; background:var(--alert-soft); color:var(--alert); font-size:12.5px; font-weight:600; text-align:center;"></div>
       ` : ''}
     </div>
@@ -5974,42 +6153,37 @@ function openPaymentModal(items){
     </div>
     ` : ''}
     ${qrSvg ? `
-      <div style="max-width:280px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.35); background:#fff;">
-        <div style="background:#1B3A5C; padding:22px 18px; display:flex; align-items:center; justify-content:center; gap:12px;">
-          <svg width="46" height="46" viewBox="0 0 46 46">
-            <rect x="1" y="1" width="44" height="44" rx="11" fill="none" stroke="#fff" stroke-width="2.5"/>
-            <rect x="12" y="12" width="10" height="10" rx="2" fill="#fff"/>
-            <rect x="24" y="12" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>
-            <rect x="12" y="24" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>
-            <path d="M24 34 L34 24 L34 34 Z" fill="#1AB394"/>
-          </svg>
-          <div style="text-align:left; line-height:1.2;">
-            <div style="color:#fff; font-size:20px; font-weight:800; letter-spacing:.5px; font-family:'IBM Plex Sans Thai',sans-serif;">THAI QR</div>
-            <div style="color:#fff; font-size:20px; font-weight:800; letter-spacing:.5px; font-family:'IBM Plex Sans Thai',sans-serif;">PAYMENT</div>
+      <div style="position:relative; max-width:280px; margin:0 auto; border-radius:20px; overflow:hidden; background:
+          radial-gradient(circle at 15% 0%, rgba(220,167,61,.14), transparent 55%),
+          radial-gradient(circle at 100% 100%, rgba(220,167,61,.08), transparent 50%),
+          linear-gradient(155deg, #1C1917 0%, #0C0A09 100%);
+        border:1px solid rgba(220,167,61,.55);
+        box-shadow:0 12px 30px rgba(0,0,0,.45), inset 0 0 0 3px rgba(11,9,8,.9), inset 0 0 0 4px rgba(220,167,61,.22);">
+        <div style="position:absolute; top:8px; left:8px; width:10px; height:10px; border:1.5px solid rgba(220,167,61,.65); border-right:none; border-bottom:none;"></div>
+        <div style="position:absolute; bottom:8px; right:8px; width:10px; height:10px; border:1.5px solid rgba(220,167,61,.65); border-left:none; border-top:none;"></div>
+        <div style="padding:22px 20px 8px; text-align:center;">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-weight:600; font-size:15px; letter-spacing:.8px; color:var(--gold);">Thai QR Payment</div>
+          <div style="display:inline-flex; align-items:center; gap:5px; margin-top:8px; padding:3px 12px; border:1px solid rgba(220,167,61,.5); border-radius:999px; background:rgba(220,167,61,.08);">
+            <span style="font-size:10px; font-weight:700; font-style:italic; color:#EDEAE2; font-family:'Fraunces',serif;">Prompt</span>
+            <span style="font-size:10px; font-weight:700; font-style:italic; color:var(--gold); font-family:'Fraunces',serif;">Pay</span>
           </div>
         </div>
-        <div style="padding:22px 20px 24px; text-align:center;">
-          <div style="display:inline-block; border:1.5px solid #1B3A5C; border-radius:5px; padding:6px 10px 5px; margin-bottom:18px;">
-            <div style="font-size:9.5px; color:#1B3A5C; font-weight:600; margin-bottom:1px;">พร้อมเพย์</div>
-            <div style="display:flex; align-items:stretch; height:20px;">
-              <span style="font-size:17px; font-weight:700; color:#1B3A5C; font-style:italic; padding-right:4px;">Prompt</span>
-              <span style="background:#1B3A5C; color:#fff; font-size:17px; font-weight:800; font-style:italic; padding:0 6px; display:flex; align-items:center; border-radius:2px;">Pay</span>
-            </div>
-          </div>
-          <div style="position:relative; display:inline-block; line-height:0; width:100%; max-width:230px;">
+        <div style="padding:16px 24px 24px; text-align:center;">
+          <div style="position:relative; display:inline-block; line-height:0; width:100%; max-width:220px; padding:12px; background:#fff; border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.3);">
             ${qrSvg}
-            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:42px; height:42px; background:#fff; border:2.5px solid #1B3A5C; border-radius:9px; display:flex; align-items:center; justify-content:center;">
-              <svg width="22" height="22" viewBox="0 0 46 46">
-                <rect x="1" y="1" width="44" height="44" rx="10" fill="none" stroke="#1B3A5C" stroke-width="3"/>
-                <rect x="12" y="12" width="10" height="10" rx="2" fill="#1B3A5C"/>
-                <rect x="24" y="12" width="10" height="10" rx="2" fill="none" stroke="#1B3A5C" stroke-width="3"/>
-                <rect x="12" y="24" width="10" height="10" rx="2" fill="none" stroke="#1B3A5C" stroke-width="3"/>
-                <path d="M24 34 L34 24 L34 34 Z" fill="#1AB394"/>
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:40px; height:40px; background:#fff; border:2px solid var(--ink); border-radius:9px; display:flex; align-items:center; justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 46 46">
+                <rect x="1" y="1" width="44" height="44" rx="10" fill="none" stroke="#0C0A09" stroke-width="3"/>
+                <rect x="12" y="12" width="10" height="10" rx="2" fill="#0C0A09"/>
+                <rect x="24" y="12" width="10" height="10" rx="2" fill="none" stroke="#0C0A09" stroke-width="3"/>
+                <rect x="12" y="24" width="10" height="10" rx="2" fill="none" stroke="#0C0A09" stroke-width="3"/>
+                <path d="M24 34 L34 24 L34 34 Z" fill="var(--gold)"/>
               </svg>
             </div>
           </div>
-          <div style="margin-top:18px; font-size:16px; color:#1B3A5C; font-weight:700; font-family:'IBM Plex Sans Thai',sans-serif;">
-            ยอดชำระ: <span style="color:#E8622C; font-family:'IBM Plex Mono'; font-weight:800; font-size:23px;">฿${fmt(total)}</span>
+          <div style="margin-top:10px; border-top:1px dashed rgba(220,167,61,.35); padding-top:14px;">
+            <div style="font-family:'Fraunces',serif; font-style:italic; font-size:11px; letter-spacing:1px; color:var(--gold);">ยอดชำระ</div>
+            <div style="font-family:'Fraunces',serif; font-weight:600; font-size:32px; color:#fff; letter-spacing:.3px; margin-top:2px;">฿${fmt(total)}</div>
           </div>
         </div>
       </div>
@@ -6963,11 +7137,9 @@ document.addEventListener('visibilitychange', ()=>{
   renderAll();
   playHeroIntro();
 
-  if(currentUser && state.instructors.includes(currentUser)){
-    hideLoginScreen();
-  } else {
-    showLoginScreen();
-  }
+  // always require picking your name + entering your PIN on every app open — never auto-skip login,
+  // even if a previous session was remembered, so the device can't stay silently logged in as someone else
+  showLoginScreen();
 })();
 </script>
 </body>
