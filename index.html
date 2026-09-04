@@ -405,7 +405,7 @@
     display:flex; align-items:center; justify-content:center; margin:0 auto;
     background:linear-gradient(150deg,#21201D,#131110);
     font-family:'Fraunces',serif; font-weight:700; font-size:76px; color:#fff;
-    animation: showcaseSlideIn 1.3s cubic-bezier(.16,.84,.28,1);
+    animation: showcaseSlideIn .65s cubic-bezier(.16,.84,.28,1);
   }
   .showcase-photo-wrap img{ width:100%; height:100%; object-fit:cover; }
   @keyframes showcaseSlideIn{
@@ -416,11 +416,11 @@
   .showcase-name{
     margin-top:26px; font-family:'Fraunces',serif; font-style:italic; font-weight:600;
     font-size:26px; color:#fff; letter-spacing:.5px; text-align:center;
-    animation: showcaseFadeUp 1s cubic-bezier(.16,.84,.28,1) .25s both;
+    animation: showcaseFadeUp .55s cubic-bezier(.16,.84,.28,1) .15s both;
   }
   .showcase-role{
     margin-top:6px; font-size:11px; letter-spacing:3px; color:var(--gold); text-transform:uppercase;
-    animation: showcaseFadeUp 1s cubic-bezier(.16,.84,.28,1) .38s both;
+    animation: showcaseFadeUp .55s cubic-bezier(.16,.84,.28,1) .22s both;
   }
   @keyframes showcaseFadeUp{
     0%{ opacity:0; transform:translateX(50px); }
@@ -429,6 +429,10 @@
   .showcase-dots{ display:flex; gap:8px; margin-top:34px; }
   .showcase-dots span{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.25); transition:.25s; }
   .showcase-dots span.active{ background:var(--gold); width:22px; border-radius:4px; }
+  .tap-skip-hint{
+    position:absolute; bottom:34px; left:0; right:0; text-align:center;
+    font-size:11px; color:rgba(255,255,255,.45); letter-spacing:.5px; pointer-events:none;
+  }
 
   /* ---------- game-style stat panel ---------- */
   .stat-panel{
@@ -2486,6 +2490,7 @@ var qrcode = function() {
       <div class="splash-dots"><span></span><span></span><span></span></div>
     </div>
   </div>
+  <div class="tap-skip-hint">แตะหน้าจอเพื่อข้าม</div>
 </div>
 
 <div id="instructorShowcase" class="showcase-hide">
@@ -2495,6 +2500,7 @@ var qrcode = function() {
   <div class="showcase-name" id="showcaseName"></div>
   <div class="showcase-role">RANGSAN ACADEMY · INSTRUCTOR</div>
   <div class="showcase-dots" id="showcaseDots"></div>
+  <div class="tap-skip-hint">แตะหน้าจอเพื่อข้าม</div>
 </div>
 
 <div id="loginScreen" style="display:none;">
@@ -3201,6 +3207,11 @@ async function syncBookingsFromGoogleForm(){
     const allergyIdx = findCol(['แพ้นมวัว', 'แพ้อาหาร', 'แพ้']);
     const occupationIdx = findCol(['กลุ่มอาชีพ', 'อาชีพ']);
     const incomeIdx = findCol(['รายได้']);
+    const provinceIdx = findCol(['เดินทางมาจาก', 'อำเภอ / จังหวัด', 'จังหวัด']);
+    const basicKnowledgeIdx = findCol(['ข้อมูลพื้นฐานก่อนเรียน', 'ความรู้พื้นฐานก่อนเรียน']);
+    const equipmentIdx = findCol(['อุปกรณ์ที่เคยใช้']);
+    const goalIdx = findCol(['เป้าหมายการเรียน']);
+    const topicsIdx = findCol(['หัวข้อที่อยากให้เน้น']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
     let added = 0, skipped = 0, unmatched = 0, enriched = 0;
@@ -3219,13 +3230,18 @@ async function syncBookingsFromGoogleForm(){
       const allergy = (rawAllergy && rawAllergy !== 'ไม่แพ้') ? rawAllergy : '';
       const occupation = occupationIdx>=0 ? (r[occupationIdx]||'').trim() : '';
       const income = incomeIdx>=0 ? (r[incomeIdx]||'').trim() : '';
+      const province = provinceIdx>=0 ? (r[provinceIdx]||'').trim() : '';
+      const basicKnowledge = basicKnowledgeIdx>=0 ? (r[basicKnowledgeIdx]||'').trim() : '';
+      const equipment = equipmentIdx>=0 ? (r[equipmentIdx]||'').trim() : '';
+      const goal = goalIdx>=0 ? (r[goalIdx]||'').trim() : '';
+      const topics = topicsIdx>=0 ? (r[topicsIdx]||'').trim() : '';
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
 
       const syncKey = `form_${name.trim()}_${isoDate}_${courseId}`;
       if(existingKeys.has(syncKey)){
-        // already synced before — backfill any newer fields (like occupation/income/allergy added
+        // already synced before — backfill any newer fields (like occupation/income/allergy/province added
         // in a later version of the app) onto the existing record instead of just skipping it silently,
         // so a re-sync after an app update actually enriches old records rather than leaving them stale
         const existing = sharedBookings.find(b=> b.syncKey === syncKey);
@@ -3234,6 +3250,11 @@ async function syncBookingsFromGoogleForm(){
           if(!existing.allergy && allergy){ existing.allergy = allergy; changed = true; }
           if(!existing.occupation && occupation){ existing.occupation = occupation; changed = true; }
           if(!existing.income && income){ existing.income = income; changed = true; }
+          if(!existing.province && province){ existing.province = province; changed = true; }
+          if(!existing.basicKnowledge && basicKnowledge){ existing.basicKnowledge = basicKnowledge; changed = true; }
+          if(!existing.equipment && equipment){ existing.equipment = equipment; changed = true; }
+          if(!existing.goal && goal){ existing.goal = goal; changed = true; }
+          if(!existing.topics && topics){ existing.topics = topics; changed = true; }
           if(changed) enriched++;
         }
         skipped++;
@@ -3246,7 +3267,7 @@ async function syncBookingsFromGoogleForm(){
         instructor: 'ยังไม่ระบุ',
         note: `จากฟอร์มลงทะเบียน: ${name}${phone ? ' · '+phone : ''}${line ? ' · LINE: '+line : ''}`,
         allergy,
-        occupation, income,
+        occupation, income, province, basicKnowledge, equipment, goal, topics,
         customerName: name, customerPhone: phone, customerLine: line,
         source: 'google_form',
         syncKey,
@@ -6707,6 +6728,10 @@ function renderLogTab(){
           ${b.allergy ? `<div class="ac-field" style="color:#ff9d8a;"><b style="color:#ff9d8a;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
           ${b.occupation ? `<div class="ac-field"><b>อาชีพ</b> ${b.occupation}</div>` : ''}
           ${b.income ? `<div class="ac-field"><b>รายได้</b> ${b.income}</div>` : ''}
+          ${b.province ? `<div class="ac-field"><b>จังหวัด</b> ${b.province}</div>` : ''}
+          ${(b.basicKnowledge || b.equipment) ? `<div class="ac-field"><b>พื้นฐาน</b> ${[b.basicKnowledge, b.equipment ? 'อุปกรณ์ที่เคยใช้: '+b.equipment : ''].filter(Boolean).join(' · ')}</div>` : ''}
+          ${b.goal ? `<div class="ac-field"><b>เป้าหมาย</b> ${b.goal}</div>` : ''}
+          ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${confirmButtonHtml}
         </div>
@@ -8672,7 +8697,7 @@ function playInstructorShowcase(){
     const photoWrap = document.getElementById('showcasePhotoWrap');
     const nameEl = document.getElementById('showcaseName');
     const dotsEl = document.getElementById('showcaseDots');
-    const SLIDE_MS = 3200; // slower slide-in animation (1.3s) needs more time on screen before advancing
+    const SLIDE_MS = 1700; // faster now that the slide-in animation itself is quicker (0.65s)
 
     dotsEl.innerHTML = names.map(()=> `<span></span>`).join('');
     showcase.classList.remove('showcase-hide');
@@ -8703,6 +8728,9 @@ function playInstructorShowcase(){
       timer = setTimeout(advance, SLIDE_MS);
     };
     timer = setTimeout(advance, SLIDE_MS);
+
+    // tap/click anywhere on the showcase to skip straight to the login screen
+    showcase.onclick = finish;
   });
 }
 
@@ -8850,6 +8878,7 @@ document.addEventListener('visibilitychange', ()=>{
     }
   }
   setTimeout(dismissSplash, SPLASH_MAX_MS);
+  if(splash) splash.onclick = dismissSplash; // tap anywhere to skip the intro video immediately
 
   // first-run check: if this is a standalone deployment (no real Claude window.storage) and
   // no backend has been configured on this device yet, walk the person through setup immediately —
