@@ -3203,7 +3203,7 @@ async function syncBookingsFromGoogleForm(){
     const incomeIdx = findCol(['รายได้']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
-    let added = 0, skipped = 0, unmatched = 0;
+    let added = 0, skipped = 0, unmatched = 0, enriched = 0;
 
     dataRows.forEach(r=>{
       const courseText = courseIdx>=0 ? r[courseIdx] : '';
@@ -3224,7 +3224,21 @@ async function syncBookingsFromGoogleForm(){
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
 
       const syncKey = `form_${name.trim()}_${isoDate}_${courseId}`;
-      if(existingKeys.has(syncKey)){ skipped++; return; }
+      if(existingKeys.has(syncKey)){
+        // already synced before — backfill any newer fields (like occupation/income/allergy added
+        // in a later version of the app) onto the existing record instead of just skipping it silently,
+        // so a re-sync after an app update actually enriches old records rather than leaving them stale
+        const existing = sharedBookings.find(b=> b.syncKey === syncKey);
+        if(existing){
+          let changed = false;
+          if(!existing.allergy && allergy){ existing.allergy = allergy; changed = true; }
+          if(!existing.occupation && occupation){ existing.occupation = occupation; changed = true; }
+          if(!existing.income && income){ existing.income = income; changed = true; }
+          if(changed) enriched++;
+        }
+        skipped++;
+        return;
+      }
 
       sharedBookings.push({
         date: isoDate,
@@ -3242,8 +3256,8 @@ async function syncBookingsFromGoogleForm(){
       added++;
     });
 
-    if(added > 0) await saveSharedBookings();
-    return { added, skipped, unmatched };
+    if(added > 0 || enriched > 0) await saveSharedBookings();
+    return { added, skipped, unmatched, enriched };
   }catch(err){
     return { error: err.message };
   }finally{
@@ -6868,7 +6882,7 @@ function renderLogTab(){
     } else {
       banner.style.background = 'var(--sage-soft)';
       banner.style.color = 'var(--ink)';
-      banner.innerHTML = `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
+      banner.innerHTML = `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.enriched ? ` · เติมข้อมูลเพิ่มให้ ${result.enriched} รายการเดิม` : ''}${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
     }
   };
 
