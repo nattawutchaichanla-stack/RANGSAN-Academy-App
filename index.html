@@ -215,7 +215,7 @@
   /* ---------- login screen ---------- */
   /* ---------- splash screen ---------- */
   #splashScreen{
-    position:fixed; inset:0; z-index:300;
+    position:fixed; inset:0; z-index:300; overflow:hidden;
     background:
       radial-gradient(circle at 20% 15%, rgba(220,167,61,.18), transparent 50%),
       radial-gradient(circle at 85% 85%, rgba(84,43,13,.4), transparent 50%),
@@ -286,7 +286,7 @@
   @keyframes splashDot{ 0%,80%,100%{ opacity:.25; transform:scale(.7); } 40%{ opacity:1; transform:scale(1); } }
 
   #loginScreen{
-    position:fixed; inset:0; z-index:100;
+    position:fixed; inset:0; z-index:100; overflow:hidden;
     background-color:#0B2A15; /* opaque fallback so the page behind never bleeds through, even if the photo below is slow to load or fails */
     background-image:
       radial-gradient(circle at 20% 10%, rgba(220,167,61,.3), transparent 45%),
@@ -335,6 +335,50 @@
     border:1px solid rgba(220,167,61,.25);
   }
   .modal-overlay.open .modal-box{ transform:translateY(0) scale(1); }
+
+  /* ---------- "เพิ่มเติม" nav drawer — slides in from the right edge instead of the usual centered popup ---------- */
+  #moreNavOverlay{ align-items:stretch; justify-content:flex-end; padding:0; }
+  #moreNavOverlay .modal-box{
+    height:100%; max-height:100%; width:80%; max-width:300px;
+    border-radius:20px 0 0 20px; margin:0;
+    transform:translateX(100%) !important;
+    transition:transform .32s cubic-bezier(.16,.84,.28,1) !important;
+    display:flex; flex-direction:column; justify-content:center;
+    border-left:1px solid rgba(220,167,61,.55); border-top:none; border-right:none; border-bottom:none;
+    box-shadow:inset 3px 0 0 rgba(11,9,8,.35), inset 5px 0 0 rgba(220,167,61,.15), -20px 0 50px rgba(0,0,0,.35);
+    background:linear-gradient(160deg, rgba(28,25,23,.45) 0%, rgba(11,9,8,.5) 100%) !important;
+    backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%);
+  }
+  #moreNavOverlay.open .modal-box{ transform:translateX(0) !important; }
+  #moreNavOverlay .modal-box::before, #moreNavOverlay .modal-box::after{
+    content:''; position:absolute; width:9px; height:9px; border:1.5px solid rgba(220,167,61,.65); z-index:1; pointer-events:none;
+  }
+  #moreNavOverlay .modal-box::before{ top:10px; left:14px; border-right:none; border-bottom:none; }
+  #moreNavOverlay .modal-box::after{ bottom:10px; left:14px; border-right:none; border-top:none; }
+  #moreNavOverlay h3{
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Thai','Segoe UI','Noto Sans Thai',Roboto,sans-serif;
+    font-style:normal; font-weight:700; letter-spacing:.2px;
+    color:var(--gold) !important; font-size:20px !important;
+  }
+  #moreNavOverlay .hint{ font-family:-apple-system,BlinkMacSystemFont,'SF Pro Thai','Segoe UI','Noto Sans Thai',Roboto,sans-serif; }
+  .more-nav-item{
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Thai','Segoe UI','Noto Sans Thai',Roboto,sans-serif !important;
+    font-size:15.5px !important; font-weight:600 !important;
+    color:#F3EFE6 !important; letter-spacing:.1px !important; line-height:1.3 !important;
+    border:1px solid rgba(220,167,61,.3) !important; border-radius:14px !important;
+    background:rgba(255,255,255,.03) !important; padding:16px 34px 16px 18px !important;
+    transition:.18s !important; position:relative !important;
+  }
+  .more-nav-item:active{ background:rgba(220,167,61,.14) !important; border-color:var(--gold) !important; transform:scale(.98); }
+  .more-nav-item .ic{
+    background:rgba(220,167,61,.1); border:1px solid rgba(220,167,61,.4); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; color:var(--gold);
+  }
+  .more-nav-item .ic svg{ stroke:var(--gold) !important; }
+  .more-nav-item::after{
+    content:'›'; position:absolute; right:16px; top:50%; transform:translateY(-50%);
+    font-family:'Fraunces',serif; font-size:18px; color:rgba(220,167,61,.55); font-weight:400;
+  }
   .modal-box h3{ margin:0 0 4px; font-size:16px; color:#fff; position:relative; z-index:1; }
   .modal-box .hint{ color:#C9C2B6 !important; font-size:12.5px; margin:0 0 14px; position:relative; z-index:1; }
   .modal-box .modal-close{
@@ -370,7 +414,20 @@
     position:absolute; opacity:0; width:1px; height:1px; pointer-events:none;
   }
   .pin-error{ min-height:14px; color:#ff9d8a; font-size:11px; font-weight:600; margin-top:4px; }
-  .pin-modal-box{ max-width:300px; padding:18px !important; }
+  /* ---------- PIN entry — full screen instead of a centered popup, like a real device lock screen ---------- */
+  #pinModalOverlay{ align-items:center; justify-content:center; padding:0; }
+  #pinModalOverlay .pin-modal-box{
+    width:100%; height:100%; max-width:100%; max-height:100%;
+    border-radius:0; display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:24px !important; transform:none !important; overflow:hidden !important;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(220,167,61,.16), transparent 50%),
+      radial-gradient(circle at 85% 85%, rgba(84,43,13,.35), transparent 50%),
+      linear-gradient(165deg, #0B0908 0%, #0B2A15 60%, #0B0908 100%) !important;
+  }
+  #pinModalOverlay .pin-modal-content{ width:100%; max-width:300px; margin:0 auto; }
+  #pinModalOverlay .pin-modal-box .modal-close{ max-width:none; width:auto; }
+  #pinModalOverlay.open .pin-modal-box{ transform:none !important; }
   .pin-modal-box .hint{ margin:0 0 4px; font-size:11.5px; }
   .pin-keypad{
     display:grid; grid-template-columns:repeat(3,1fr); gap:10px 14px;
@@ -392,7 +449,7 @@
 
   /* ---------- instructor showcase (before the login screen) ---------- */
   #instructorShowcase{
-    position:fixed; inset:0; z-index:250;
+    position:fixed; inset:0; z-index:250; overflow:hidden;
     background:
       radial-gradient(circle at 20% 15%, rgba(220,167,61,.18), transparent 50%),
       radial-gradient(circle at 85% 85%, rgba(84,43,13,.4), transparent 50%),
@@ -2601,39 +2658,57 @@ var qrcode = function() {
 <footer class="savebar" id="savebar">บันทึกข้อมูลแล้ว ✓</footer>
 
 <nav class="bottomnav" id="tabs">
-  <button data-tab="dashboard" class="active">
-    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/></svg></span>
-    <span class="lbl">ภาพรวม</span>
-  </button>
-  <button data-tab="menu">
-    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M7 3.5 7 6M11 3.5 11 6"/></svg></span>
-    <span class="lbl">เมนู</span>
-  </button>
-  <button data-tab="pl">
-    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 .9-3 2.2c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-1.1-3-2.5"/></svg></span>
-    <span class="lbl">กำไร</span>
-  </button>
-  <button data-tab="materials">
-    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 12 3l9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg></span>
-    <span class="lbl">วัตถุดิบ</span>
-  </button>
-  <button data-tab="schedule">
-    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
-    <span class="lbl">ตาราง</span>
-  </button>
-  <button data-tab="log">
+  <button data-tab="log" class="active">
     <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10l4 4v12H5Z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg></span>
     <span class="lbl">บันทึก</span>
-  </button>
-  <button data-tab="stock">
-    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 12 3l9 4v10l-9 4-9-4Z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg></span>
-    <span class="lbl">คลัง</span>
   </button>
   <button data-tab="sell">
     <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="17" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M3 4h2l2.4 11.6a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/></svg></span>
     <span class="lbl">ขายสินค้า</span>
   </button>
+  <button data-tab="stock">
+    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 12 3l9 4v10l-9 4-9-4Z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg></span>
+    <span class="lbl">คลัง</span>
+  </button>
+  <button data-tab="pl">
+    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 .9-3 2.2c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-1.1-3-2.5"/></svg></span>
+    <span class="lbl">กำไร</span>
+  </button>
+  <button id="moreNavBtn" type="button">
+    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></span>
+    <span class="lbl">เพิ่มเติม</span>
+  </button>
 </nav>
+
+<div class="modal-overlay" id="moreNavOverlay">
+  <div class="modal-box" style="max-width:340px;">
+    <button class="modal-close" id="moreNavClose">✕</button>
+    <div style="display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:700; letter-spacing:1.8px; color:var(--gold); text-transform:uppercase; opacity:.85; margin-bottom:14px;">
+      <span style="width:14px; height:1px; background:var(--gold); opacity:.6;"></span>
+      RANGSAN Academy
+    </div>
+    <h3>เพิ่มเติม</h3>
+    <p class="hint">แท็บอื่นๆ ที่ใช้ไม่บ่อยเท่า</p>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button data-tab="dashboard" class="btn ghost more-nav-item" style="justify-content:flex-start; text-align:left; display:flex; align-items:center; gap:10px;">
+        <span class="ic" style="width:26px;height:26px;flex:none;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2.2"/><rect x="13" y="3" width="8" height="8" rx="2.2"/><rect x="3" y="13" width="8" height="8" rx="2.2"/><rect x="13" y="13" width="8" height="8" rx="2.2"/></svg></span>
+        ภาพรวม
+      </button>
+      <button data-tab="menu" class="btn ghost more-nav-item" style="justify-content:flex-start; text-align:left; display:flex; align-items:center; gap:10px;">
+        <span class="ic" style="width:26px;height:26px;flex:none;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v4.5A5.5 5.5 0 0 1 11.5 19h-1A5.5 5.5 0 0 1 5 13.5V9Z"/><path d="M17 10.3h1.2a2.2 2.2 0 1 1 0 4.4H17"/><path d="M9 5.5V4M13 5.5V4"/></svg></span>
+        เมนู
+      </button>
+      <button data-tab="materials" class="btn ghost more-nav-item" style="justify-content:flex-start; text-align:left; display:flex; align-items:center; gap:10px;">
+        <span class="ic" style="width:26px;height:26px;flex:none;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8 12 3.5 20.5 8 12 12.5 3.5 8Z"/><path d="M3.5 8v8.5L12 21l8.5-4.5V8"/><path d="M12 12.5V21"/></svg></span>
+        วัตถุดิบ
+      </button>
+      <button data-tab="schedule" class="btn ghost more-nav-item" style="justify-content:flex-start; text-align:left; display:flex; align-items:center; gap:10px;">
+        <span class="ic" style="width:26px;height:26px;flex:none;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/><circle cx="8" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="14" r="1" fill="currentColor" stroke="none"/></svg></span>
+        ตาราง
+      </button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="menuModalOverlay">
   <div class="modal-box" style="position:relative;">
@@ -2774,6 +2849,7 @@ var qrcode = function() {
 <div class="modal-overlay" id="pinModalOverlay" style="z-index:150;">
   <div class="modal-box pin-modal-box" style="position:relative; text-align:center;">
     <button class="modal-close" id="pinModalClose">✕</button>
+    <div class="pin-modal-content">
     <div class="pin-lock">🔒</div>
     <h3 id="pinModalTitle">กรอกรหัส</h3>
     <p class="hint" id="pinModalSub"></p>
@@ -2800,6 +2876,7 @@ var qrcode = function() {
     </div>
     <div id="pinModalClearWrap" style="display:none; margin-top:8px;">
       <button type="button" class="pin-key-text" id="pinModalClearBtn" style="background:none; border:none; font-size:11.5px; color:var(--gold); font-weight:600; cursor:pointer; text-decoration:underline;">ยกเลิกการล็อก (ไม่ตั้งรหัส)</button>
+    </div>
     </div>
   </div>
 </div>
@@ -3625,6 +3702,7 @@ const DEFAULT_STATE = {
   adminPin: '',
   menuNameHistory: ['เอสเพรสโซ่ (Espresso)','อเมริกาโน่ (Americano)','คาปูชิโน่ (Cappuccino)','ลาเต้ (Latte)','ลาเต้อาร์ทฝึกลาย (Latte Art Practice)'],
   extraMaterials: [],
+  practiceLog: [], // material usage NOT tied to a paying class (e.g. staff latte art practice) — logged as a cost, no revenue
   matNameHistory: ['เมล็ดกาแฟคั่ว','นมสด'],
   lineRelayUrl: '',
   instructors: ['อาจารย์ตั้ม','อาจารย์แสตมป์','อาจารย์โจ'],
@@ -3974,8 +4052,11 @@ function openInstructorProfile(name, booking){
 }
 
 /* ============================= RENDER: TABS ============================= */
+const MORE_NAV_TABS = ['dashboard','menu','materials','schedule']; // tabs tucked under the "เพิ่มเติม" sheet
 function switchTab(tab){
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('#tabs button[data-tab]').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  const moreBtn = document.getElementById('moreNavBtn');
+  if(moreBtn) moreBtn.classList.toggle('active', MORE_NAV_TABS.includes(tab));
   document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+tab));
   if(tab==='log'){
     Promise.all([loadSharedBookings(), loadInstructorPhotos(), loadSharedAdminPin(), loadRetailProducts(), loadSharedEvalFormUrl(), loadStandaloneSales()]).then(()=>{ if(document.getElementById('bookingCardGrid')) renderLogTab(); });
@@ -3994,17 +4075,25 @@ document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('button[data-tab]');
   if(btn) switchTab(btn.dataset.tab);
 });
+document.getElementById('moreNavBtn').onclick = ()=> openModal('moreNavOverlay');
+document.getElementById('moreNavClose').onclick = ()=> closeModal('moreNavOverlay');
+document.querySelectorAll('.more-nav-item').forEach(btn=>{
+  btn.onclick = ()=>{
+    switchTab(btn.dataset.tab);
+    closeModal('moreNavOverlay');
+  };
+});
 
 /* ============================= RENDER: MAIN SHELL ============================= */
 function renderShell(){
   const main = document.getElementById('main');
   main.innerHTML = `
-    <section class="tabpanel active" id="tab-dashboard"></section>
+    <section class="tabpanel" id="tab-dashboard"></section>
     <section class="tabpanel" id="tab-menu"></section>
     <section class="tabpanel" id="tab-pl"></section>
     <section class="tabpanel" id="tab-materials"></section>
     <section class="tabpanel" id="tab-schedule"></section>
-    <section class="tabpanel" id="tab-log"></section>
+    <section class="tabpanel active" id="tab-log"></section>
     <section class="tabpanel" id="tab-stock"></section>
     <section class="tabpanel" id="tab-sell"></section>
   `;
@@ -5364,6 +5453,28 @@ function renderPLTab(){
       <div id="menuToggleList"></div>
     </div>
     <div class="receipt-wrap"><div class="receipt" id="receiptBox"></div></div>
+    <div class="card">
+      <h2>บันทึกการใช้วัตถุดิบนอกคอร์ส (เช่น ฝึกซ้อม)</h2>
+      <p class="hint">สำหรับต้นทุนที่เกิดขึ้นจริงแต่ไม่ได้มาจากการสอนลูกค้า เช่น อาจารย์ฝึกลายลาเต้อาร์ท — จะถูกรวมเป็นต้นทุนแยกต่างหาก ไม่กระทบกำไรต่อคอร์สด้านบน</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px;">
+        <div style="flex:2; min-width:160px;">
+          <label style="font-size:12px; color:#8a7a63; display:block; margin-bottom:4px;">เมนูที่ใช้ฝึก</label>
+          <select id="practiceRecipeSelect" class="pill" style="width:100%;">
+            ${state.recipes.map(r=>`<option value="${r.id}" ${r.id==='latteart'?'selected':''}>${r.menu}</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1; min-width:90px;">
+          <label style="font-size:12px; color:#8a7a63; display:block; margin-bottom:4px;">จำนวน (แก้ว)</label>
+          <input type="number" id="practiceCupsInput" class="pill" min="1" value="1" style="width:100%;">
+        </div>
+        <div style="flex:2; min-width:140px;">
+          <label style="font-size:12px; color:#8a7a63; display:block; margin-bottom:4px;">หมายเหตุ (ถ้ามี)</label>
+          <input type="text" id="practiceNoteInput" class="pill" placeholder="เช่น ฝึกก่อนเปิดคอร์สใหม่" style="width:100%;">
+        </div>
+        <button class="btn" id="addPracticeLogBtn" style="flex:none;">+ บันทึก</button>
+      </div>
+      <div id="practiceLogList"></div>
+    </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-top:-10px; flex-wrap:wrap;">
       ${sharedLineRelayUrl ? `
       <button class="btn" id="lineAutoBtn" style="display:flex; align-items:center; gap:8px;">
@@ -5440,6 +5551,59 @@ function renderPLTab(){
   document.getElementById('lineSettingsBtn').onclick = promptLineRelayUrl;
   document.getElementById('storageSettingsBtn').onclick = promptSetStorageBackendUrl;
   document.getElementById('storageTestBtn').onclick = testStorageBackendConnection;
+
+  if(!state.practiceLog) state.practiceLog = []; // safety default for accounts saved before this feature existed
+  const renderPracticeLog = ()=>{
+    const listEl = document.getElementById('practiceLogList');
+    if(!listEl) return;
+    if(!state.practiceLog.length){
+      listEl.innerHTML = `<p class="hint" style="margin:0;">ยังไม่มีรายการบันทึก</p>`;
+      return;
+    }
+    const total = state.practiceLog.reduce((s,p)=> s+p.cost, 0);
+    listEl.innerHTML = `
+      <table>
+        <thead><tr><th>วันที่</th><th>เมนู</th><th class="num">จำนวน</th><th class="num">ต้นทุน</th><th>หมายเหตุ</th><th></th></tr></thead>
+        <tbody>
+          ${state.practiceLog.map((p,i)=>{
+            const recipe = state.recipes.find(r=>r.id===p.recipeId);
+            const dateStr = p.date ? new Date(p.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+            return `<tr>
+              <td>${dateStr}</td><td>${recipe ? recipe.menu : p.recipeId}</td><td class="num">${p.cups}</td>
+              <td class="num">${fmt(p.cost)}</td><td>${p.note||'-'}</td>
+              <td><button class="btn small ghost" data-del-practice="${i}" title="ลบรายการนี้">ลบ</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div class="line total" style="margin-top:8px;"><span>รวมต้นทุนฝึกซ้อม</span><span>${fmt(total)}</span></div>
+    `;
+    listEl.querySelectorAll('[data-del-practice]').forEach(btn=>{
+      btn.onclick = ()=>{
+        state.practiceLog.splice(Number(btn.dataset.delPractice), 1);
+        scheduleSave();
+        renderPracticeLog();
+      };
+    });
+  };
+  renderPracticeLog();
+
+  document.getElementById('addPracticeLogBtn').onclick = ()=>{
+    const recipeId = document.getElementById('practiceRecipeSelect').value;
+    const cups = Number(document.getElementById('practiceCupsInput').value) || 0;
+    const note = document.getElementById('practiceNoteInput').value.trim();
+    if(cups <= 0){ alert('กรุณากรอกจำนวนแก้วให้ถูกต้อง'); return; }
+    const recipe = state.recipes.find(r=>r.id===recipeId);
+    const cost = recipe ? costPerCup(recipe) * cups : 0;
+    state.practiceLog.push({
+      date: new Date().toISOString().slice(0,10),
+      recipeId, cups, cost, note
+    });
+    scheduleSave();
+    document.getElementById('practiceCupsInput').value = 1;
+    document.getElementById('practiceNoteInput').value = '';
+    renderPracticeLog();
+  };
 }
 
 /* ============================= RENDER: MATERIALS & STOCK ============================= */
