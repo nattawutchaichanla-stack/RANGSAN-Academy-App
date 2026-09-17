@@ -2797,6 +2797,16 @@ var qrcode = function() {
       <select id="newBookingInstructor" class="pill"></select>
       <input type="text" id="newBookingNote" placeholder="หมายเหตุ เช่น ยืนยันแล้ว" class="pill">
       <input type="text" id="newBookingAllergy" placeholder="ข้อความพิเศษ / แพ้อาหาร (ถ้ามี)" class="pill">
+      <select id="newBookingMachine" class="pill">
+        <option value="">— รุ่นเครื่องชง/เครื่องบด (ถ้ามี) —</option>
+        <option value="La Marzocco Linea Mini + Eureka Mignon">La Marzocco Linea Mini + Eureka Mignon</option>
+        <option value="Rancilio Silvia + Baratza Encore">Rancilio Silvia + Baratza Encore</option>
+        <option value="Breville Barista Pro (in-one)">Breville Barista Pro (ในตัว)</option>
+        <option value="Nuova Simonelli Oscar + Niche Zero">Nuova Simonelli Oscar + Niche Zero</option>
+        <option value="Gaggia Classic Pro + Baratza Encore">Gaggia Classic Pro + Baratza Encore</option>
+        <option value="other">อื่นๆ (ระบุเอง)</option>
+      </select>
+      <input type="text" id="newBookingMachineOther" placeholder="ระบุรุ่นเครื่องชง/เครื่องบด" class="pill" style="display:none;">
       <button class="btn-arrow" id="addBookingBtn" style="justify-content:center;">จองคิวสอน<span class="circ">+</span></button>
     </div>
   </div>
@@ -3647,6 +3657,7 @@ const DEFAULT_STATE = {
     { id:'c3', name:'คอร์ส 3: Basic Barista Workshop (Group Class)', price:8450, students:5 },
     { id:'c4', name:'คอร์ส 4: Specialty Latte Art (Private)', price:6500, students:2 },
     { id:'c6', name:'คอร์ส 6: Brew Your Type — Scent & Thai Tea Lab (Group Class)', price:590, students:6 },
+    { id:'c7', name:'คอร์ส 7: เครื่องชง + เครื่องบด (Private/Semi-Private)', price:0, students:2 },
   ],
   priceBeanPerKg: 450,
   priceMilkPerL: 65,
@@ -3710,6 +3721,15 @@ const DEFAULT_STATE = {
         { category:'อุปกรณ์', item:'ไส้สำลี/วิคสำหรับซับกลิ่น', unit:'ชิ้น', qty:6, price:5 },
         { category:'เอกสาร', item:'สติกเกอร์ฉลาก MBTI + การ์ดผลลัพธ์', unit:'ชุด', qty:6, price:15 },
       ]
+    },
+    c7: {
+      consumables:[
+        { category:'เมล็ดกาแฟ', item:'เมล็ดกาแฟคั่ว Medium Roast', unit:'กก.', qty:1, price:450 },
+        { category:'นม', item:'นมสด (ฝึกตีนมกับเครื่องจริง)', unit:'ลิตร', qty:2, price:65 },
+      ],
+      equipment:[
+        { category:'เอกสาร', item:'คู่มือการใช้/ดูแลเครื่องชง-เครื่องบด', unit:'ชุด', qty:2, price:15 },
+      ]
     }
   },
   stock: [
@@ -3726,6 +3746,7 @@ const DEFAULT_STATE = {
     c3: { espresso:{use:true,cups:2}, americano:{use:true,cups:2}, cappuccino:{use:true,cups:2}, latte:{use:false,cups:2}, latteart:{use:false,cups:2} },
     c4: { espresso:{use:false,cups:2}, americano:{use:false,cups:2}, cappuccino:{use:false,cups:2}, latte:{use:false,cups:2}, latteart:{use:true,cups:2} },
     c6: { espresso:{use:false,cups:6}, americano:{use:false,cups:6}, cappuccino:{use:false,cups:6}, latte:{use:false,cups:6}, latteart:{use:false,cups:6} },
+    c7: { espresso:{use:true,cups:2}, americano:{use:false,cups:2}, cappuccino:{use:true,cups:2}, latte:{use:true,cups:2}, latteart:{use:false,cups:2} },
   },
   selectedCourse: 'c1',
   adminPin: '',
@@ -3781,6 +3802,14 @@ const DEFAULT_STATE = {
       ['10:55','11:10','STEP 4 · Personal Touch — ปรับเปลี่ยนได้ 1 Note ตามใจชอบ',false],
       ['11:10','11:20','STEP 5 · Name Your Scent — ตั้งชื่อกลิ่นของตัวเอง',false],
       ['11:20','11:30','STEP 6 · Label It — ติดฉลาก MBTI + ชื่อกลิ่นบนกระปุก ปิดกิจกรรม',false],
+    ],
+    c7: [
+      ['10:00','10:20','ลงทะเบียน แนะนำเครื่องชง-เครื่องบดรุ่นที่เลือก',false],
+      ['10:20','11:30','โครงสร้างเครื่องชง การตั้งค่าอุณหภูมิ/แรงดัน การบำรุงรักษาเบื้องต้น',false],
+      ['11:30','12:30','โครงสร้างเครื่องบด การตั้งความละเอียด การปรับให้เข้ากับเมล็ด',false],
+      ['12:30','13:30','พักเที่ยง',true],
+      ['13:30','16:00','ลงมือชงจริงกับเครื่องที่เลือก ปรับค่าจนได้ช็อตที่ต้องการ',false],
+      ['16:00','17:00','สรุปการแก้ปัญหาที่พบบ่อย ถาม-ตอบ มอบใบประกาศนียบัตร',false],
     ]
   },
   curriculum: {
@@ -3820,6 +3849,13 @@ const DEFAULT_STATE = {
       ['Personal Touch','ปรับเปลี่ยนได้ 1 Note ตามใจชอบ — เน้นว่ากลิ่นที่ชอบสำคัญกว่าตัวอักษรเสมอ ไม่ให้ Concept แข็งจน Gimmick เกินไป'],
       ['Name Your Scent','ตั้งชื่อกลิ่นของตัวเองให้มีความหมายส่วนตัว'],
       ['Label It','ติดฉลาก MBTI + ชื่อกลิ่นบนกระปุก พร้อมนำกลับบ้าน'],
+    ],
+    c7: [
+      ['รู้จักเครื่องชง Espresso','โครงสร้างหลัก, กลุ่มหัวชง, บอยเลอร์, การตั้งอุณหภูมิ/แรงดัน'],
+      ['การบำรุงรักษาเครื่องชง','ทำความสะอาดหัวชง, ล้างกรุ๊ปเฮด, backflush เบื้องต้น'],
+      ['รู้จักเครื่องบด','ชนิดใบมีด, การตั้งความละเอียด, ผลต่อรสชาติการสกัด'],
+      ['ปรับตั้งค่าให้เข้ากับเมล็ด','ปรับความละเอียด/dose ให้ได้ค่าสกัดที่ต้องการกับเครื่องรุ่นที่เลือก'],
+      ['แก้ปัญหาที่พบบ่อย','วิเคราะห์และแก้ปัญหาเครื่องชง-เครื่องบดที่เจอบ่อยในการใช้งานจริง'],
     ]
   }
 };
@@ -5496,8 +5532,10 @@ function renderPLTab(){
       <h2 class="marker-h"><span>เลือกคอร์ส + เลือกเมนู เพื่อดูงบกำไรขาดทุน</span></h2>
       <p class="hint">คลิกเลือกคอร์ส แล้วสลับเปิด/ปิดเมนูที่จะสอน ระบบคำนวณกำไรให้ทันที</p>
       <div class="course-picker" id="plCoursePicker"></div>
-      <div style="display:flex; gap:24px; margin-bottom:14px; font-size:13.5px;">
-        <div>ราคาขายต่อรอบ: <b class="mono">${fmt(course.price)}</b> บาท</div>
+      <div style="display:flex; gap:24px; margin-bottom:14px; font-size:13.5px; align-items:center;">
+        <div style="display:flex; align-items:center; gap:6px;">ราคาขายต่อรอบ:
+          <input type="number" id="coursePriceInput" class="pill mono" value="${course.price}" style="width:100px; padding:5px 10px; font-size:13.5px;"> บาท
+        </div>
         <div>จำนวนผู้เรียน: <b class="mono">${course.students}</b> คน</div>
       </div>
       <div id="menuToggleList"></div>
@@ -5599,6 +5637,13 @@ function renderPLTab(){
   if(autoBtn) autoBtn.onclick = (e)=> sendToLineGroupAuto(activePLCourse, e.currentTarget);
   document.getElementById('copyBtn').onclick = (e)=> copySummary(activePLCourse, e.currentTarget);
   document.getElementById('lineSettingsBtn').onclick = promptLineRelayUrl;
+  document.getElementById('coursePriceInput').onchange = (e)=>{
+    const val = Number(e.target.value);
+    if(!val || val < 0){ alert('กรุณากรอกราคาให้ถูกต้อง'); e.target.value = course.price; return; }
+    course.price = val;
+    scheduleSave();
+    renderPLTab();
+  };
   document.getElementById('storageSettingsBtn').onclick = promptSetStorageBackendUrl;
   document.getElementById('storageTestBtn').onclick = testStorageBackendConnection;
 
@@ -7121,6 +7166,7 @@ function renderLogTab(){
           ${(b.basicKnowledge || b.equipment) ? `<div class="ac-field"><b>พื้นฐาน</b> ${[b.basicKnowledge, b.equipment ? 'อุปกรณ์ที่เคยใช้: '+b.equipment : ''].filter(Boolean).join(' · ')}</div>` : ''}
           ${b.goal ? `<div class="ac-field"><b>เป้าหมาย</b> ${b.goal}</div>` : ''}
           ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
+          ${b.machineModel ? `<div class="ac-field"><b>รุ่นเครื่อง</b> ${b.machineModel}</div>` : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${confirmButtonHtml}
         </div>
@@ -7244,16 +7290,26 @@ function renderLogTab(){
     document.getElementById('newBookingInstructor').innerHTML = state.instructors.map(n=>`<option value="${n}" ${n===currentUser?'selected':''}>${n}</option>`).join('');
     document.getElementById('newBookingNote').value = '';
     document.getElementById('newBookingAllergy').value = '';
+    document.getElementById('newBookingMachine').value = '';
+    document.getElementById('newBookingMachineOther').value = '';
+    document.getElementById('newBookingMachineOther').style.display = 'none';
     openModal('bookingModalOverlay');
   };
   document.getElementById('openBookingModalBtn').onclick = ()=> openBookingModalPrefilled();
+  document.getElementById('newBookingMachine').onchange = (e)=>{
+    document.getElementById('newBookingMachineOther').style.display = e.target.value === 'other' ? 'block' : 'none';
+  };
   document.getElementById('addBookingBtn').onclick = ()=>{
     const date = document.getElementById('newBookingDate').value || new Date().toISOString().slice(0,10);
     const courseId = document.getElementById('newBookingCourse').value;
     const instructor = document.getElementById('newBookingInstructor').value;
     const note = document.getElementById('newBookingNote').value.trim();
     const allergy = document.getElementById('newBookingAllergy').value.trim();
-    sharedBookings.push({ date, courseId, instructor, note, allergy });
+    const machineSelectVal = document.getElementById('newBookingMachine').value;
+    const machineModel = machineSelectVal === 'other'
+      ? document.getElementById('newBookingMachineOther').value.trim()
+      : machineSelectVal;
+    sharedBookings.push({ date, courseId, instructor, note, allergy, machineModel });
     saveSharedBookings();
     renderBookingCards();
     renderCalendar();
