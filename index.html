@@ -336,6 +336,29 @@
   }
   .modal-overlay.open .modal-box{ transform:translateY(0) scale(1); }
 
+  /* ---------- instructor profile — glassmorphism (frosted glass) treatment ---------- */
+  #profileModalOverlay{
+    background:rgba(11,9,8,.35);
+  }
+  #profileModalOverlay .modal-box{
+    background:linear-gradient(165deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.04) 100%) !important;
+    backdrop-filter:blur(26px) saturate(160%); -webkit-backdrop-filter:blur(26px) saturate(160%);
+    border:1px solid rgba(255,255,255,.18) !important;
+    box-shadow:0 30px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12), 0 0 60px rgba(220,167,61,.12);
+  }
+  #profileModalOverlay .profile-photo-pop{
+    box-shadow:0 16px 34px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.15);
+  }
+  #profileModalOverlay .kpi{
+    background:rgba(255,255,255,.07) !important; border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(8px);
+  }
+  #profileModalOverlay .kpi .label{ color:rgba(255,255,255,.55) !important; }
+  #profileModalOverlay .kpi .value{ color:#fff !important; }
+  #profileModalOverlay .stat-panel{
+    background:rgba(255,255,255,.05) !important; border:1px solid rgba(255,255,255,.1) !important;
+  }
+
   /* ---------- "เพิ่มเติม" nav drawer — slides in from the right edge instead of the usual centered popup ---------- */
   #moreNavOverlay{ align-items:stretch; justify-content:flex-end; padding:0; }
   #moreNavOverlay .modal-box{
@@ -803,6 +826,12 @@
     font-family:'Fraunces',serif; font-weight:700; font-size:12.5px; color:var(--ink);
     box-shadow:0 1px 4px rgba(220,167,61,.5);
   }
+  .ac-header-avatar{
+    width:26px; height:26px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:12px; color:#fff;
+    border:1.5px solid rgba(220,167,61,.6); overflow:hidden;
+  }
+  .ac-header-avatar.rotating-avatar{ transition:opacity .25s ease; }
   .ac-title{ font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:13.5px; letter-spacing:1.4px; color:var(--gold); flex:1; }
   .ac-id{ font-family:'Fraunces',serif; font-size:10.5px; letter-spacing:1.2px; color:#8a8178; font-style:italic; }
   .ac-del{
@@ -3617,7 +3646,7 @@ const DEFAULT_STATE = {
     { id:'c2', name:'คอร์ส 2: Basic Barista & Business Model (Private)', price:5500, students:2 },
     { id:'c3', name:'คอร์ส 3: Basic Barista Workshop (Group Class)', price:8450, students:5 },
     { id:'c4', name:'คอร์ส 4: Specialty Latte Art (Private)', price:6500, students:2 },
-    { id:'c5', name:'คอร์ส 5: Brew Your Type (Group Class)', price:990, students:6 },
+    { id:'c6', name:'คอร์ส 6: Brew Your Type — Scent & Thai Tea Lab (Group Class)', price:590, students:6 },
   ],
   priceBeanPerKg: 450,
   priceMilkPerL: 65,
@@ -3672,14 +3701,14 @@ const DEFAULT_STATE = {
         { category:'เอกสาร', item:'Worksheet + ใบประกาศนียบัตร', unit:'ชุด', qty:2, price:15 },
       ]
     },
-    c5: {
+    c6: {
       consumables:[
-        { category:'เมล็ดกาแฟ', item:'เมล็ดกาแฟคั่ว Medium Roast', unit:'กก.', qty:0.8, price:450 },
+        { category:'หัวน้ำหอม', item:'Scent Note ต่างๆ (Analyst/Diplomat/Sentinel/Explorer)', unit:'ขวด', qty:1, price:1200 },
       ],
       equipment:[
-        { category:'อุปกรณ์สิ้นเปลือง', item:'กระดาษกรอง/ของใช้แล้วหมด', unit:'แพ็ค', qty:0.3, price:120 },
-        { category:'อุปกรณ์', item:'แก้ว/ถ้วยสำหรับฝึก', unit:'ชิ้น', qty:6, price:15 },
-        { category:'เอกสาร', item:'Worksheet', unit:'ชุด', qty:6, price:15 },
+        { category:'อุปกรณ์', item:'หลอดสูดกลิ่น (Inhaler Tube) เปล่า', unit:'ชิ้น', qty:6, price:15 },
+        { category:'อุปกรณ์', item:'ไส้สำลี/วิคสำหรับซับกลิ่น', unit:'ชิ้น', qty:6, price:5 },
+        { category:'เอกสาร', item:'สติกเกอร์ฉลาก MBTI + การ์ดผลลัพธ์', unit:'ชุด', qty:6, price:15 },
       ]
     }
   },
@@ -3696,7 +3725,7 @@ const DEFAULT_STATE = {
     c2: { espresso:{use:true,cups:2}, americano:{use:true,cups:2}, cappuccino:{use:false,cups:2}, latte:{use:true,cups:2}, latteart:{use:false,cups:2} },
     c3: { espresso:{use:true,cups:2}, americano:{use:true,cups:2}, cappuccino:{use:true,cups:2}, latte:{use:false,cups:2}, latteart:{use:false,cups:2} },
     c4: { espresso:{use:false,cups:2}, americano:{use:false,cups:2}, cappuccino:{use:false,cups:2}, latte:{use:false,cups:2}, latteart:{use:true,cups:2} },
-    c5: { espresso:{use:true,cups:6}, americano:{use:true,cups:6}, cappuccino:{use:false,cups:6}, latte:{use:false,cups:6}, latteart:{use:false,cups:6} },
+    c6: { espresso:{use:false,cups:6}, americano:{use:false,cups:6}, cappuccino:{use:false,cups:6}, latte:{use:false,cups:6}, latteart:{use:false,cups:6} },
   },
   selectedCourse: 'c1',
   adminPin: '',
@@ -3744,11 +3773,14 @@ const DEFAULT_STATE = {
       ['15:00','16:30','ฝึกทำซ้ำและแก้ปัญหาลายที่ไม่สมบูรณ์',false],
       ['16:30','17:00','ทดสอบและมอบใบประกาศนียบัตร',false],
     ],
-    c5: [
-      ['10:00','10:20','ลงทะเบียน แนะนำคอร์สและวิธีการชิม',false],
-      ['10:20','11:00','แนะนำวิธีการชงกาแฟแบบต่างๆ (Pour Over, French Press, AeroPress)',false],
-      ['11:00','12:00','ลงมือชงและเปรียบเทียบรสชาติแต่ละวิธี',false],
-      ['12:00','12:30','สรุปหาสไตล์การชงที่ใช่สำหรับตัวเอง มอบใบประกาศนียบัตร',false],
+    c6: [
+      ['10:00','10:05','ลงทะเบียน แนะนำกิจกรรม Scent Your Type',false],
+      ['10:05','10:15','STEP 1 · What\'s Your Type — ผู้เรียนเลือก MBTI ของตัวเอง',false],
+      ['10:15','10:25','STEP 2 · Find Your Scent World — แนะนำ 4 กลุ่มกลิ่น (Analyst/Diplomat/Sentinel/Explorer)',false],
+      ['10:25','10:55','STEP 3 · Build Your Scent — เลือกกลิ่นตามตัวอักษรของตัวเอง ลงมือผสม',false],
+      ['10:55','11:10','STEP 4 · Personal Touch — ปรับเปลี่ยนได้ 1 Note ตามใจชอบ',false],
+      ['11:10','11:20','STEP 5 · Name Your Scent — ตั้งชื่อกลิ่นของตัวเอง',false],
+      ['11:20','11:30','STEP 6 · Label It — ติดฉลาก MBTI + ชื่อกลิ่นบนกระปุก ปิดกิจกรรม',false],
     ]
   },
   curriculum: {
@@ -3781,11 +3813,13 @@ const DEFAULT_STATE = {
       ['การแก้ปัญหาลาย','วิเคราะห์และแก้ไขลายที่ไม่สมบูรณ์'],
       ['ความเร็วเชิงพาณิชย์','ฝึกเทลายให้เร็วและสวยระดับหน้าร้าน'],
     ],
-    c5: [
-      ['รู้จักวิธีชงแบบต่างๆ','ภาพรวม Pour Over, French Press, AeroPress, Cold Brew'],
-      ['ตัวแปรที่มีผลต่อรสชาติ','อัตราส่วนกาแฟ/น้ำ, อุณหภูมิ, ความหยาบ-ละเอียดของกาแฟบด'],
-      ['ลงมือชงเปรียบเทียบ','ชงจริงและชิมเทียบแต่ละวิธีด้วยเมล็ดเดียวกัน'],
-      ['หาสไตล์ที่ใช่','สรุปแนะนำวิธีชงที่เหมาะกับรสนิยมของแต่ละคน'],
+    c6: [
+      ['What\'s Your Type?','ผู้เรียนเลือก MBTI ของตัวเอง เป็นจุดเริ่มต้นของกิจกรรม'],
+      ['Find Your Scent World','จับคู่กลุ่มบุคลิก MBTI เข้ากับ 4 โลกกลิ่น: Analyst / Diplomat / Sentinel / Explorer'],
+      ['Build Your Scent','เลือกและผสมกลิ่นตามกลุ่มตัวอักษรของตัวเอง ลงมือทำจริง'],
+      ['Personal Touch','ปรับเปลี่ยนได้ 1 Note ตามใจชอบ — เน้นว่ากลิ่นที่ชอบสำคัญกว่าตัวอักษรเสมอ ไม่ให้ Concept แข็งจน Gimmick เกินไป'],
+      ['Name Your Scent','ตั้งชื่อกลิ่นของตัวเองให้มีความหมายส่วนตัว'],
+      ['Label It','ติดฉลาก MBTI + ชื่อกลิ่นบนกระปุก พร้อมนำกลับบ้าน'],
     ]
   }
 };
@@ -3828,6 +3862,22 @@ function migrateCourseNames(loaded){
 // data that's already been synced to the shared database.
 function mergeMissingCourses(loaded){
   if(!Array.isArray(loaded.courses)) loaded.courses = [];
+  // one-time rename fix: c6 briefly went out under an earlier working title before the final name was set
+  const c6 = loaded.courses.find(c=> c.id==='c6');
+  if(c6 && c6.name === 'คอร์ส 6: Scent Your Type — MBTI Inhaler (Group Class)'){
+    c6.name = 'คอร์ส 6: Brew Your Type — Scent & Thai Tea Lab (Group Class)';
+  }
+  // one-time removal: course 5 (coffee brew methods) was discontinued — strip it from any already-synced
+  // data too, not just skip re-adding it, so it actually disappears for everyone on their next load
+  const REMOVED_COURSE_IDS = ['c5'];
+  REMOVED_COURSE_IDS.forEach(id=>{
+    loaded.courses = loaded.courses.filter(c=> c.id !== id);
+    if(loaded.materials) delete loaded.materials[id];
+    if(loaded.schedule) delete loaded.schedule[id];
+    if(loaded.curriculum) delete loaded.curriculum[id];
+    if(loaded.menuSelection) delete loaded.menuSelection[id];
+    if(loaded.selectedCourse === id) loaded.selectedCourse = 'c1'; // don't leave a dangling reference to the removed course
+  });
   const existingIds = new Set(loaded.courses.map(c=> c.id));
   DEFAULT_STATE.courses.forEach(course=>{
     if(existingIds.has(course.id)) return;
@@ -5689,8 +5739,13 @@ function renderScheduleTab(){
   if(!activeScheduleCourse) activeScheduleCourse = state.selectedCourse;
   el.innerHTML = `
     <div class="card">
-      <h2>ตารางเวลาในการเรียน</h2>
-      <p class="hint">เรียน 10:00–17:00 น. (รวม 7 ชั่วโมง)</p>
+      <div class="card-head">
+        <div>
+          <h2>ตารางเวลาในการเรียน</h2>
+          <p class="hint">เรียน 10:00–17:00 น. (รวม 7 ชั่วโมง)</p>
+        </div>
+        <button class="btn small ghost" id="exportScheduleImgBtn" title="บันทึกตารางเวลานี้เป็นไฟล์รูปภาพ ส่งให้ลูกค้าได้เลย">📄 ส่งเป็นไฟล์</button>
+      </div>
       <div class="course-picker" id="schCoursePicker"></div>
       <div id="scheduleList"></div>
     </div>
@@ -5716,6 +5771,106 @@ function renderScheduleTab(){
     <div class="curric-cat">${cat}</div>
     <div style="font-size:13.5px;color:#4a3a2a;margin-bottom:2px">${detail}</div>
   `).join('');
+
+  document.getElementById('exportScheduleImgBtn').onclick = ()=> exportScheduleAsImage(activeScheduleCourse);
+}
+
+// renders the selected course's daily timetable onto a canvas and downloads it as a shareable PNG image —
+// no external library needed, and works even with zero network access (unlike the earlier QR/CDN issues)
+async function exportScheduleAsImage(courseId){
+  const course = courseById(courseId);
+  const sched = state.schedule[courseId] || [];
+  if(!course || !sched.length){ alert('ไม่พบตารางเวลาของคอร์สนี้'); return; }
+  try{ await document.fonts.ready; }catch(e){ /* proceed with whatever fonts are available */ }
+
+  const W = 900;
+  const padX = 56;
+  const rowH = 74;
+  const headerH = 210;
+  const footerH = 60;
+  const H = headerH + sched.length*rowH + footerH;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // background: dark gradient matching the app's premium theme
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, '#1C1917'); bg.addColorStop(1, '#0C0A09');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // gold double-border frame
+  ctx.strokeStyle = 'rgba(220,167,61,.55)'; ctx.lineWidth = 2;
+  ctx.strokeRect(10,10,W-20,H-20);
+  ctx.strokeStyle = 'rgba(220,167,61,.22)'; ctx.lineWidth = 1;
+  ctx.strokeRect(16,16,W-32,H-32);
+
+  // header
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#DCA73D';
+  ctx.font = 'italic 600 22px Fraunces, serif';
+  ctx.fillText('RANGSAN Academy', W/2, 62);
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 30px "Noto Serif Thai", serif';
+  ctx.fillText(course.name, W/2, 106);
+  ctx.fillStyle = '#C9C2B6';
+  ctx.font = '15px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('ตารางเวลาในการเรียน', W/2, 138);
+  ctx.strokeStyle = 'rgba(220,167,61,.4)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padX, 168); ctx.lineTo(W-padX, 168); ctx.stroke();
+
+  // rows
+  let y = headerH;
+  sched.forEach(([st,en,topic,isBreak])=>{
+    if(isBreak){
+      ctx.fillStyle = 'rgba(220,167,61,.06)';
+      ctx.fillRect(padX-10, y, W-(padX-10)*2, rowH-10);
+    }
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#DCA73D';
+    ctx.font = '700 17px "IBM Plex Mono", monospace';
+    ctx.fillText(`${st}–${en}`, padX, y+34);
+    ctx.fillStyle = isBreak ? '#948a78' : '#EDEAE2';
+    ctx.font = isBreak ? 'italic 16px "Noto Serif Thai", serif' : '16px "Noto Serif Thai", serif';
+    wrapCanvasText(ctx, topic, padX+180, y+34, W-padX-180-padX, 22);
+    y += rowH;
+    ctx.strokeStyle = 'rgba(220,167,61,.15)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padX, y-8); ctx.lineTo(W-padX, y-8); ctx.stroke();
+  });
+
+  // footer
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a7a63';
+  ctx.font = '13px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('ขอบคุณที่ให้ความสนใจคอร์สของเรา ☕', W/2, H-30);
+
+  canvas.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ตารางเวลา-${course.name.replace(/[^ก-๙a-zA-Z0-9]+/g,'-')}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(url), 3000);
+  }, 'image/png');
+}
+// wraps text across multiple lines within maxWidth on a canvas 2D context
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(' ');
+  let line = '';
+  const lines = [];
+  words.forEach(word=>{
+    const test = line ? line + ' ' + word : word;
+    if(ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if(line) lines.push(line);
+  lines.slice(0,2).forEach((l,i)=> ctx.fillText(l, x, y + i*lineHeight));
 }
 
 /* ============================= RENDER: TEACHING LOG ============================= */
@@ -6859,6 +7014,72 @@ function renderLogTab(){
     });
     const confirmedGroupKeys = new Set(); // only render the group's one confirm button on its first row
 
+    // when 2+ different (instructor, course) combos share this day, show a visual time-comparison strip
+    // so it's obvious at a glance whether they overlap or run back-to-back, even though each is a separate class
+    const distinctSessions = [];
+    const seenSessionKeys = new Set();
+    bookings.forEach(b=>{
+      const key = groupKey(b);
+      if(seenSessionKeys.has(key)) return;
+      seenSessionKeys.add(key);
+      const sched = state.schedule[b.courseId];
+      if(!sched || !sched.length) return;
+      distinctSessions.push({ instructor:b.instructor, courseId:b.courseId, start:sched[0][0], end:sched[sched.length-1][1] });
+    });
+    // distinct instructors actually teaching this day (excluding "not yet assigned" placeholders) —
+    // used to drive a rotating avatar in the header when 2+ people are teaching simultaneously
+    const distinctInstructors = [...new Set(
+      bookings.filter(b=> b.instructor && b.instructor !== 'ยังไม่ระบุ').map(b=> b.instructor)
+    )];
+    const headerAvatarHTML = (()=>{
+      if(distinctInstructors.length === 0) return '';
+      if(distinctInstructors.length === 1){
+        const name = distinctInstructors[0];
+        const photo = instructorPhotos[name];
+        const initial = name.replace('อาจารย์','').trim().charAt(0) || '?';
+        const content = photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial;
+        return `<div class="ac-header-avatar" style="background:${instructorColor(name)};">${content}</div>`;
+      }
+      const framesJson = JSON.stringify(distinctInstructors.map(name=>{
+        const photo = instructorPhotos[name];
+        const initial = name.replace('อาจารย์','').trim().charAt(0) || '?';
+        return { name, color: instructorColor(name), content: photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial };
+      })).replace(/"/g,'&quot;');
+      const first = distinctInstructors[0];
+      const firstPhoto = instructorPhotos[first];
+      const firstInitial = first.replace('อาจารย์','').trim().charAt(0) || '?';
+      const firstContent = firstPhoto ? `<img src="${firstPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : firstInitial;
+      return `<div class="ac-header-avatar rotating-avatar" data-frames="${framesJson}" title="สลับรูปทุก 5 วิ — สอนพร้อมกัน ${distinctInstructors.length} ท่าน" style="background:${instructorColor(first)};">${firstContent}</div>`;
+    })();
+    const timelineHTML = distinctSessions.length > 1 ? (()=>{
+      const toMin = t=>{ const [h,m] = t.split(':').map(Number); return h*60+m; };
+      const dayStart = Math.min(...distinctSessions.map(s=>toMin(s.start)));
+      const dayEnd = Math.max(...distinctSessions.map(s=>toMin(s.end)));
+      const span = Math.max(dayEnd - dayStart, 60);
+      const rows = distinctSessions.map(s=>{
+        const course = courseById(s.courseId);
+        const needsInstructor = !s.instructor || s.instructor === 'ยังไม่ระบุ';
+        const color = needsInstructor ? '#948a78' : instructorColor(s.instructor);
+        const left = ((toMin(s.start)-dayStart)/span)*100;
+        const width = Math.max(((toMin(s.end)-toMin(s.start))/span)*100, 4);
+        return `
+        <div style="display:flex; align-items:center; gap:8px; margin:6px 0;">
+          <div style="width:76px; flex:none; font-size:10.5px; color:#C9C2B6; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${needsInstructor?'?':s.instructor.replace('อาจารย์','')}</div>
+          <div style="flex:1; position:relative; height:22px; background:rgba(255,255,255,.05); border-radius:6px;">
+            <div style="position:absolute; left:${left}%; width:${width}%; top:0; height:100%; background:${color}; border-radius:6px; display:flex; align-items:center; padding:0 6px; overflow:hidden;">
+              <span style="font-size:10px; color:#fff; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; font-weight:600;">${course?course.name.replace(/^คอร์ส \d+: /,''):s.courseId}</span>
+            </div>
+          </div>
+          <div style="width:82px; flex:none; font-size:9.5px; color:#8a8072; font-family:'IBM Plex Mono';">${s.start}–${s.end}</div>
+        </div>`;
+      }).join('');
+      return `
+      <div style="padding:10px 16px 4px; border-bottom:1px solid rgba(220,167,61,.2);">
+        <div style="font-family:'Fraunces',serif; font-style:italic; font-size:10.5px; letter-spacing:.6px; color:var(--gold); margin-bottom:2px;">เทียบเวลาสอนวันนี้ (${distinctSessions.length} รอบ)</div>
+        ${rows}
+      </div>`;
+    })() : '';
+
     const rows = bookings.map(b=>{
       const initial = (b.instructor||'?').replace('อาจารย์','').trim().charAt(0) || '?';
       const color = instructorColor(b.instructor);
@@ -6913,8 +7134,10 @@ function renderLogTab(){
       <div class="ac-header">
         <div class="ac-logo">R</div>
         <div class="ac-title">${dateStr}</div>
+        ${headerAvatarHTML}
         <div class="ac-id">${bookings.length} คิว</div>
       </div>
+      ${timelineHTML}
       <div class="ac-body" style="flex-direction:column; padding:2px 16px 12px;">
         ${rows}
       </div>
@@ -7011,6 +7234,7 @@ function renderLogTab(){
     } else {
       historySection.style.display = 'none';
     }
+    setupRotatingAvatars();
   };
   renderBookingCards();
 
@@ -8859,6 +9083,31 @@ function playHeroIntro(){
 }
 
 // large sliding showcase of each instructor's photo, shown once right before the login screen
+// rotates the small header avatar between each instructor teaching that day, one frame every 5s —
+// tracks its own interval IDs globally so re-rendering the cards never stacks up duplicate timers
+let rotatingAvatarIntervals = [];
+function setupRotatingAvatars(){
+  rotatingAvatarIntervals.forEach(id=> clearInterval(id));
+  rotatingAvatarIntervals = [];
+  document.querySelectorAll('.rotating-avatar[data-frames]').forEach(el=>{
+    let frames;
+    try{ frames = JSON.parse(el.dataset.frames); }catch(e){ return; }
+    if(!Array.isArray(frames) || frames.length < 2) return;
+    let idx = 0;
+    const id = setInterval(()=>{
+      idx = (idx + 1) % frames.length;
+      el.style.opacity = '0';
+      setTimeout(()=>{
+        el.style.background = frames[idx].color;
+        el.innerHTML = frames[idx].content;
+        el.title = `${frames[idx].name} — สลับรูปทุก 5 วิ (สอนพร้อมกัน ${frames.length} ท่าน)`;
+        el.style.opacity = '1';
+      }, 250);
+    }, 5000);
+    rotatingAvatarIntervals.push(id);
+  });
+}
+
 function playInstructorShowcase(){
   return new Promise(resolve=>{
     const names = (state && state.instructors) ? state.instructors : [];
