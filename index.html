@@ -9385,6 +9385,13 @@ document.addEventListener('visibilitychange', ()=>{
     reachedLogin = true;
     dismissSplash();
     try{ if(document.getElementById('instructorShowcase')) document.getElementById('instructorShowcase').classList.add('showcase-hide'); }catch(e){}
+    // if state never finished loading (the thing that hung), fall back to defaults so the screens
+    // below have SOMETHING valid to render instead of throwing on undefined and leaving main blank —
+    // better to show default courses/menus than an empty page, and normal data loads again next visit
+    if(typeof state === 'undefined' || !state){
+      console.error('state never loaded before the safety timeout — rendering with defaults instead of a blank page');
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
     try{ renderShell(); renderAll(); }catch(e){ console.error('renderShell/renderAll failed in fallback', e); }
     try{ showLoginScreen(); }catch(e){ console.error('showLoginScreen failed in fallback', e); }
   };
