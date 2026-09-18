@@ -9355,6 +9355,22 @@ document.addEventListener('visibilitychange', ()=>{
   setTimeout(dismissSplash, SPLASH_MAX_MS);
   if(splash) splash.onclick = dismissSplash; // tap anywhere to skip the intro video immediately
 
+  // safety net: no matter what happens below (a slow/stuck network request while loading shared
+  // data, an unexpected error while merging saved state, etc.), the person must always end up at
+  // a usable screen within a bounded time — never stuck on a blank/frozen screen indefinitely.
+  let reachedLogin = false;
+  const forceReachLogin = ()=>{
+    if(reachedLogin) return;
+    reachedLogin = true;
+    dismissSplash();
+    try{ if(document.getElementById('instructorShowcase')) document.getElementById('instructorShowcase').classList.add('showcase-hide'); }catch(e){}
+    try{ renderShell(); renderAll(); }catch(e){ console.error('renderShell/renderAll failed in fallback', e); }
+    try{ showLoginScreen(); }catch(e){ console.error('showLoginScreen failed in fallback', e); }
+  };
+  setTimeout(forceReachLogin, 20000); // absolute worst case — something above hung; get the person into the app anyway
+
+  try{
+
   // first-run check: if this is a standalone deployment (no real Claude window.storage) and
   // no backend has been configured on this device yet, walk the person through setup immediately —
   // otherwise the app would silently load empty with nothing explaining why.
@@ -9384,7 +9400,13 @@ document.addEventListener('visibilitychange', ()=>{
   // always require picking your name + entering your PIN on every app open — never auto-skip login,
   // even if a previous session was remembered, so the device can't stay silently logged in as someone else
   await playInstructorShowcase();
+  reachedLogin = true;
   showLoginScreen();
+
+  }catch(err){
+    console.error('init sequence failed, falling back to a usable login screen anyway', err);
+    forceReachLogin();
+  }
 })();
 </script>
 </body>
