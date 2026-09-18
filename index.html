@@ -6572,7 +6572,18 @@ document.getElementById('instructorManageAddBtn').onclick = ()=>{
   renderInstructorManageList();
 };
 document.getElementById('instructorManageSaveBtn').onclick = saveInstructorChanges;
+// races a promise against a timeout so a slow/hung network call (Supabase write, etc.) never
+// blocks the caller forever — resolves with fallbackValue if the timeout wins instead of the real promise
+function withTimeout(promise, ms, fallbackValue){
+  return new Promise(resolve=>{
+    let done = false;
+    const timer = setTimeout(()=>{ if(!done){ done = true; resolve(fallbackValue); } }, ms);
+    promise.then(val=>{ if(!done){ done = true; clearTimeout(timer); resolve(val); } })
+           .catch(()=>{ if(!done){ done = true; clearTimeout(timer); resolve(fallbackValue); } });
+  });
+}
 async function attemptLogin(name){
+  try{
   const hasPin = !!instructorPins[name];
   if(hasPin){
     const val = await askPin(`สวัสดี ${name}`, 'กรอกรหัสของคุณเพื่อเข้าสู่ระบบ', 'ลืมรหัส?');
@@ -6588,9 +6599,19 @@ async function attemptLogin(name){
     if(val2===null) return;
     if(val1 !== val2){ alert('รหัสทั้งสองครั้งไม่ตรงกัน กรุณาลองใหม่'); return; }
     instructorPins[name] = val1;
-    await saveInstructorPins();
+    const saved = await withTimeout(saveInstructorPins(), 6000, false);
+    if(!saved) console.error('saveInstructorPins timed out or failed — continuing anyway so the person is not stuck');
     await saveCurrentUser(name);
     hideLoginScreen();
+  }
+  }catch(err){
+    // never leave the person stuck on a frozen PIN screen — surface the problem and get them
+    // in anyway, since currentUser/hideLoginScreen only touch localStorage and are always safe to force
+    console.error('attemptLogin failed unexpectedly', err);
+    try{ closeModal('pinModalOverlay'); }catch(e){}
+    alert('เกิดข้อผิดพลาดบางอย่างระหว่างเข้าสู่ระบบ (อาจเป็นเพราะเน็ตช้า/หลุด) — ระบบจะพาเข้าแอพต่อให้เลย ลองเช็คอินเทอร์เน็ตอีกครั้งได้ทีหลัง');
+    try{ await saveCurrentUser(name); }catch(e){}
+    try{ hideLoginScreen(); }catch(e){}
   }
 }
 // forgot-PIN recovery: only ADMIN_NAME (อาจารย์โจ) can authorize setting a brand new PIN for someone else
