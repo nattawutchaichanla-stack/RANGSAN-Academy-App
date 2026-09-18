@@ -9136,14 +9136,26 @@ function openSaleReceipt(sale){
 
 /* ============================= RENDER ALL ============================= */
 function renderAll(){
-  renderDashboard();
-  renderMenuTab();
-  renderPLTab();
-  renderMaterialsTab();
-  renderScheduleTab();
-  renderLogTab();
-  renderStockTab();
-  renderSellTab();
+  // each tab renders independently — if one throws (e.g. unexpected data shape from years of
+  // migrations), the others still render instead of a single bad tab leaving everything blank,
+  // and the broken one shows a visible error instead of silently staying empty
+  const safe = (label, fn)=>{
+    try{ fn(); }
+    catch(err){
+      console.error(`render${label} failed`, err);
+      const panelIds = { Dashboard:'tab-dashboard', Menu:'tab-menu', PL:'tab-pl', Materials:'tab-materials', Schedule:'tab-schedule', Log:'tab-log', Stock:'tab-stock', Sell:'tab-sell' };
+      const panel = document.getElementById(panelIds[label]);
+      if(panel) panel.innerHTML = `<div class="card"><p class="hint" style="color:#c0392b;">เกิดข้อผิดพลาดตอนแสดงแท็บนี้ (${label}) — ลองรีเฟรชหน้าเว็บอีกครั้ง หากยังเจอปัญหาแจ้งแอดมินพร้อมข้อความนี้: ${(err&&err.message)||err}</p></div>`;
+    }
+  };
+  safe('Dashboard', renderDashboard);
+  safe('Menu', renderMenuTab);
+  safe('PL', renderPLTab);
+  safe('Materials', renderMaterialsTab);
+  safe('Schedule', renderScheduleTab);
+  safe('Log', renderLogTab);
+  safe('Stock', renderStockTab);
+  safe('Sell', renderSellTab);
 }
 
 function playHeroIntro(){
