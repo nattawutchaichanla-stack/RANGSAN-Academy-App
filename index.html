@@ -3990,7 +3990,8 @@ function costPerCup(recipe){
 }
 function materialTotals(courseId){
   const m = state.materials[courseId];
-  const sum = arr => arr.reduce((s,x)=>s+x.qty*x.price,0);
+  if(!m) return { consumables:0, equipment:0, total:0 }; // course removed/renamed but an old booking still references it — don't crash, just cost nothing
+  const sum = arr => (arr||[]).reduce((s,x)=>s+x.qty*x.price,0);
   const consumables = sum(m.consumables);
   const equipment = sum(m.equipment);
   return { consumables, equipment, total: consumables+equipment };
@@ -3998,6 +3999,7 @@ function materialTotals(courseId){
 function coursePL_materials(courseId){
   const course = courseById(courseId);
   const mt = materialTotals(courseId);
+  if(!course) return { revenue:0, cost:mt.total, profit:-mt.total, margin:0 }; // course removed/renamed but an old booking still references it
   const revenue = course.price;
   const cost = mt.total;
   const profit = revenue-cost;
@@ -4006,6 +4008,7 @@ function coursePL_materials(courseId){
 function coursePL_menu(courseId){
   const course = courseById(courseId);
   const sel = state.menuSelection[courseId];
+  if(!course || !sel) return { menuCost:0, equip:0, totalCost:0, lines:[] }; // course removed/renamed but an old booking still references it
   let menuCost = 0;
   const lines = [];
   state.recipes.forEach(r=>{
