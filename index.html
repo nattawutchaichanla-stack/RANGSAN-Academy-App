@@ -846,11 +846,11 @@
   @keyframes avatarFade4{ 0%{opacity:1;} 23%{opacity:1;} 25%{opacity:0;} 100%{opacity:0;} }
   @keyframes avatarFade5{ 0%{opacity:1;} 18%{opacity:1;} 20%{opacity:0;} 100%{opacity:0;} }
   @keyframes avatarFade6{ 0%{opacity:1;} 14.6%{opacity:1;} 16.67%{opacity:0;} 100%{opacity:0;} }
-  .ac-header-avatar-stack[style*="--cycle-n:2"] .ac-avatar-layer{ animation-name:avatarFade2; }
-  .ac-header-avatar-stack[style*="--cycle-n:3"] .ac-avatar-layer{ animation-name:avatarFade3; }
-  .ac-header-avatar-stack[style*="--cycle-n:4"] .ac-avatar-layer{ animation-name:avatarFade4; }
-  .ac-header-avatar-stack[style*="--cycle-n:5"] .ac-avatar-layer{ animation-name:avatarFade5; }
-  .ac-header-avatar-stack[style*="--cycle-n:6"] .ac-avatar-layer{ animation-name:avatarFade6; }
+  .ac-header-avatar-stack[style*="--cycle-n:2"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-2 .ac-avatar-layer{ animation-name:avatarFade2; }
+  .ac-header-avatar-stack[style*="--cycle-n:3"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-3 .ac-avatar-layer{ animation-name:avatarFade3; }
+  .ac-header-avatar-stack[style*="--cycle-n:4"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-4 .ac-avatar-layer{ animation-name:avatarFade4; }
+  .ac-header-avatar-stack[style*="--cycle-n:5"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-5 .ac-avatar-layer{ animation-name:avatarFade5; }
+  .ac-header-avatar-stack[style*="--cycle-n:6"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-6 .ac-avatar-layer{ animation-name:avatarFade6; }
   .ac-del{
     position:absolute; top:8px; right:8px; z-index:2; width:22px; height:22px; border-radius:50%;
     background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); color:#EDEAE2; font-size:12px;
@@ -7139,7 +7139,8 @@ function renderLogTab(){
         const delay = i * 5; // seconds — offsets when this layer's turn to be visible starts
         return `<div class="ac-header-avatar ac-avatar-layer" style="background:${instructorColor(name)}; animation-duration:${cycleS}s; animation-delay:-${delay}s;" title="${name} — สอนพร้อมกัน ${n} ท่าน (สลับอัตโนมัติทุก 5 วิ)">${content}</div>`;
       }).join('');
-      return `<div class="ac-header-avatar-stack" style="--cycle-n:${n};">${layers}</div>`;
+      const cycleClass = `cycle-${Math.min(n,6)}`; // reliable class-based selector — the [style*="..."] attribute match above is kept too as a harmless fallback, but shouldn't be relied on alone since custom-property string matching in inline styles isn't consistently reliable across all browsers
+      return `<div class="ac-header-avatar-stack ${cycleClass}" style="--cycle-n:${n};">${layers}</div>`;
     })();
     const timelineHTML = distinctSessions.length > 1 ? (()=>{
       const toMin = t=>{ const [h,m] = t.split(':').map(Number); return h*60+m; };
