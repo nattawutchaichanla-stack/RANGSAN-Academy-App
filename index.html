@@ -827,30 +827,31 @@
     box-shadow:0 1px 4px rgba(220,167,61,.5);
   }
   .ac-header-avatar{
-    width:26px; height:26px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-family:'Fraunces',serif; font-weight:700; font-size:12px; color:#fff;
-    border:1.5px solid rgba(220,167,61,.6); overflow:hidden;
+    width:56px; height:56px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:24px; color:#fff;
+    border:2px solid rgba(220,167,61,.7); overflow:hidden; box-shadow:0 3px 10px rgba(0,0,0,.4);
   }
   .ac-title{ font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:13.5px; letter-spacing:1.4px; color:var(--gold); flex:1; }
   .ac-id{ font-family:'Fraunces',serif; font-size:10.5px; letter-spacing:1.2px; color:#8a8178; font-style:italic; }
 
   /* ---------- header avatar auto-crossfade slideshow (pure CSS, no JS timer — immune to any
      browser throttling of setInterval/requestAnimationFrame on idle mobile tabs) ---------- */
-  .ac-header-avatar-stack{ position:relative; width:26px; height:26px; flex:none; }
-  .ac-avatar-layer{
+  .ac-header-avatar-stack{ position:relative; width:56px; height:56px; flex:none; }
+  .ac-avatar-layer, .cal-avatar-layer{
     position:absolute; inset:0; opacity:0;
     animation-iteration-count:infinite; animation-timing-function:linear;
   }
+  .cal-chip-stack{ position:absolute; inset:0; }
   @keyframes avatarFade2{ 0%{opacity:1;} 48%{opacity:1;} 50%{opacity:0;} 100%{opacity:0;} }
   @keyframes avatarFade3{ 0%{opacity:1;} 31%{opacity:1;} 33.33%{opacity:0;} 100%{opacity:0;} }
   @keyframes avatarFade4{ 0%{opacity:1;} 23%{opacity:1;} 25%{opacity:0;} 100%{opacity:0;} }
   @keyframes avatarFade5{ 0%{opacity:1;} 18%{opacity:1;} 20%{opacity:0;} 100%{opacity:0;} }
   @keyframes avatarFade6{ 0%{opacity:1;} 14.6%{opacity:1;} 16.67%{opacity:0;} 100%{opacity:0;} }
-  .ac-header-avatar-stack[style*="--cycle-n:2"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-2 .ac-avatar-layer{ animation-name:avatarFade2; }
-  .ac-header-avatar-stack[style*="--cycle-n:3"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-3 .ac-avatar-layer{ animation-name:avatarFade3; }
-  .ac-header-avatar-stack[style*="--cycle-n:4"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-4 .ac-avatar-layer{ animation-name:avatarFade4; }
-  .ac-header-avatar-stack[style*="--cycle-n:5"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-5 .ac-avatar-layer{ animation-name:avatarFade5; }
-  .ac-header-avatar-stack[style*="--cycle-n:6"] .ac-avatar-layer, .ac-header-avatar-stack.cycle-6 .ac-avatar-layer{ animation-name:avatarFade6; }
+  .cycle-2 .ac-avatar-layer, .cycle-2 .cal-avatar-layer{ animation-name:avatarFade2; }
+  .cycle-3 .ac-avatar-layer, .cycle-3 .cal-avatar-layer{ animation-name:avatarFade3; }
+  .cycle-4 .ac-avatar-layer, .cycle-4 .cal-avatar-layer{ animation-name:avatarFade4; }
+  .cycle-5 .ac-avatar-layer, .cycle-5 .cal-avatar-layer{ animation-name:avatarFade5; }
+  .cycle-6 .ac-avatar-layer, .cycle-6 .cal-avatar-layer{ animation-name:avatarFade6; }
   .ac-del{
     position:absolute; top:8px; right:8px; z-index:2; width:22px; height:22px; border-radius:50%;
     background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); color:#EDEAE2; font-size:12px;
@@ -6995,19 +6996,50 @@ function renderLogTab(){
       let passBadge = '';
       let hasPhotoClass = '';
       if(items.length){
-        const b = items[0];
-        const short = (b.instructor||'').replace('อาจารย์','').trim();
-        const courseShort = courseShortName(b.courseId);
-        const courseFull = courseById(b.courseId) ? courseById(b.courseId).name : '-';
-        const photo = instructorPhotos[b.instructor];
-        const dataAttrs = `data-instructor="${b.instructor}" data-date="${b.date}" data-course="${b.courseId}" data-note="${(b.note||'').replace(/"/g,'&quot;')}"`;
-        const labelHTML = `<div class="cal-chip-label"><div class="cal-chip-name">${short}</div><div class="cal-chip-course">${courseShort}</div></div>`;
-        if(photo){
-          chip = `<div class="cal-chip" style="background-image:url('${photo}')" title="${b.instructor} — ${courseFull}" ${dataAttrs}>${labelHTML}</div>`;
+        const distinctCalInstructors = [...new Set(items.map(b=>b.instructor).filter(Boolean))];
+        const courseFullFor = id => courseById(id) ? courseById(id).name : '-';
+        if(distinctCalInstructors.length > 1){
+          // 2+ different instructors teaching this day — stack each as its own crossfade layer,
+          // same mechanism as the booking-card header avatar: auto-advances via pure CSS animation,
+          // and tapping the cell also reliably force-advances to the next one regardless of whether
+          // the automatic side is animating on this particular device.
+          const n = distinctCalInstructors.length;
+          const cycleS = n * 5;
+          const framesJson = JSON.stringify(distinctCalInstructors.map(name=>{
+            const b = items.find(x=>x.instructor===name);
+            const short = name.replace('อาจารย์','').trim();
+            const courseShort = courseShortName(b.courseId);
+            const photo = instructorPhotos[name];
+            return { name, short, courseShort, photo: photo||'', color: instructorColorCal(name) };
+          })).replace(/"/g,'&quot;');
+          const layers = distinctCalInstructors.map((name, i)=>{
+            const b = items.find(x=>x.instructor===name);
+            const short = name.replace('อาจารย์','').trim();
+            const courseShort = courseShortName(b.courseId);
+            const photo = instructorPhotos[name];
+            const delay = i * 5;
+            const labelHTML = `<div class="cal-chip-label"><div class="cal-chip-name">${short}</div><div class="cal-chip-course">${courseShort}</div></div>`;
+            const bg = photo ? `background-image:url('${photo}')` : `background:${instructorColorCal(name)}`;
+            return `<div class="cal-chip ${photo?'':'no-photo'} cal-avatar-layer" data-layer-idx="${i}" style="${bg}; animation-duration:${cycleS}s; animation-delay:-${delay}s;">${labelHTML}</div>`;
+          }).join('');
+          const cycleClass = `cycle-${Math.min(n,6)}`;
+          chip = `<div class="cal-chip-stack tap-avatar-stack ${cycleClass}" data-frames="${framesJson}" style="--cycle-n:${n};" title="สอนพร้อมกัน ${n} ท่าน — แตะเพื่อดูคนถัดไป">${layers}</div>`;
           hasPhotoClass = 'has-photo';
         } else {
-          chip = `<div class="cal-chip no-photo" style="background:${instructorColorCal(b.instructor)}" title="${b.instructor} — ${courseFull}" ${dataAttrs}>${labelHTML}</div>`;
-          hasPhotoClass = 'has-photo';
+          const b = items[0];
+          const short = (b.instructor||'').replace('อาจารย์','').trim();
+          const courseShort = courseShortName(b.courseId);
+          const courseFull = courseFullFor(b.courseId);
+          const photo = instructorPhotos[b.instructor];
+          const dataAttrs = `data-instructor="${b.instructor}" data-date="${b.date}" data-course="${b.courseId}" data-note="${(b.note||'').replace(/"/g,'&quot;')}"`;
+          const labelHTML = `<div class="cal-chip-label"><div class="cal-chip-name">${short}</div><div class="cal-chip-course">${courseShort}</div></div>`;
+          if(photo){
+            chip = `<div class="cal-chip" style="background-image:url('${photo}')" title="${b.instructor} — ${courseFull}" ${dataAttrs}>${labelHTML}</div>`;
+            hasPhotoClass = 'has-photo';
+          } else {
+            chip = `<div class="cal-chip no-photo" style="background:${instructorColorCal(b.instructor)}" title="${b.instructor} — ${courseFull}" ${dataAttrs}>${labelHTML}</div>`;
+            hasPhotoClass = 'has-photo';
+          }
         }
         if(items.length>1){
           moreBadge = `<div class="cal-more-badge">+${items.length-1}</div>`;
@@ -7061,6 +7093,7 @@ function renderLogTab(){
       cell.style.cursor = 'pointer';
       cell.onclick = ()=> openBookingModalPrefilled(cell.dataset.cellDate);
     });
+    setupRotatingAvatars();
   };
   renderCalendar();
   document.getElementById('calPrevBtn').onclick = ()=>{
@@ -7126,25 +7159,26 @@ function renderLogTab(){
         const content = photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial;
         return `<div class="ac-header-avatar" style="background:${instructorColor(name)};">${content}</div>`;
       }
-      // pure-CSS crossfade slideshow — each instructor is its own stacked, absolutely-positioned circle
-      // with a staggered animation-delay so exactly one is visible at a time, cycling forever. Runs
-      // entirely on the browser's own animation engine, not a JS timer, so it can't be throttled the
-      // way setInterval/requestAnimationFrame can be on some mobile browsers when the page sits idle.
+      // combines a pure-CSS crossfade (auto-advances on its own, when the browser's animation
+      // engine cooperates) with a guaranteed manual tap-to-advance on top — tapping always works
+      // immediately regardless of whether the automatic side is running, since it's a plain click
+      // handler with no dependency on any timer or animation mechanism at all.
       const n = distinctInstructors.length;
-      const cycleS = n * 5; // 5s per instructor
+      const cycleS = n * 5;
+      const framesJson = JSON.stringify(distinctInstructors.map(name=>{
+        const photo = instructorPhotos[name];
+        const initial = name.replace('อาจารย์','').trim().charAt(0) || '?';
+        return { name, color: instructorColor(name), content: photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial };
+      })).replace(/"/g,'&quot;');
       const layers = distinctInstructors.map((name, i)=>{
         const photo = instructorPhotos[name];
         const initial = name.replace('อาจารย์','').trim().charAt(0) || '?';
         const content = photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial;
-        const delay = i * 5; // seconds — offsets when this layer's turn to be visible starts
-        return `<div class="ac-header-avatar ac-avatar-layer" style="background:${instructorColor(name)}; animation-duration:${cycleS}s; animation-delay:-${delay}s;" title="${name} — สอนพร้อมกัน ${n} ท่าน (สลับอัตโนมัติทุก 5 วิ)">${content}</div>`;
+        const delay = i * 5;
+        return `<div class="ac-header-avatar ac-avatar-layer" data-layer-idx="${i}" style="background:${instructorColor(name)}; animation-duration:${cycleS}s; animation-delay:-${delay}s;">${content}</div>`;
       }).join('');
-      const cycleClass = `cycle-${Math.min(n,6)}`; // reliable class-based selector — the [style*="..."] attribute match above is kept too as a harmless fallback, but shouldn't be relied on alone since custom-property string matching in inline styles isn't consistently reliable across all browsers
-      // TEMPORARY diagnostic counter — shows live elapsed seconds so we can tell whether ANY script
-      // is running near this element at all, separate from whether the avatar swap itself works.
-      // Safe to remove once the real issue is found.
-      const debugCounter = `<span class="ac-avatar-debug" data-debug-start="${Date.now()}" style="font-size:9px; color:#e0a94a; font-family:monospace; margin-left:2px;">0s</span>`;
-      return `<div class="ac-header-avatar-stack ${cycleClass}" style="--cycle-n:${n};">${layers}</div>${debugCounter}`;
+      const cycleClass = `cycle-${Math.min(n,6)}`;
+      return `<div class="ac-header-avatar-stack ${cycleClass} tap-avatar-stack" data-frames="${framesJson}" style="--cycle-n:${n}; cursor:pointer;" title="แตะเพื่อดูอาจารย์ท่านถัดไป — สอนพร้อมกัน ${n} ท่าน">${layers}</div>`;
     })();
     const timelineHTML = distinctSessions.length > 1 ? (()=>{
       const toMin = t=>{ const [h,m] = t.split(':').map(Number); return h*60+m; };
@@ -9200,29 +9234,14 @@ function playHeroIntro(){
   });
 }
 
-// TEMPORARY diagnostic: updates the small elapsed-seconds counter next to the avatar stack, so we
-// can see directly on a real device whether JS timers are running at all near this element — helps
-// tell "detection/JS not running" apart from "detection running but the CSS animation itself isn't".
-// Safe to remove once the real issue is found.
-function updateAvatarDebugCounters(){
-  document.querySelectorAll('.ac-avatar-debug[data-debug-start]').forEach(el=>{
-    const start = Number(el.dataset.debugStart);
-    if(!start) return;
-    const secs = Math.floor((Date.now() - start) / 1000);
-    el.textContent = secs + 's';
-  });
-}
-setInterval(updateAvatarDebugCounters, 1000);
-
-// large sliding showcase of each instructor's photo, shown once right before the login screen
-// tap-to-cycle: instead of an automatic timer (which some mobile browsers throttle unpredictably),
-// tapping the header avatar directly cycles to the next instructor teaching that day — 100%
-// reliable since it's a plain click handler, no timers involved at all.
+// header avatar / calendar chip for days with 2+ instructors: the CSS crossfade animation
+// auto-advances on its own when the browser's animation engine cooperates, and tapping the stack
+// ALSO immediately forces the next instructor to the front — a plain click handler with no timer
+// dependency at all, so it works reliably even on devices where the automatic side doesn't animate.
 function setupRotatingAvatars(){
-  document.querySelectorAll('.rotating-avatar[data-frames]').forEach(el=>{
-    if(el.dataset.tapWired) return; // don't attach a second handler if this exact element is somehow re-processed
+  document.querySelectorAll('.tap-avatar-stack[data-frames]').forEach(el=>{
+    if(el.dataset.tapWired) return;
     el.dataset.tapWired = '1';
-    el.style.cursor = 'pointer';
     el.onclick = (e)=>{
       e.stopPropagation();
       let frames;
@@ -9230,9 +9249,16 @@ function setupRotatingAvatars(){
       if(!Array.isArray(frames) || frames.length < 2) return;
       const idx = ((Number(el.dataset.rotateIdx)||0) + 1) % frames.length;
       el.dataset.rotateIdx = String(idx);
-      el.style.background = frames[idx].color;
-      el.innerHTML = frames[idx].content;
-      el.title = `${frames[idx].name} — แตะเพื่อดูอาจารย์ท่านถัดไป (สอนพร้อมกัน ${frames.length} ท่าน)`;
+      el.title = frames[idx].short!==undefined
+        ? `${frames[idx].name} — สอนพร้อมกัน ${frames.length} ท่าน (แตะเพื่อดูคนถัดไป)`
+        : `${frames[idx].name} — แตะเพื่อดูอาจารย์ท่านถัดไป (สอนพร้อมกัน ${frames.length} ท่าน)`;
+      // force this layer to the front, overriding whatever the CSS animation currently shows —
+      // from this point the tapped state takes precedence over the automatic animation
+      el.querySelectorAll('.ac-avatar-layer, .cal-avatar-layer').forEach(layer=>{
+        const isTarget = Number(layer.dataset.layerIdx) === idx;
+        layer.style.setProperty('animation-play-state', 'paused', 'important');
+        layer.style.setProperty('opacity', isTarget ? '1' : '0', 'important');
+      });
     };
   });
 }
