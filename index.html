@@ -836,17 +836,17 @@
 
   /* ---------- header avatar auto-crossfade slideshow (pure CSS, no JS timer — immune to any
      browser throttling of setInterval/requestAnimationFrame on idle mobile tabs) ---------- */
-  .ac-header-avatar-stack{ position:relative; width:56px; height:56px; flex:none; }
+  .ac-header-avatar-stack{ position:relative; width:56px; height:56px; flex:none; border-radius:50%; overflow:hidden; }
   .ac-avatar-layer, .cal-avatar-layer{
     position:absolute; inset:0; opacity:0;
     animation-iteration-count:infinite; animation-timing-function:linear;
   }
-  .cal-chip-stack{ position:absolute; inset:0; }
-  @keyframes avatarFade2{ 0%{opacity:1;} 48%{opacity:1;} 50%{opacity:0;} 100%{opacity:0;} }
-  @keyframes avatarFade3{ 0%{opacity:1;} 31%{opacity:1;} 33.33%{opacity:0;} 100%{opacity:0;} }
-  @keyframes avatarFade4{ 0%{opacity:1;} 23%{opacity:1;} 25%{opacity:0;} 100%{opacity:0;} }
-  @keyframes avatarFade5{ 0%{opacity:1;} 18%{opacity:1;} 20%{opacity:0;} 100%{opacity:0;} }
-  @keyframes avatarFade6{ 0%{opacity:1;} 14.6%{opacity:1;} 16.67%{opacity:0;} 100%{opacity:0;} }
+  .cal-chip-stack{ position:absolute; inset:0; overflow:hidden; }
+  @keyframes avatarFade2{ 0%{opacity:1; transform:translateX(0);} 35%{opacity:1; transform:translateX(0);} 50%{opacity:0; transform:translateX(-20px);} 100%{opacity:0; transform:translateX(-20px);} }
+  @keyframes avatarFade3{ 0%{opacity:1; transform:translateX(0);} 23%{opacity:1; transform:translateX(0);} 33.33%{opacity:0; transform:translateX(-20px);} 100%{opacity:0; transform:translateX(-20px);} }
+  @keyframes avatarFade4{ 0%{opacity:1; transform:translateX(0);} 17.5%{opacity:1; transform:translateX(0);} 25%{opacity:0; transform:translateX(-20px);} 100%{opacity:0; transform:translateX(-20px);} }
+  @keyframes avatarFade5{ 0%{opacity:1; transform:translateX(0);} 14%{opacity:1; transform:translateX(0);} 20%{opacity:0; transform:translateX(-20px);} 100%{opacity:0; transform:translateX(-20px);} }
+  @keyframes avatarFade6{ 0%{opacity:1; transform:translateX(0);} 11.7%{opacity:1; transform:translateX(0);} 16.67%{opacity:0; transform:translateX(-20px);} 100%{opacity:0; transform:translateX(-20px);} }
   .cycle-2 .ac-avatar-layer, .cycle-2 .cal-avatar-layer{ animation-name:avatarFade2; }
   .cycle-3 .ac-avatar-layer, .cycle-3 .cal-avatar-layer{ animation-name:avatarFade3; }
   .cycle-4 .ac-avatar-layer, .cycle-4 .cal-avatar-layer{ animation-name:avatarFade4; }
@@ -5155,6 +5155,70 @@ function computeDaySummary(dateStr){
   return { dateStr, sessions, teachRevenue, teachCost, teachProfit, retailLines, retailTotal, grandTotal };
 }
 
+// builds a customer-facing message listing genuinely open dates this month — a day counts as
+// open only if it has ZERO existing bookings, Mondays are always excluded (no classes ever), and
+// only today-or-later dates are considered (past days can't be booked anyway)
+function buildAvailabilitySummary(){
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth(); // 0-11
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = now.toISOString().slice(0,10);
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const dowShort = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  const bookedDates = new Set(sharedBookings.filter(b=>b.date).map(b=>b.date));
+
+  const openDays = [];
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    if(dateStr < todayStr) continue; // past — can't book
+    const dow = new Date(year, month, day).getDay(); // 0=Sun..6=Sat
+    if(dow === 1) continue; // Monday — never teaches
+    if(bookedDates.has(dateStr)) continue; // already has at least one booking
+    openDays.push({ day, dow });
+  }
+
+  let msg = `☕ RANGSAN Academy — คิวว่างเดือน${monthNames[month]} ${year+543}\n`;
+  msg += `--------------------------\n`;
+  if(openDays.length){
+    openDays.forEach(d=>{
+      msg += `📅 วัน${dowShort[d.dow]}ที่ ${d.day} ${monthNames[month]}\n`;
+    });
+  } else {
+    msg += `ขออภัยค่ะ เดือนนี้คิวเต็มหมดแล้ว 🙏\n`;
+  }
+  msg += `--------------------------\n`;
+  msg += `หมายเหตุ: ปิดสอนทุกวันจันทร์\n`;
+  msg += `สนใจจองคิวทักมาสอบถามได้เลยค่ะ 😊`;
+  return msg;
+}
+function openAvailabilitySummary(){
+  const msg = buildAvailabilitySummary();
+  document.getElementById('reportModalBody').innerHTML = `
+    <h3>📅 สรุปคิวว่างให้ลูกค้า</h3>
+    <p class="hint">ดึงจากตารางจองอัตโนมัติ — วันที่ยังไม่มีการจองเลยเท่านั้น (ไม่รวมวันจันทร์)</p>
+    <div style="background:var(--cream); border-radius:12px; padding:14px; margin:12px 0; white-space:pre-wrap; font-size:13px; line-height:1.7; max-height:50vh; overflow-y:auto;">${msg}</div>
+    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+      ${sharedLineRelayUrl ? `
+      <button class="btn" id="availLineAutoBtn" style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#06C755"/><path d="M6 10.2c0-3 2.8-5.4 6-5.4s6 2.4 6 5.4c0 2.7-2.2 4.9-5.2 5.3-.2.6-.6 1.9-.7 2.2-.1.3-.3.3-.5.1-.1-.1-1.6-1.1-2.3-1.6C7.4 15.5 6 13 6 10.2Z" fill="#fff"/></svg>
+        ส่งเข้ากลุ่มอัตโนมัติ
+      </button>` : `
+      <button class="btn" id="availLineShareBtn" style="display:flex; align-items:center; gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#06C755"/><path d="M6 10.2c0-3 2.8-5.4 6-5.4s6 2.4 6 5.4c0 2.7-2.2 4.9-5.2 5.3-.2.6-.6 1.9-.7 2.2-.1.3-.3.3-.5.1-.1-.1-1.6-1.1-2.3-1.6C7.4 15.5 6 13 6 10.2Z" fill="#fff"/></svg>
+        ส่งไลน์
+      </button>`}
+      <button class="btn ghost" id="availCopyBtn">คัดลอกข้อความ</button>
+    </div>
+  `;
+  const shareBtn = document.getElementById('availLineShareBtn');
+  if(shareBtn) shareBtn.onclick = ()=> sendTextToLine(msg);
+  const autoBtn = document.getElementById('availLineAutoBtn');
+  if(autoBtn) autoBtn.onclick = (e)=> sendTextToLineGroupAuto(msg, e.currentTarget);
+  document.getElementById('availCopyBtn').onclick = (e)=> copyTextToClipboard(msg, e.currentTarget);
+  openModal('reportModalOverlay');
+}
+
 function buildDaySummaryReport(dateStr){
   const d = computeDaySummary(dateStr);
   const dateLabel = new Date(dateStr+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -6775,6 +6839,9 @@ function renderLogTab(){
         <button id="calNextBtn">›</button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
+      <div style="text-align:center; margin-top:10px;">
+        <button class="btn small ghost" id="summarizeAvailabilityBtn">📅 สรุปคิวว่างให้ลูกค้า</button>
+      </div>
       <div style="margin:14px 0; border-top:1px dashed var(--line);"></div>
       <h3 style="margin:0 0 10px; font-size:14px; color:var(--ink);">คิวที่กำลังจะถึง</h3>
       <div class="card-grid" id="bookingCardGrid"></div>
@@ -7106,6 +7173,7 @@ function renderLogTab(){
     if(window._calMonth>11){ window._calMonth=0; window._calYear++; }
     renderCalendar();
   };
+  document.getElementById('summarizeAvailabilityBtn').onclick = ()=> openAvailabilitySummary();
 
   // ---------- Shared advance-booking cards (agent-card style) ----------
   const INSTRUCTOR_COLORS = ['#165028', '#542B0D', '#8F5A26'];
