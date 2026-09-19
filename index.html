@@ -831,9 +831,26 @@
     font-family:'Fraunces',serif; font-weight:700; font-size:12px; color:#fff;
     border:1.5px solid rgba(220,167,61,.6); overflow:hidden;
   }
-  .ac-header-avatar.rotating-avatar{ transition:opacity .25s ease; }
   .ac-title{ font-family:'Fraunces',serif; font-weight:600; font-style:italic; font-size:13.5px; letter-spacing:1.4px; color:var(--gold); flex:1; }
   .ac-id{ font-family:'Fraunces',serif; font-size:10.5px; letter-spacing:1.2px; color:#8a8178; font-style:italic; }
+
+  /* ---------- header avatar auto-crossfade slideshow (pure CSS, no JS timer — immune to any
+     browser throttling of setInterval/requestAnimationFrame on idle mobile tabs) ---------- */
+  .ac-header-avatar-stack{ position:relative; width:26px; height:26px; flex:none; }
+  .ac-avatar-layer{
+    position:absolute; inset:0; opacity:0;
+    animation-iteration-count:infinite; animation-timing-function:linear;
+  }
+  @keyframes avatarFade2{ 0%{opacity:1;} 48%{opacity:1;} 50%{opacity:0;} 100%{opacity:0;} }
+  @keyframes avatarFade3{ 0%{opacity:1;} 31%{opacity:1;} 33.33%{opacity:0;} 100%{opacity:0;} }
+  @keyframes avatarFade4{ 0%{opacity:1;} 23%{opacity:1;} 25%{opacity:0;} 100%{opacity:0;} }
+  @keyframes avatarFade5{ 0%{opacity:1;} 18%{opacity:1;} 20%{opacity:0;} 100%{opacity:0;} }
+  @keyframes avatarFade6{ 0%{opacity:1;} 14.6%{opacity:1;} 16.67%{opacity:0;} 100%{opacity:0;} }
+  .ac-header-avatar-stack[style*="--cycle-n:2"] .ac-avatar-layer{ animation-name:avatarFade2; }
+  .ac-header-avatar-stack[style*="--cycle-n:3"] .ac-avatar-layer{ animation-name:avatarFade3; }
+  .ac-header-avatar-stack[style*="--cycle-n:4"] .ac-avatar-layer{ animation-name:avatarFade4; }
+  .ac-header-avatar-stack[style*="--cycle-n:5"] .ac-avatar-layer{ animation-name:avatarFade5; }
+  .ac-header-avatar-stack[style*="--cycle-n:6"] .ac-avatar-layer{ animation-name:avatarFade6; }
   .ac-del{
     position:absolute; top:8px; right:8px; z-index:2; width:22px; height:22px; border-radius:50%;
     background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2); color:#EDEAE2; font-size:12px;
@@ -7109,16 +7126,20 @@ function renderLogTab(){
         const content = photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial;
         return `<div class="ac-header-avatar" style="background:${instructorColor(name)};">${content}</div>`;
       }
-      const framesJson = JSON.stringify(distinctInstructors.map(name=>{
+      // pure-CSS crossfade slideshow — each instructor is its own stacked, absolutely-positioned circle
+      // with a staggered animation-delay so exactly one is visible at a time, cycling forever. Runs
+      // entirely on the browser's own animation engine, not a JS timer, so it can't be throttled the
+      // way setInterval/requestAnimationFrame can be on some mobile browsers when the page sits idle.
+      const n = distinctInstructors.length;
+      const cycleS = n * 5; // 5s per instructor
+      const layers = distinctInstructors.map((name, i)=>{
         const photo = instructorPhotos[name];
         const initial = name.replace('อาจารย์','').trim().charAt(0) || '?';
-        return { name, color: instructorColor(name), content: photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial };
-      })).replace(/"/g,'&quot;');
-      const first = distinctInstructors[0];
-      const firstPhoto = instructorPhotos[first];
-      const firstInitial = first.replace('อาจารย์','').trim().charAt(0) || '?';
-      const firstContent = firstPhoto ? `<img src="${firstPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : firstInitial;
-      return `<div class="ac-header-avatar rotating-avatar" data-frames="${framesJson}" title="สลับรูปทุก 5 วิ — สอนพร้อมกัน ${distinctInstructors.length} ท่าน" style="background:${instructorColor(first)};">${firstContent}</div>`;
+        const content = photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initial;
+        const delay = i * 5; // seconds — offsets when this layer's turn to be visible starts
+        return `<div class="ac-header-avatar ac-avatar-layer" style="background:${instructorColor(name)}; animation-duration:${cycleS}s; animation-delay:-${delay}s;" title="${name} — สอนพร้อมกัน ${n} ท่าน (สลับอัตโนมัติทุก 5 วิ)">${content}</div>`;
+      }).join('');
+      return `<div class="ac-header-avatar-stack" style="--cycle-n:${n};">${layers}</div>`;
     })();
     const timelineHTML = distinctSessions.length > 1 ? (()=>{
       const toMin = t=>{ const [h,m] = t.split(':').map(Number); return h*60+m; };
@@ -9175,28 +9196,26 @@ function playHeroIntro(){
 }
 
 // large sliding showcase of each instructor's photo, shown once right before the login screen
-// rotates the small header avatar between each instructor teaching that day, one frame every 5s —
-// a single shared ticker (created once, never re-created) drives every rotating avatar on the
-// page. Which frame shows is derived purely from the CURRENT absolute time (Date.now() / 5000),
-// not "time since this element appeared" — so even if the booking cards get re-rendered constantly
-// (background sync, tab switches, etc., recreating this DOM element from scratch each time) the
-// correct frame is always shown immediately, with nothing to reset.
-let rotatingAvatarTickerId = null;
+// tap-to-cycle: instead of an automatic timer (which some mobile browsers throttle unpredictably),
+// tapping the header avatar directly cycles to the next instructor teaching that day — 100%
+// reliable since it's a plain click handler, no timers involved at all.
 function setupRotatingAvatars(){
-  if(rotatingAvatarTickerId) return; // already running — the shared ticker below picks up new/changed elements on its own
-  rotatingAvatarTickerId = setInterval(()=>{
-    document.querySelectorAll('.rotating-avatar[data-frames]').forEach(el=>{
+  document.querySelectorAll('.rotating-avatar[data-frames]').forEach(el=>{
+    if(el.dataset.tapWired) return; // don't attach a second handler if this exact element is somehow re-processed
+    el.dataset.tapWired = '1';
+    el.style.cursor = 'pointer';
+    el.onclick = (e)=>{
+      e.stopPropagation();
       let frames;
-      try{ frames = JSON.parse(el.dataset.frames); }catch(e){ return; }
+      try{ frames = JSON.parse(el.dataset.frames); }catch(err){ return; }
       if(!Array.isArray(frames) || frames.length < 2) return;
-      const idx = Math.floor(Date.now() / 5000) % frames.length;
-      if(el.dataset.rotateIdx === String(idx)) return; // already showing this frame — nothing to change
+      const idx = ((Number(el.dataset.rotateIdx)||0) + 1) % frames.length;
       el.dataset.rotateIdx = String(idx);
       el.style.background = frames[idx].color;
       el.innerHTML = frames[idx].content;
-      el.title = `${frames[idx].name} — สลับรูปทุก 5 วิ (สอนพร้อมกัน ${frames.length} ท่าน)`;
-    });
-  }, 800); // check often enough to catch the 5s boundary promptly, and cheap enough not to matter
+      el.title = `${frames[idx].name} — แตะเพื่อดูอาจารย์ท่านถัดไป (สอนพร้อมกัน ${frames.length} ท่าน)`;
+    };
+  });
 }
 
 function playInstructorShowcase(){
