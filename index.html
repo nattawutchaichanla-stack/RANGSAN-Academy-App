@@ -5158,9 +5158,13 @@ function computeDaySummary(dateStr){
 // builds a customer-facing message listing genuinely open dates this month — a day counts as
 // open only if it has ZERO existing bookings, Mondays are always excluded (no classes ever), and
 // only today-or-later dates are considered (past days can't be booked anyway)
-function buildAvailabilitySummary(){
+function buildAvailabilitySummary(targetYear, targetMonth){
   const now = new Date();
-  const year = now.getFullYear(), month = now.getMonth(); // 0-11
+  // default to whichever month the calendar is currently showing (so navigating the calendar with
+  // ‹ › first, then pressing the button, summarizes THAT month) — falls back to the real current
+  // month if the calendar hasn't set those globals yet for some reason
+  const year = targetYear!=null ? targetYear : (typeof window._calYear==='number' ? window._calYear : now.getFullYear());
+  const month = targetMonth!=null ? targetMonth : (typeof window._calMonth==='number' ? window._calMonth : now.getMonth()); // 0-11
   const daysInMonth = new Date(year, month+1, 0).getDate();
   const todayStr = now.toISOString().slice(0,10);
   const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -5171,7 +5175,7 @@ function buildAvailabilitySummary(){
   const openDays = [];
   for(let day=1; day<=daysInMonth; day++){
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    if(dateStr < todayStr) continue; // past — can't book
+    if(dateStr < todayStr) continue; // past — can't book (only matters for the current real month; earlier months are skipped entirely below, future months have nothing before today anyway)
     const dow = new Date(year, month, day).getDay(); // 0=Sun..6=Sat
     if(dow === 1) continue; // Monday — never teaches
     if(bookedDates.has(dateStr)) continue; // already has at least one booking
@@ -5196,7 +5200,7 @@ function openAvailabilitySummary(){
   const msg = buildAvailabilitySummary();
   document.getElementById('reportModalBody').innerHTML = `
     <h3>📅 สรุปคิวว่างให้ลูกค้า</h3>
-    <p class="hint">ดึงจากตารางจองอัตโนมัติ — วันที่ยังไม่มีการจองเลยเท่านั้น (ไม่รวมวันจันทร์)</p>
+    <p class="hint">สรุปเดือนที่กำลังดูอยู่ในปฏิทินด้านบน (เลื่อน ‹ › เพื่อเลือกเดือนอื่นก่อนกดปุ่มนี้ได้) — วันที่ยังไม่มีการจองเลยเท่านั้น (ไม่รวมวันจันทร์)</p>
     <div style="background:var(--cream); border-radius:12px; padding:14px; margin:12px 0; white-space:pre-wrap; font-size:13px; line-height:1.7; max-height:50vh; overflow-y:auto;">${msg}</div>
     <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
       ${sharedLineRelayUrl ? `
@@ -6840,7 +6844,7 @@ function renderLogTab(){
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div style="text-align:center; margin-top:10px;">
-        <button class="btn small ghost" id="summarizeAvailabilityBtn">📅 สรุปคิวว่างให้ลูกค้า</button>
+        <button class="btn small ghost" id="summarizeAvailabilityBtn">📅 สรุปคิวว่างให้ลูกค้า (เดือนที่ดูอยู่)</button>
       </div>
       <div style="margin:14px 0; border-top:1px dashed var(--line);"></div>
       <h3 style="margin:0 0 10px; font-size:14px; color:var(--ink);">คิวที่กำลังจะถึง</h3>
