@@ -7140,7 +7140,11 @@ function renderLogTab(){
         return `<div class="ac-header-avatar ac-avatar-layer" style="background:${instructorColor(name)}; animation-duration:${cycleS}s; animation-delay:-${delay}s;" title="${name} — สอนพร้อมกัน ${n} ท่าน (สลับอัตโนมัติทุก 5 วิ)">${content}</div>`;
       }).join('');
       const cycleClass = `cycle-${Math.min(n,6)}`; // reliable class-based selector — the [style*="..."] attribute match above is kept too as a harmless fallback, but shouldn't be relied on alone since custom-property string matching in inline styles isn't consistently reliable across all browsers
-      return `<div class="ac-header-avatar-stack ${cycleClass}" style="--cycle-n:${n};">${layers}</div>`;
+      // TEMPORARY diagnostic counter — shows live elapsed seconds so we can tell whether ANY script
+      // is running near this element at all, separate from whether the avatar swap itself works.
+      // Safe to remove once the real issue is found.
+      const debugCounter = `<span class="ac-avatar-debug" data-debug-start="${Date.now()}" style="font-size:9px; color:#e0a94a; font-family:monospace; margin-left:2px;">0s</span>`;
+      return `<div class="ac-header-avatar-stack ${cycleClass}" style="--cycle-n:${n};">${layers}</div>${debugCounter}`;
     })();
     const timelineHTML = distinctSessions.length > 1 ? (()=>{
       const toMin = t=>{ const [h,m] = t.split(':').map(Number); return h*60+m; };
@@ -9195,6 +9199,20 @@ function playHeroIntro(){
     setTimeout(()=> el.classList.add('loop'), delay + 900 + idx*120);
   });
 }
+
+// TEMPORARY diagnostic: updates the small elapsed-seconds counter next to the avatar stack, so we
+// can see directly on a real device whether JS timers are running at all near this element — helps
+// tell "detection/JS not running" apart from "detection running but the CSS animation itself isn't".
+// Safe to remove once the real issue is found.
+function updateAvatarDebugCounters(){
+  document.querySelectorAll('.ac-avatar-debug[data-debug-start]').forEach(el=>{
+    const start = Number(el.dataset.debugStart);
+    if(!start) return;
+    const secs = Math.floor((Date.now() - start) / 1000);
+    el.textContent = secs + 's';
+  });
+}
+setInterval(updateAvatarDebugCounters, 1000);
 
 // large sliding showcase of each instructor's photo, shown once right before the login screen
 // tap-to-cycle: instead of an automatic timer (which some mobile browsers throttle unpredictably),
