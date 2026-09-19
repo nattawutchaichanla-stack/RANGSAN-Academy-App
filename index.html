@@ -9176,28 +9176,27 @@ function playHeroIntro(){
 
 // large sliding showcase of each instructor's photo, shown once right before the login screen
 // rotates the small header avatar between each instructor teaching that day, one frame every 5s —
-// tracks its own interval IDs globally so re-rendering the cards never stacks up duplicate timers
-let rotatingAvatarIntervals = [];
+// a single shared ticker (created once, never re-created) drives every rotating avatar on the
+// page. Which frame shows is derived purely from the CURRENT absolute time (Date.now() / 5000),
+// not "time since this element appeared" — so even if the booking cards get re-rendered constantly
+// (background sync, tab switches, etc., recreating this DOM element from scratch each time) the
+// correct frame is always shown immediately, with nothing to reset.
+let rotatingAvatarTickerId = null;
 function setupRotatingAvatars(){
-  rotatingAvatarIntervals.forEach(id=> clearInterval(id));
-  rotatingAvatarIntervals = [];
-  document.querySelectorAll('.rotating-avatar[data-frames]').forEach(el=>{
-    let frames;
-    try{ frames = JSON.parse(el.dataset.frames); }catch(e){ return; }
-    if(!Array.isArray(frames) || frames.length < 2) return;
-    let idx = 0;
-    const id = setInterval(()=>{
-      idx = (idx + 1) % frames.length;
-      el.style.opacity = '0';
-      setTimeout(()=>{
-        el.style.background = frames[idx].color;
-        el.innerHTML = frames[idx].content;
-        el.title = `${frames[idx].name} — สลับรูปทุก 5 วิ (สอนพร้อมกัน ${frames.length} ท่าน)`;
-        el.style.opacity = '1';
-      }, 250);
-    }, 5000);
-    rotatingAvatarIntervals.push(id);
-  });
+  if(rotatingAvatarTickerId) return; // already running — the shared ticker below picks up new/changed elements on its own
+  rotatingAvatarTickerId = setInterval(()=>{
+    document.querySelectorAll('.rotating-avatar[data-frames]').forEach(el=>{
+      let frames;
+      try{ frames = JSON.parse(el.dataset.frames); }catch(e){ return; }
+      if(!Array.isArray(frames) || frames.length < 2) return;
+      const idx = Math.floor(Date.now() / 5000) % frames.length;
+      if(el.dataset.rotateIdx === String(idx)) return; // already showing this frame — nothing to change
+      el.dataset.rotateIdx = String(idx);
+      el.style.background = frames[idx].color;
+      el.innerHTML = frames[idx].content;
+      el.title = `${frames[idx].name} — สลับรูปทุก 5 วิ (สอนพร้อมกัน ${frames.length} ท่าน)`;
+    });
+  }, 800); // check often enough to catch the 5s boundary promptly, and cheap enough not to matter
 }
 
 function playInstructorShowcase(){
