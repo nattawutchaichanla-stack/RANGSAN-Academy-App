@@ -3401,7 +3401,7 @@ async function syncBookingsFromGoogleForm(){
     const equipmentIdx = findCol(['อุปกรณ์ที่เคยใช้']);
     const goalIdx = findCol(['เป้าหมายการเรียน']);
     const topicsIdx = findCol(['หัวข้อที่อยากให้เน้น']);
-    const photoConsentIdx = findCol(['ยินยอมให้ถ่ายรูป', 'ยินยอมให้ถ่ายภาพ', 'อนุญาตให้ถ่ายรูป', 'อนุญาตให้ถ่ายภาพ', 'ถ่ายรูป']);
+    const photoConsentIdx = findCol(['การยินยอมให้ใช้ภาพถ่ายและวิดีโอ', 'ยินยอมให้ใช้ภาพถ่าย', 'ยินยอมให้ถ่ายรูป', 'ยินยอมให้ถ่ายภาพ', 'อนุญาตให้ถ่ายรูป', 'อนุญาตให้ถ่ายภาพ', 'ยินยอม']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
     let added = 0, skipped = 0, unmatched = 0, enriched = 0;
