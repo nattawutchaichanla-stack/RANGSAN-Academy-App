@@ -3401,6 +3401,7 @@ async function syncBookingsFromGoogleForm(){
     const equipmentIdx = findCol(['อุปกรณ์ที่เคยใช้']);
     const goalIdx = findCol(['เป้าหมายการเรียน']);
     const topicsIdx = findCol(['หัวข้อที่อยากให้เน้น']);
+    const photoConsentIdx = findCol(['ยินยอมให้ถ่ายรูป', 'ยินยอมให้ถ่ายภาพ', 'อนุญาตให้ถ่ายรูป', 'อนุญาตให้ถ่ายภาพ', 'ถ่ายรูป']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
     let added = 0, skipped = 0, unmatched = 0, enriched = 0;
@@ -3424,6 +3425,7 @@ async function syncBookingsFromGoogleForm(){
       const equipment = equipmentIdx>=0 ? (r[equipmentIdx]||'').trim() : '';
       const goal = goalIdx>=0 ? (r[goalIdx]||'').trim() : '';
       const topics = topicsIdx>=0 ? (r[topicsIdx]||'').trim() : '';
+      const photoConsent = photoConsentIdx>=0 ? (r[photoConsentIdx]||'').trim() : '';
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
@@ -3444,6 +3446,7 @@ async function syncBookingsFromGoogleForm(){
           if(!existing.equipment && equipment){ existing.equipment = equipment; changed = true; }
           if(!existing.goal && goal){ existing.goal = goal; changed = true; }
           if(!existing.topics && topics){ existing.topics = topics; changed = true; }
+          if(!existing.photoConsent && photoConsent){ existing.photoConsent = photoConsent; changed = true; }
           if(changed) enriched++;
         }
         skipped++;
@@ -3456,7 +3459,7 @@ async function syncBookingsFromGoogleForm(){
         instructor: 'ยังไม่ระบุ',
         note: `จากฟอร์มลงทะเบียน: ${name}${phone ? ' · '+phone : ''}${line ? ' · LINE: '+line : ''}`,
         allergy,
-        occupation, income, province, basicKnowledge, equipment, goal, topics,
+        occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent,
         customerName: name, customerPhone: phone, customerLine: line,
         source: 'google_form',
         syncKey,
@@ -7412,6 +7415,11 @@ function renderLogTab(){
           ${b.goal ? `<div class="ac-field"><b>เป้าหมาย</b> ${b.goal}</div>` : ''}
           ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
           ${b.machineModel ? `<div class="ac-field"><b>รุ่นเครื่อง</b> ${b.machineModel}</div>` : ''}
+          ${b.photoConsent ? (()=>{
+            const declined = b.photoConsent.includes('ไม่');
+            const color = declined ? '#ff9d8a' : '#7fd99a';
+            return `<div class="ac-field" style="color:${color};"><b style="color:${color};">📷 ถ่ายรูป</b> ${b.photoConsent}</div>`;
+          })() : ''}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${confirmButtonHtml}
         </div>
