@@ -2902,6 +2902,14 @@ var qrcode = function() {
           <div class="price-field" style="flex:1;"><span class="price-currency">฿</span><input type="number" id="newProductPrice" placeholder="ราคาขาย"></div>
         </div>
       </div>
+      <div>
+        <div class="modal-field-label">หักสต๊อกวัตถุดิบอัตโนมัติ (ไม่บังคับ)</div>
+        <p class="hint" style="margin:0 0 6px;">เช่น ขาย 1 แก้ว หักเมล็ดกาแฟออกกี่กรัม — เว้นว่างได้ถ้าไม่ต้องการหักอะไร</p>
+        <div style="display:flex; gap:8px;">
+          <select id="newProductStockLink" class="pill" style="flex:2;"></select>
+          <div class="price-field" style="flex:1;"><input type="number" id="newProductStockGrams" placeholder="กรัม/ชิ้น"><span class="price-suffix">ก.</span></div>
+        </div>
+      </div>
       <label class="btn ghost" style="cursor:pointer; text-align:center;">
         📷 เลือกรูปสินค้า (ไม่บังคับ)
         <input type="file" accept="image/*" id="newProductPhoto" style="display:none;">
@@ -5607,8 +5615,10 @@ function confirmBookingTaught(bookingGroup, students, soldProducts, soldProducts
         changed = true;
         logStockMovement(prod.name, 'sale', sp.qty, `ขายพร้อมคอร์ส ${booking.instructor}`);
       }
+      deductLinkedRawMaterial(sp.name, sp.qty);
     });
     if(changed) saveRetailProducts();
+    scheduleSave(); // persists state.stock after any linked raw-material deductions above
   }
 
   if(document.getElementById('bookingCardGrid')) renderLogTab();
@@ -6330,6 +6340,20 @@ async function loadStockMovements(){
 }
 async function saveStockMovements(){
   try{ await window.storage.set('shared_stock_movements', JSON.stringify(stockMovements), true); }catch(e){ console.error('shared stock movements save failed', e); }
+}
+// deducts a sold product's linked raw material (e.g. selling 1 cup of latte deducts 18g of coffee
+// beans from state.stock) — grams are converted to the material's own unit only for the common
+// weight/volume units (กก./ลิตร → divide by 1000); other units are treated as already-whole-number
+// grams-equivalent and just subtracted directly, since a per-gram deduction wouldn't make sense there
+function deductLinkedRawMaterial(productName, qtySold){
+  const prod = retailProducts.find(p=> p.name === productName);
+  if(!prod || !prod.linkedStockKey || !prod.deductGrams) return;
+  const mat = state.stock.find(s=> s.key === prod.linkedStockKey);
+  if(!mat) return;
+  const totalGrams = prod.deductGrams * qtySold;
+  const isWeightOrVolumeUnit = mat.unit === 'กก.' || mat.unit === 'ลิตร';
+  const deduction = isWeightOrVolumeUnit ? totalGrams/1000 : totalGrams;
+  mat.stock = Math.max(0, (mat.stock||0) - deduction);
 }
 function logStockMovement(productName, type, qty, note, evidencePhoto){
   stockMovements.push({
@@ -7895,6 +7919,11 @@ function renderStockTab(){
     document.querySelector('#productModalOverlay h3').textContent = editing ? '✎ แก้ไขสินค้า' : '+ เพิ่มสินค้าเสนอขาย';
     document.querySelector('#productModalOverlay .hint').textContent = editing ? 'แก้ไขชื่อ/หมวดหมู่/ราคา/รูปของสินค้านี้ แล้วกดบันทึก' : 'แตะเลือกชื่อจากรายการ หรือพิมพ์เองก็ได้ แล้วใส่ต้นทุน + ราคาขาย + รูป (ไม่บังคับ)';
     document.getElementById('addProductBtn').innerHTML = editing ? 'บันทึกการแก้ไข<span class="circ">✓</span>' : 'เพิ่มสินค้า<span class="circ">+</span>';
+    document.getElementById('newProductStockLink').innerHTML =
+      `<option value="">— ไม่หักสต๊อกวัตถุดิบ —</option>` +
+      state.stock.map(s=>`<option value="${s.key}">${s.item}</option>`).join('');
+    document.getElementById('newProductStockLink').value = existing && existing.linkedStockKey ? existing.linkedStockKey : '';
+    document.getElementById('newProductStockGrams').value = existing && existing.deductGrams ? existing.deductGrams : '';
     // quick-pick catalog cards only make sense when adding something brand new
     document.getElementById('productNameChips').style.display = editing ? 'none' : '';
     document.querySelector('#productModalOverlay .modal-field-label').style.display = editing ? 'none' : '';
@@ -7969,12 +7998,15 @@ function renderStockTab(){
     const cost = Number(costInput.value) || 0;
     const price = Number(priceInput.value) || 0;
     const category = categoryInput.value || 'อื่นๆ';
+    const linkedStockKey = document.getElementById('newProductStockLink').value || null;
+    const deductGrams = linkedStockKey ? (Number(document.getElementById('newProductStockGrams').value) || 0) : 0;
     if(editing){
       const p = retailProducts[editingProductIdx];
       p.name = name; p.cost = cost; p.price = price; p.category = category;
+      p.linkedStockKey = linkedStockKey; p.deductGrams = deductGrams;
       if(pendingProductPhotoDataUrl!=null) p.photo = pendingProductPhotoDataUrl;
     } else {
-      retailProducts.push({ id:'prod_'+Date.now(), name, cost, price, category, photo: pendingProductPhotoDataUrl || '', stock: 0 });
+      retailProducts.push({ id:'prod_'+Date.now(), name, cost, price, category, photo: pendingProductPhotoDataUrl || '', stock: 0, linkedStockKey, deductGrams });
     }
     saveRetailProducts();
     renderProductGrid();
@@ -8716,8 +8748,10 @@ async function openPaymentModal(items){
           prod.stock = Math.max(0, (prod.stock||0) - sp.qty);
           logStockMovement(prod.name, 'sale', sp.qty, 'ขายหน้าร้าน');
         }
+        deductLinkedRawMaterial(sp.name, sp.qty);
       });
       await saveRetailProducts();
+      scheduleSave(); // persists state.stock after any linked raw-material deductions above
 
       renderSellTab();
       if(document.getElementById('stockWarehouseBody')) renderStockTab();
