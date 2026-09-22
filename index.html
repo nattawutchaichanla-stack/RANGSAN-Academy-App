@@ -6261,6 +6261,12 @@ const DEFAULT_RETAIL_PRODUCTS = [
   { name:'กาแฟศรีนวล 250 กรัม', price:200, stock:1, category:'เมล็ดกาแฟ' },
   { name:'แมวเป้า คั่วกลาง 500 กรัม', price:325, stock:33, category:'เมล็ดกาแฟ' },
   { name:'แมวเป้า คั่วกลาง 250 กรัม', price:200, stock:10, category:'เมล็ดกาแฟ' },
+  // เครื่องดื่มชงสด — ชงตามสั่ง ไม่ใช่สินค้าแพ็ค จึงตั้ง stock สูงไว้ (พร้อมชงเสมอ) ปรับราคาได้ในหน้าจัดการสินค้า
+  { name:'เอสเพรสโซ่ (Espresso)', price:45, stock:999, category:'เครื่องดื่ม' },
+  { name:'อเมริกาโน่ (Americano)', price:50, stock:999, category:'เครื่องดื่ม' },
+  { name:'คาปูชิโน่ (Cappuccino)', price:55, stock:999, category:'เครื่องดื่ม' },
+  { name:'ลาเต้ (Latte)', price:55, stock:999, category:'เครื่องดื่ม' },
+  { name:'ลาเต้อาร์ท (Latte Art)', price:65, stock:999, category:'เครื่องดื่ม' },
 ];
 async function loadRetailProducts(){
   try{
@@ -7703,7 +7709,7 @@ function renderStockTab(){
           ${p.photo ? `<img src="${p.photo}">` : `<span class="pc-placeholder-wrap"><span class="pc-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="pc-add-photo-hint">แตะเพื่อใส่รูป</span></span>`}
           <input type="file" accept="image/*" data-photo-input="${i}" style="display:none;">
         </label>
-        <div class="pc-body">
+        <div class="pc-body" data-edit-product="${i}" style="cursor:pointer;" title="แตะเพื่อแก้ไข">
           <div class="pc-name">${p.name}</div>
           ${p.category ? `<div class="pc-category">${p.category}</div>` : ''}
           <div class="pc-price">฿${fmt(p.price)}</div>
@@ -7729,12 +7735,16 @@ function renderStockTab(){
     }
 
     productGrid.querySelectorAll('[data-del-product]').forEach(btn=>{
-      btn.onclick = ()=>{
+      btn.onclick = (e)=>{
+        e.stopPropagation();
         if(!confirm(`ลบสินค้า "${retailProducts[btn.dataset.delProduct].name}" ใช่หรือไม่?`)) return;
         retailProducts.splice(Number(btn.dataset.delProduct),1);
         saveRetailProducts();
         renderProductGrid();
       };
+    });
+    productGrid.querySelectorAll('[data-edit-product]').forEach(body=>{
+      body.onclick = ()=> openProductModal(Number(body.dataset.editProduct));
     });
     productGrid.querySelectorAll('[data-photo-input]').forEach(inp=>{
       inp.onchange = async (e)=>{
@@ -7869,18 +7879,29 @@ function renderStockTab(){
   };
   renderStockWarehouse();
 
-  document.getElementById('openProductModalBtn').onclick = ()=>{
-    document.getElementById('newProductName').value = '';
-    document.getElementById('newProductCost').value = '';
-    document.getElementById('newProductPrice').value = '';
+  let editingProductIdx = null; // null = adding a new product; a number = editing that index in retailProducts
+  const openProductModal = (editIdx)=>{
+    editingProductIdx = (editIdx!=null) ? editIdx : null;
+    const editing = editingProductIdx!=null;
+    const existing = editing ? retailProducts[editingProductIdx] : null;
+    document.getElementById('newProductName').value = existing ? existing.name : '';
+    document.getElementById('newProductCost').value = existing && existing.cost ? existing.cost : '';
+    document.getElementById('newProductPrice').value = existing ? existing.price : '';
     document.getElementById('newProductPhoto').value = '';
-    document.getElementById('newProductPreview').style.display = 'none';
-    document.getElementById('newProductPreview').innerHTML = '';
+    document.getElementById('newProductPreview').style.display = existing && existing.photo ? 'block' : 'none';
+    document.getElementById('newProductPreview').innerHTML = existing && existing.photo ? `<img src="${existing.photo}" style="max-width:120px; border-radius:10px;">` : '';
     document.getElementById('productWarning').style.display = 'none';
-    pendingProductPhotoDataUrl = null;
+    pendingProductPhotoDataUrl = existing ? existing.photo : null;
+    document.querySelector('#productModalOverlay h3').textContent = editing ? '✎ แก้ไขสินค้า' : '+ เพิ่มสินค้าเสนอขาย';
+    document.querySelector('#productModalOverlay .hint').textContent = editing ? 'แก้ไขชื่อ/หมวดหมู่/ราคา/รูปของสินค้านี้ แล้วกดบันทึก' : 'แตะเลือกชื่อจากรายการ หรือพิมพ์เองก็ได้ แล้วใส่ต้นทุน + ราคาขาย + รูป (ไม่บังคับ)';
+    document.getElementById('addProductBtn').innerHTML = editing ? 'บันทึกการแก้ไข<span class="circ">✓</span>' : 'เพิ่มสินค้า<span class="circ">+</span>';
+    // quick-pick catalog cards only make sense when adding something brand new
+    document.getElementById('productNameChips').style.display = editing ? 'none' : '';
+    document.querySelector('#productModalOverlay .modal-field-label').style.display = editing ? 'none' : '';
     document.getElementById('newProductCategory').innerHTML =
       allProductCategories().map(c=>`<option value="${c}">${c}</option>`).join('') +
       `<option value="__add_new__">+ เพิ่มหมวดหมู่ใหม่...</option>`;
+    if(existing) document.getElementById('newProductCategory').value = existing.category || 'อื่นๆ';
     document.getElementById('newProductCategory').onchange = async (e)=>{
       if(e.target.value === '__add_new__'){
         const newCat = await askText('เพิ่มหมวดหมู่ใหม่', 'ตั้งชื่อหมวดหมู่สินค้าที่ต้องการเพิ่ม');
@@ -7923,6 +7944,7 @@ function renderStockTab(){
     });
     openModal('productModalOverlay');
   };
+  document.getElementById('openProductModalBtn').onclick = ()=> openProductModal(null);
   document.getElementById('addProductBtn').onclick = ()=>{
     const nameInput = document.getElementById('newProductName');
     const costInput = document.getElementById('newProductCost');
@@ -7936,7 +7958,9 @@ function renderStockTab(){
       nameInput.focus();
       return;
     }
-    const isDup = retailProducts.some(p=> p.name.trim().toLowerCase() === name.toLowerCase());
+    const editing = editingProductIdx!=null;
+    // when editing, the item's own current name doesn't count as a duplicate of itself
+    const isDup = retailProducts.some((p,i)=> p.name.trim().toLowerCase() === name.toLowerCase() && i!==editingProductIdx);
     if(isDup){
       warn.textContent = `⚠️ มีสินค้า "${name}" อยู่แล้วในระบบ`;
       warn.style.display = 'block';
@@ -7945,11 +7969,18 @@ function renderStockTab(){
     const cost = Number(costInput.value) || 0;
     const price = Number(priceInput.value) || 0;
     const category = categoryInput.value || 'อื่นๆ';
-    retailProducts.push({ id:'prod_'+Date.now(), name, cost, price, category, photo: pendingProductPhotoDataUrl || '', stock: 0 });
+    if(editing){
+      const p = retailProducts[editingProductIdx];
+      p.name = name; p.cost = cost; p.price = price; p.category = category;
+      if(pendingProductPhotoDataUrl!=null) p.photo = pendingProductPhotoDataUrl;
+    } else {
+      retailProducts.push({ id:'prod_'+Date.now(), name, cost, price, category, photo: pendingProductPhotoDataUrl || '', stock: 0 });
+    }
     saveRetailProducts();
     renderProductGrid();
     renderStockWarehouse();
     closeModal('productModalOverlay');
+    editingProductIdx = null;
   };
 
   // ---------- Retail sales history (from confirmed bookings + standalone walk-in sales) ----------
