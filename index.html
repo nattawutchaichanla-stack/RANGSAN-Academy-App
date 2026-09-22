@@ -7415,11 +7415,20 @@ function renderLogTab(){
           ${b.goal ? `<div class="ac-field"><b>เป้าหมาย</b> ${b.goal}</div>` : ''}
           ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
           ${b.machineModel ? `<div class="ac-field"><b>รุ่นเครื่อง</b> ${b.machineModel}</div>` : ''}
-          ${b.photoConsent ? (()=>{
-            const declined = b.photoConsent.includes('ไม่');
+          ${(()=>{
+            // no answer on file counts as declined by default (safe default for privacy) —
+            // always shown, not just when present, so it's never accidentally overlooked
+            const hasAnswer = !!b.photoConsent;
+            const declined = !hasAnswer || b.photoConsent.includes('ไม่');
+            const label = hasAnswer ? b.photoConsent : 'ไม่ยินยอมให้ถ่าย (ไม่มีคำตอบ)';
+            const bg = declined ? 'rgba(255,157,138,.15)' : 'rgba(127,217,154,.18)';
             const color = declined ? '#ff9d8a' : '#7fd99a';
-            return `<div class="ac-field" style="color:${color};"><b style="color:${color};">📷 ถ่ายรูป</b> ${b.photoConsent}</div>`;
-          })() : ''}
+            return `<div class="ac-field" style="background:${bg}; border-radius:8px; padding:6px 10px; margin:4px 0; display:flex; align-items:center; gap:6px;">
+              <span style="font-size:14px;">${declined?'🚫':'📷'}</span>
+              <span style="font-weight:700; color:${color};">${declined?'ไม่ยินยอมให้ถ่าย':'ยินยอมให้ถ่ายรูป'}</span>
+              ${hasAnswer && !declined ? `<span style="color:${color}; opacity:.85; font-size:11.5px;">— ${label}</span>` : ''}
+            </div>`;
+          })()}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
           ${confirmButtonHtml}
         </div>
