@@ -7416,17 +7416,26 @@ function renderLogTab(){
           ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
           ${b.machineModel ? `<div class="ac-field"><b>รุ่นเครื่อง</b> ${b.machineModel}</div>` : ''}
           ${(()=>{
-            // no answer on file counts as declined by default (safe default for privacy) —
-            // always shown, not just when present, so it's never accidentally overlooked
+            // three states: no answer on file yet = "pending, ask in person" (neutral, not an
+            // assumption either way), explicit "ไม่ยินยอม" = declined, anything else = consented
             const hasAnswer = !!b.photoConsent;
-            const declined = !hasAnswer || b.photoConsent.includes('ไม่');
-            const label = hasAnswer ? b.photoConsent : 'ไม่ยินยอมให้ถ่าย (ไม่มีคำตอบ)';
-            const bg = declined ? 'rgba(255,157,138,.15)' : 'rgba(127,217,154,.18)';
-            const color = declined ? '#ff9d8a' : '#7fd99a';
+            const declined = hasAnswer && b.photoConsent.includes('ไม่');
+            const consented = hasAnswer && !declined;
+            let icon, text, extra, bg, color;
+            if(!hasAnswer){
+              icon = '❓'; text = 'รอสอบถามหน้างาน'; extra = '';
+              bg = 'rgba(220,167,61,.15)'; color = '#DCA73D';
+            } else if(declined){
+              icon = '🚫'; text = 'ไม่ยินยอมให้ถ่าย'; extra = '';
+              bg = 'rgba(255,157,138,.15)'; color = '#ff9d8a';
+            } else {
+              icon = '📷'; text = 'ยินยอมให้ถ่ายรูป'; extra = ` — ${b.photoConsent}`;
+              bg = 'rgba(127,217,154,.18)'; color = '#7fd99a';
+            }
             return `<div class="ac-field" style="background:${bg}; border-radius:8px; padding:6px 10px; margin:4px 0; display:flex; align-items:center; gap:6px;">
-              <span style="font-size:14px;">${declined?'🚫':'📷'}</span>
-              <span style="font-weight:700; color:${color};">${declined?'ไม่ยินยอมให้ถ่าย':'ยินยอมให้ถ่ายรูป'}</span>
-              ${hasAnswer && !declined ? `<span style="color:${color}; opacity:.85; font-size:11.5px;">— ${label}</span>` : ''}
+              <span style="font-size:14px;">${icon}</span>
+              <span style="font-weight:700; color:${color};">${text}</span>
+              ${consented ? `<span style="color:${color}; opacity:.85; font-size:11.5px;">${extra}</span>` : ''}
             </div>`;
           })()}
           <div class="ac-stamp" style="${b.taught?'border-color:#948a78;color:#c9c2b6;':''}">${b.taught?`✓ TAUGHT (${b.taughtStudents||0} คน)`:'○ BOOKED'}</div>
