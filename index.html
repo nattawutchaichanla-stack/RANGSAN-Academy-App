@@ -9225,7 +9225,7 @@ function renderSlipGallery(){
             const timeStr = t && !isNaN(t) ? t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
             const itemsStr = (s.items||[]).map(it=> `${it.name} x${it.qty}`).join(', ');
             return `<div style="display:flex; gap:10px; background:#fffefc; border-radius:10px; padding:8px; border:1px solid var(--line);">
-              <img class="slip-gallery-item" data-slip="${s.slip}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" src="${s.slip}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
+              <img class="slip-gallery-item" data-slip="${s.slip}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" data-sale-time="${s.time||''}" src="${s.slip}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
               <div style="flex:1; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline; gap:6px;">
                   <span class="mono" style="font-weight:700; font-size:13px;">฿${fmt(s.total)}</span>
@@ -9288,12 +9288,27 @@ function renderSlipGallery(){
   box.querySelectorAll('.slip-gallery-item').forEach(item=>{
     item.onclick = (e)=>{
       e.stopPropagation();
+      const saleTime = item.dataset.saleTime;
       document.getElementById('reportModalBody').innerHTML = `
         <h3>📎 สลิปการโอน</h3>
         <p class="hint">${item.dataset.date} · ฿${fmt(item.dataset.total)} · ${item.dataset.seller}</p>
         ${item.dataset.items ? `<div style="font-size:12.5px; color:#5A4433; background:var(--cream); border-radius:10px; padding:8px 12px; margin-top:8px;">${item.dataset.items}</div>` : ''}
         <div style="text-align:center; margin-top:10px;"><img src="${item.dataset.slip}" style="max-width:100%; border-radius:12px;"></div>
+        ${currentUser === ADMIN_NAME ? `<button class="btn ghost" id="deleteSlipBtn" style="width:100%; margin-top:14px; color:var(--alert);">🗑️ ลบสลิปนี้</button>` : ''}
       `;
+      const delBtn = document.getElementById('deleteSlipBtn');
+      if(delBtn) delBtn.onclick = async ()=>{
+        // only ADMIN_NAME may delete a slip — re-checked here too, not just at render time, in
+        // case this modal was left open across a user switch
+        if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่ลบสลิปได้`); return; }
+        if(!confirm('ลบรูปสลิปนี้ใช่หรือไม่? รายการขายยังอยู่เหมือนเดิม แค่เอารูปสลิปออก')) return;
+        const sale = standaloneSales.find(x=> saleTime && x.time === saleTime);
+        if(!sale){ alert('ไม่พบรายการขายนี้ อาจถูกลบไปแล้ว'); return; }
+        sale.slip = '';
+        await saveStandaloneSales();
+        closeModal('reportModalOverlay');
+        renderSlipGallery();
+      };
       openModal('reportModalOverlay');
     };
   });
