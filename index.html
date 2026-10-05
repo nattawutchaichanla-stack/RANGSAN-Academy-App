@@ -1626,10 +1626,41 @@
   }
 
   @keyframes rsKenBurns{ 0%{ transform:scale(1.04) translate(0,0); } 100%{ transform:scale(1.16) translate(-2.5%,-2%); } }
-  @media (prefers-reduced-motion: reduce){ #splashScreen::before, .hero-x::before, #loginScreen::before{ animation:none !important; } }
 
   /* app-like feel: no pinch zoom or double-tap zoom; normal vertical/horizontal scrolling still works */
   html, body{ touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+  /* ---------- background motion ---------- */
+  @keyframes rsMoZoom{ 0%{ transform:scale(1) translate(0,0); } 100%{ transform:scale(1.22) translate(-3%,-2.5%); } }
+  @keyframes rsMoPan{ 0%{ transform:scale(1.12) translateX(-6%); } 100%{ transform:scale(1.12) translateX(6%); } }
+  @keyframes rsMoFloat{ 0%{ transform:scale(1.06) rotate(-1.2deg) translateY(1.5%); } 100%{ transform:scale(1.12) rotate(1.2deg) translateY(-1.5%); } }
+  @keyframes rsBgZoom{ 0%{ background-size:100% 100%, 120% auto; } 100%{ background-size:100% 100%, 160% auto; } }
+  @keyframes rsBgPan{ 0%{ background-position:0 0, 0% 50%; } 100%{ background-position:0 0, 100% 50%; } }
+  @keyframes rsBgFloat{ 0%{ background-position:0 0, 45% 40%; background-size:100% 100%, 130% auto; } 100%{ background-position:0 0, 55% 60%; background-size:100% 100%, 142% auto; } }
+  @keyframes rsPrevZoom{ 0%{ background-size:100%; } 100%{ background-size:140%; } }
+  @keyframes rsPrevPan{ 0%{ background-size:150%; background-position:0% 50%; } 100%{ background-size:150%; background-position:100% 50%; } }
+  @keyframes rsPrevFloat{ 0%{ background-size:125%; background-position:40% 35%; } 100%{ background-size:135%; background-position:60% 65%; } }
+  .bg-preview.mo-zoom{ animation:rsPrevZoom 4s ease-in-out infinite alternate; }
+  .bg-preview.mo-pan{ animation:rsPrevPan 5s ease-in-out infinite alternate; }
+  .bg-preview.mo-float{ animation:rsPrevFloat 3s ease-in-out infinite alternate; }
+  .bg-motion{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .bg-motion-chip{ all:unset; cursor:pointer; font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px;
+    color:rgba(239,232,214,.75); border:1px solid rgba(239,232,214,.25); }
+  .bg-motion-chip.on{ background:#EFE8D6; color:#0B2A15; border-color:#EFE8D6; }
+  .bg-motion-chip:focus-visible{ outline:2px solid #DCA73D; outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){
+    #splashScreen::before, .hero-x::before, #loginScreen::before, body::before, .bg-preview{ animation:none !important; }
+    .modal-box{ animation:none !important; }
+  }
+  #confirmPaymentBtn[aria-busy="true"], #confirmTaughtBtn:disabled{ opacity:.6; cursor:wait; pointer-events:none; }
+
+  .dup-banner{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
+    padding:12px 14px; border-radius:14px; background:#F6E1DB; color:#7A2E1F; }
+  .dup-banner b{ display:block; font-size:14px; }
+  .dup-banner span{ font-size:12.5px; }
+  .dup-banner .btn{ background:#B8452F; color:#fff; flex:none; }
+  .dup-note{ font-weight:600; flex:none; }
+  .dup-tag{ display:inline-block; font-size:10.5px; font-weight:700; color:#fff; background:#B8452F; border-radius:999px; padding:1px 7px; vertical-align:middle; }
 </style>
 <script>
 /* QR Code Generator for JavaScript — Copyright (c) 2009 Kazuhiko Arase — MIT License
@@ -4642,20 +4673,32 @@ document.getElementById('bgSettingsClose').onclick = ()=> closeModal('bgSettings
 
 /* ============================= CUSTOM BACKGROUNDS (admin) ============================= */
 const BG_SLOTS = [
-  { key:'splash', label:'หน้าเปิดแอพ (Splash)',        hint:'ภาพจะค่อยๆ ซูมและเลื่อนช้าๆ แทนวิดีโอ',        max:1600 },
-  { key:'hero',  label:'แถบด้านบน (Hero)',            hint:'แทนวิดีโอด้านบน ภาพจะค่อยๆ ซูมและเลื่อนช้าๆ', max:1600 },
-  { key:'login', label:'หน้าเลือกผู้ใช้และหน้ารหัส',   hint:'ตอนเลือกชื่อและกรอก PIN ภาพจะขยับช้าๆ',       max:1400 },
+  { key:'splash', label:'หน้าเปิดแอพ (Splash)',        hint:'แทนวิดีโอตอนเปิดแอพ',        max:1600 },
+  { key:'hero',  label:'แถบด้านบน (Hero)',            hint:'แทนวิดีโอด้านบนของแอพ', max:1600 },
+  { key:'login', label:'หน้าเลือกผู้ใช้และหน้ารหัส',   hint:'ตอนเลือกชื่อและกรอก PIN',       max:1400 },
   { key:'page',  label:'พื้นหลังทั้งแอพ',              hint:'แสดงจางๆ ด้านหลังการ์ดทุกแท็บ',                max:1600 },
   { key:'modal', label:'หน้าต่างป๊อปอัพ',              hint:'ป๊อปอัพทุกตัว เช่น จองคิว เพิ่มสินค้า',         max:1000 },
 ];
 let customBackgrounds = {};
+const BG_MOTIONS = [ { key:'zoom', label:'ซูม' }, { key:'pan', label:'แพน' }, { key:'float', label:'ลอย' }, { key:'none', label:'นิ่ง' } ];
+const BG_MOTION_DEFAULT = { splash:'zoom', hero:'zoom', login:'pan', page:'none', modal:'none' };
+let bgMotion = { ...BG_MOTION_DEFAULT };
+async function saveBgMotion(){ await window.storage.set('shared_bg_motion', JSON.stringify(bgMotion), true); }
 async function loadCustomBackgrounds(){
-  await Promise.all(BG_SLOTS.map(async slot=>{
-    try{
-      const res = await window.storage.get('shared_bg_'+slot.key, true);
-      customBackgrounds[slot.key] = (res && res.value) ? res.value : '';
-    }catch(e){ console.error('load background failed', slot.key, e); }
-  }));
+  await Promise.all([
+    ...BG_SLOTS.map(async slot=>{
+      try{
+        const res = await window.storage.get('shared_bg_'+slot.key, true);
+        customBackgrounds[slot.key] = (res && res.value) ? res.value : '';
+      }catch(e){ console.error('load background failed', slot.key, e); }
+    }),
+    (async ()=>{
+      try{
+        const res = await window.storage.get('shared_bg_motion', true);
+        if(res && res.value) bgMotion = { ...BG_MOTION_DEFAULT, ...JSON.parse(res.value) };
+      }catch(e){ console.error('load background motion failed', e); }
+    })(),
+  ]);
   cacheSplashBackground();
 }
 // the splash is only on screen 1-3s, often before shared data finishes loading — keep a per-device
@@ -4664,24 +4707,31 @@ function cacheSplashBackground(){
   try{
     if(customBackgrounds.splash) localStorage.setItem('rangsan_bg_splash', customBackgrounds.splash);
     else localStorage.removeItem('rangsan_bg_splash');
+    localStorage.setItem('rangsan_bg_splash_motion', bgMotion.splash || 'zoom');
   }catch(e){ /* storage full — the splash just falls back to the video, nothing breaks */ }
 }
 function applyCustomBackgrounds(){
   let el = document.getElementById('customBgStyle');
   if(!el){ el = document.createElement('style'); el.id = 'customBgStyle'; document.head.appendChild(el); }
   const u = k => customBackgrounds[k] ? `url("${customBackgrounds[k]}")` : '';
-  // moving layer for the large, glance-only areas (splash, hero, login): a slow zoom + drift
-  const ken = (sel, img, z, dur) => `${sel}::before{ content:''; position:absolute; inset:-5%; z-index:${z}; pointer-events:none;
-    background:${img} center/cover no-repeat; animation:rsKenBurns ${dur}s ease-in-out infinite alternate; will-change:transform; }`;
+  const ANIM = { zoom:'rsMoZoom 9s ease-in-out infinite alternate', pan:'rsMoPan 11s ease-in-out infinite alternate', float:'rsMoFloat 6s ease-in-out infinite alternate', none:'none' };
+  // a separate oversized layer behind the content carries the image so it can move without exposing edges
+  const layer = (sel, img, z, motion, overlay) => `${sel}::before{ content:''; position:absolute; inset:-8%; z-index:${z}; pointer-events:none;
+    background:${overlay ? overlay+', ' : ''}${img} center/cover no-repeat; animation:${ANIM[motion]||'none'}; will-change:transform; }`;
   let css = '';
-  if(u('splash')) css += ken('#splashScreen', u('splash'), -2, 14) + ` #splashVideo{ display:none !important; }`;
-  if(u('hero')) css += `.hero-x{ overflow:hidden; } ` + ken('.hero-x', u('hero'), -3, 20) + ` .hero-x-video{ display:none; }`;
-  if(u('login')) css += ken('#loginScreen', u('login'), -2, 18) + ` #loginScreen .login-video{ display:none; }
+  if(u('splash')) css += layer('#splashScreen', u('splash'), -2, bgMotion.splash) + ` #splashVideo{ display:none !important; }`;
+  if(u('hero')) css += `.hero-x{ overflow:hidden; } ` + layer('.hero-x', u('hero'), -3, bgMotion.hero) + ` .hero-x-video{ display:none; }`;
+  if(u('login')) css += layer('#loginScreen', u('login'), -2, bgMotion.login) + ` #loginScreen .login-video{ display:none; }
     #pinModalOverlay .pin-modal-box{ background:linear-gradient(rgba(11,42,21,.78),rgba(11,42,21,.92)), ${u('login')} center/cover no-repeat !important; }`;
-  if(u('page')) css += `body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background:linear-gradient(rgba(245,240,230,.84),rgba(245,240,230,.84)), ${u('page')} center/cover no-repeat; }`;
-  if(u('modal')) css += `.modal-overlay:not(#pinModalOverlay):not(#moreNavOverlay):not(#profileModalOverlay) .modal-box{
-    background:linear-gradient(rgba(11,42,21,.8),rgba(11,42,21,.94)), ${u('modal')} center/cover no-repeat !important; }`;
+  if(u('page')) css += layer('body', u('page'), -1, bgMotion.page, 'linear-gradient(rgba(245,240,230,.84),rgba(245,240,230,.84))').replace('position:absolute','position:fixed');
+  if(u('modal')){
+    // popups scroll internally, so their image moves via background size/position on the box itself
+    const MA = { zoom:'rsBgZoom 9s ease-in-out infinite alternate', pan:'rsBgPan 11s ease-in-out infinite alternate', float:'rsBgFloat 6s ease-in-out infinite alternate', none:'none' };
+    css += `.modal-overlay:not(#pinModalOverlay):not(#moreNavOverlay):not(#profileModalOverlay) .modal-box{
+      background-image:linear-gradient(rgba(11,42,21,.8),rgba(11,42,21,.94)), ${u('modal')} !important;
+      background-repeat:no-repeat !important; background-color:#0B2A15 !important;
+      background-size:100% 100%, 135% auto; background-position:0 0, 50% 50%; animation:${MA[bgMotion.modal]||'none'}; }`;
+  }
   el.textContent = css;
 }
 function renderBgSettings(){
@@ -4691,7 +4741,7 @@ function renderBgSettings(){
     const img = customBackgrounds[slot.key];
     return `
     <div class="bg-row" data-bg-slot="${slot.key}">
-      <div class="bg-preview ${img?'':'is-default'}" ${img?`style="background-image:url('${img}')"`:''}>${img?'':'แบบเดิม'}</div>
+      <div class="bg-preview ${img?'':'is-default'} ${img?'mo-'+(bgMotion[slot.key]||'none'):''}" ${img?`style="background-image:url('${img}')"`:''}>${img?'':'แบบเดิม'}</div>
       <div class="bg-info">
         <div class="bg-label">${slot.label}</div>
         <div class="bg-hint">${slot.hint}</div>
@@ -4699,6 +4749,7 @@ function renderBgSettings(){
           <label class="btn small">${img?'เปลี่ยนรูป':'เลือกรูป'}<input type="file" accept="image/*" data-bg-file="${slot.key}" hidden></label>
           ${img?`<button type="button" class="btn small ghost" data-bg-remove="${slot.key}">ลบ กลับเป็นแบบเดิม</button>`:''}
         </div>
+        ${img ? `<div class="bg-motion" role="radiogroup" aria-label="ลักษณะการขยับ">${BG_MOTIONS.map(m=>`<button type="button" role="radio" aria-checked="${(bgMotion[slot.key]||'none')===m.key}" class="bg-motion-chip ${(bgMotion[slot.key]||'none')===m.key?'on':''}" data-bg-motion="${slot.key}" data-motion="${m.key}">${m.label}</button>`).join('')}</div>` : ''}
         <div class="bg-status" data-bg-status="${slot.key}" aria-live="polite"></div>
       </div>
     </div>`;
@@ -4724,6 +4775,18 @@ function renderBgSettings(){
         console.error('background upload failed', e);
         if(status) status.textContent = 'อัปโหลดไม่สำเร็จ ลองใช้รูปที่เล็กลง หรือเช็คอินเทอร์เน็ตแล้วลองอีกครั้ง';
       }
+    };
+  });
+  list.querySelectorAll('[data-bg-motion]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่เปลี่ยนภาพพื้นหลังได้`); return; }
+      const key = btn.dataset.bgMotion;
+      bgMotion[key] = btn.dataset.motion;
+      applyCustomBackgrounds();
+      renderBgSettings();
+      if(key==='splash') cacheSplashBackground();
+      try{ await saveBgMotion(); flashSaved(); }
+      catch(e){ console.error('save motion failed', e); const st = document.querySelector(`[data-bg-status="${key}"]`); if(st) st.textContent = 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'; }
     };
   });
   list.querySelectorAll('[data-bg-remove]').forEach(btn=>{
@@ -6073,6 +6136,9 @@ function openConfirmTaughtModal(bookingGroup){
     if(soldProducts.length && !pendingConfirmSlipDataUrl){
       if(!confirm('ยังไม่ได้แนบสลิปการโอนสำหรับสินค้าที่ขาย ยอดนี้จะไม่ถูกนับเข้าสถิติ "ยอดขายวัตถุดิบในคอร์สสอน"\n\nต้องการดำเนินการต่อโดยไม่แนบสลิปหรือไม่?')) return;
     }
+    const taughtBtn = document.getElementById('confirmTaughtBtn');
+    if(taughtBtn.dataset.busy) return; // already confirming — ignore repeat taps
+    taughtBtn.dataset.busy = '1'; taughtBtn.disabled = true;
     confirmBookingTaught(bookings, students, soldProducts, pendingConfirmSlipDataUrl);
   };
   openModal('reportModalOverlay');
@@ -6837,7 +6903,8 @@ async function saveStandaloneSales(){
     await backupBeforeSave('shared_standalone_sales');
     await window.storage.set('shared_standalone_sales', JSON.stringify(standaloneSales), true);
     flashSaved();
-  }catch(e){ console.error('shared standalone sales save failed', e); }
+    return true;
+  }catch(e){ console.error('shared standalone sales save failed', e); return false; }
 }
 
 let stockMovements = []; // [{ date, productName, type:'in'|'out'|'sale', qty, note, who }]
@@ -9301,7 +9368,11 @@ async function openPaymentModal(items){
   };
   document.getElementById('slipInput').addEventListener('change', handleSlipFileChange);
 
+  // one sale per tap: the button locks itself the moment it's pressed, so a second tap while the
+  // save is still travelling to the shared database can't record the same bill twice
+  let paymentSubmitting = false;
   document.getElementById('confirmPaymentBtn').onclick = async ()=>{
+    if(paymentSubmitting) return;
     if(!pendingSlipDataUrl){
       const warnBox = document.getElementById('slipRequiredWarning');
       if(warnBox){
@@ -9310,7 +9381,13 @@ async function openPaymentModal(items){
       }
       return;
     }
+    paymentSubmitting = true;
+    const payBtn = document.getElementById('confirmPaymentBtn');
+    const payBtnOriginal = payBtn.innerHTML;
+    payBtn.disabled = true; payBtn.setAttribute('aria-busy','true');
+    payBtn.innerHTML = 'กำลังบันทึก...';
     criticalOpInProgress = true;
+    let saleSaved = false, saleRecordRef = null;
     try{
       const saleRecord = {
         date: new Date().toISOString().slice(0,10),
@@ -9320,8 +9397,11 @@ async function openPaymentModal(items){
         total,
         slip: pendingSlipDataUrl || ''
       };
+      saleRecordRef = saleRecord;
       standaloneSales.push(saleRecord);
-      await saveStandaloneSales();
+      const savedOk = await saveStandaloneSales();
+      if(!savedOk) throw new Error('shared sales save failed');
+      saleSaved = true;
 
       items.forEach(sp=>{
         const prod = retailProducts.find(p=> p.name === sp.name);
@@ -9337,10 +9417,74 @@ async function openPaymentModal(items){
       renderSellTab();
       if(document.getElementById('stockWarehouseBody')) renderStockTab();
       openSaleReceipt(saleRecord);
+    }catch(err){
+      console.error('record sale failed', err);
+      // if the bill itself never saved, take it back out so a retry doesn't leave a local duplicate
+      if(!saleSaved && saleRecordRef){ const ix = standaloneSales.indexOf(saleRecordRef); if(ix>=0) standaloneSales.splice(ix,1); }
+      alert('บันทึกการขายไม่สำเร็จ กรุณาเช็คอินเทอร์เน็ตแล้วกดอีกครั้ง');
     }finally{
       criticalOpInProgress = false;
+      if(!saleSaved){
+        paymentSubmitting = false;
+        payBtn.disabled = false; payBtn.removeAttribute('aria-busy');
+        payBtn.innerHTML = payBtnOriginal;
+      }
     }
   };
+}
+
+// bills accidentally saved twice (double-tap before the button lock existed): same seller, same items,
+// same total, same slip, within 2 minutes of each other — the first one is kept, the rest are flagged
+function saleSignature(sale){
+  const items = (sale.items||[]).map(it=> `${it.name}|${it.qty}|${it.price}`).sort().join(';');
+  const slip = sale.slip ? sale.slip.length+':'+sale.slip.slice(-64) : '';
+  return `${sale.seller}#${sale.total}#${items}#${slip}`;
+}
+function findDuplicateSales(){
+  const sorted = standaloneSales.slice().sort((a,b)=> new Date(a.time||a.date) - new Date(b.time||b.date));
+  const lastKept = {}; const dups = [];
+  sorted.forEach(sale=>{
+    const sig = saleSignature(sale);
+    const t = new Date(sale.time||sale.date).getTime();
+    if(lastKept[sig] !== undefined && Math.abs(t - lastKept[sig]) <= 120000) dups.push(sale);
+    else lastKept[sig] = t;
+  });
+  return dups;
+}
+function restoreLinkedRawMaterial(productName, qty){
+  const prod = retailProducts.find(p=> p.name === productName);
+  if(!prod || !prod.linkedStockKey || !prod.deductGrams) return;
+  const mat = state.stock.find(s=> s.key === prod.linkedStockKey);
+  if(!mat) return;
+  const grams = prod.deductGrams * qty;
+  mat.stock = (mat.stock||0) + ((mat.unit==='กก.' || mat.unit==='ลิตร') ? grams/1000 : grams);
+}
+async function removeDuplicateSales(){
+  if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่ลบบิลซ้ำได้`); return; }
+  const dups = findDuplicateSales();
+  if(!dups.length) return;
+  const total = dups.reduce((n,s)=> n + (s.total||0), 0);
+  if(!confirm(`ลบบิลซ้ำ ${dups.length} บิล (รวม ฿${fmt(total)}) ใช่หรือไม่?\n\nเก็บบิลแรกไว้ สต๊อกของบิลที่ลบจะถูกคืนให้อัตโนมัติ`)) return;
+  criticalOpInProgress = true;
+  try{
+    dups.forEach(sale=>{
+      (sale.items||[]).forEach(it=>{
+        const prod = retailProducts.find(p=> p.name===it.name);
+        if(prod){ prod.stock = (prod.stock||0) + it.qty; logStockMovement(it.name, 'in', it.qty, 'ลบบิลซ้ำ (กดบันทึกซ้ำ)'); }
+        restoreLinkedRawMaterial(it.name, it.qty);
+      });
+      const ix = standaloneSales.indexOf(sale); if(ix>=0) standaloneSales.splice(ix,1);
+    });
+    const ok = await saveStandaloneSales();
+    await saveRetailProducts();
+    scheduleSave();
+    if(!ok) alert('ลบในเครื่องแล้ว แต่บันทึกขึ้นฐานข้อมูลกลางไม่สำเร็จ กรุณาเช็คอินเทอร์เน็ตแล้วเปิดแอพใหม่');
+    renderTodaySalesList();
+    renderSlipGallery();
+    if(document.getElementById('stockWarehouseBody')) renderStockTab();
+  }finally{
+    criticalOpInProgress = false;
+  }
 }
 
 let showAllSalesHistory = false;
@@ -9351,6 +9495,12 @@ function renderTodaySalesList(){
   const todaySales = standaloneSales.filter(s=> s.date === todayStr);
   const source = showAllSalesHistory ? standaloneSales.slice().reverse() : todaySales.slice().reverse();
 
+  const dupSet = new Set(findDuplicateSales());
+  const dupBanner = dupSet.size ? `
+      <div class="dup-banner" role="status">
+        <div><b>พบบิลซ้ำ ${dupSet.size} บิล</b><span>น่าจะเกิดจากกดบันทึกการขายซ้ำ ยอดขายเลยนับเกินจริง</span></div>
+        ${currentUser===ADMIN_NAME ? `<button type="button" class="btn small" id="removeDupSalesBtn">ลบบิลซ้ำ</button>` : `<span class="dup-note">แจ้ง ${ADMIN_NAME} ให้ลบ</span>`}
+      </div>` : '';
   const rowHTML = (s)=>{
     const t = s.time ? new Date(s.time) : null;
     const dateTimeStr = t && !isNaN(t)
@@ -9360,7 +9510,7 @@ function renderTodaySalesList(){
     const idx = standaloneSales.indexOf(s);
     return `<div style="padding:9px 0; border-bottom:1px dashed var(--line);">
       <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
-        <span style="font-weight:700; font-size:13px;">฿${fmt(s.total)}</span>
+        <span style="font-weight:700; font-size:13px;">฿${fmt(s.total)}${dupSet.has(s) ? ' <span class="dup-tag">ซ้ำ</span>' : ''}</span>
         <div style="display:flex; align-items:center; gap:8px; flex:none;">
           <span style="font-size:11px; color:#948a78;">${dateTimeStr} · ${s.seller}</span>
           ${currentUser===ADMIN_NAME ? `<button class="sale-edit-btn" data-idx="${idx}" title="แก้ไขบิล (ต้องใช้รหัสแอดมิน)">✎</button>` : ''}
@@ -9385,6 +9535,7 @@ function renderTodaySalesList(){
     `;
   } else {
     listEl.innerHTML = `
+      ${dupBanner}
       <div class="kpi-grid" style="margin-bottom:10px;">
         <div class="kpi"><div class="label">ยอดขายวันนี้</div><div class="value">${fmt(dayTotal)}</div></div>
         <div class="kpi"><div class="label">จำนวนบิล</div><div class="value">${todaySales.length}</div></div>
@@ -9393,6 +9544,8 @@ function renderTodaySalesList(){
       ${toggleBtn}
     `;
   }
+  const dupBtn = document.getElementById('removeDupSalesBtn');
+  if(dupBtn) dupBtn.onclick = removeDuplicateSales;
   const tBtn = document.getElementById('toggleSalesHistoryBtn');
   if(tBtn) tBtn.onclick = ()=>{ showAllSalesHistory = !showAllSalesHistory; renderTodaySalesList(); };
   listEl.querySelectorAll('.sale-edit-btn').forEach(btn=>{
@@ -9977,7 +10130,9 @@ function openEditSaleModal(idx){
           prod.stock = (prod.stock||0) + it.qty;
           logStockMovement(it.name, 'in', it.qty, 'ยกเลิกบิลขายโดยแอดมิน');
         }
+        restoreLinkedRawMaterial(it.name, it.qty);
       });
+      scheduleSave();
       await saveRetailProducts();
       standaloneSales.splice(idx,1);
       await saveStandaloneSales();
@@ -10263,7 +10418,7 @@ document.addEventListener('visibilitychange', ()=>{
 })();
 
 // show this device's cached splash image immediately, before any shared data loads
-try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSplash){ customBackgrounds.splash = cachedSplash; applyCustomBackgrounds(); } }catch(e){}
+try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSplash){ customBackgrounds.splash = cachedSplash; bgMotion.splash = localStorage.getItem('rangsan_bg_splash_motion') || 'zoom'; applyCustomBackgrounds(); } }catch(e){}
 
 // block pinch-zoom gestures that iOS Safari still allows despite the viewport setting
 ['gesturestart','gesturechange','gestureend'].forEach(ev=> document.addEventListener(ev, e=> e.preventDefault(), {passive:false}));
