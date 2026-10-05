@@ -7222,6 +7222,7 @@ async function logoutCurrentUser(){
 }
 
 function showLoginScreen(){
+  const lv = document.querySelector('#loginScreen video'); if(lv){ const pr = lv.play(); if(pr && pr.catch) pr.catch(()=>{}); }
   const INSTRUCTOR_COLORS = ['#165028', '#542B0D', '#8F5A26'];
   const picker = document.getElementById('userPicker');
   const names = (state && state.instructors) ? state.instructors : ['อาจารย์ตั้ม','อาจารย์แสตมป์','อาจารย์โจ'];
@@ -7250,6 +7251,7 @@ function showLoginScreen(){
 }
 function hideLoginScreen(){
   document.getElementById('loginScreen').style.display = 'none';
+  const lv = document.querySelector('#loginScreen video'); if(lv) lv.pause();
   startAutoSync();
 }
 let instructorManageDraft = []; // working copy while the modal is open: [{original, current, markedDelete}]
@@ -10337,6 +10339,7 @@ async function silentBackgroundSync(){
   if(document.hidden) return;       // tab not visible, skip
   if(!currentUser) return;          // not logged in yet
   if(isUserBusy()) return;          // don't disturb active input/modal
+  __syncChanged = false;
   try{
     await Promise.all([
       loadState().then(s=> state = s), // courses/pricing/recipes/menu — now synced live like everything else
@@ -10352,7 +10355,9 @@ async function silentBackgroundSync(){
       loadQcLots(),
       loadCustomCategories(),
     ]);
-    if(!isUserBusy()) renderAll(); // re-check in case typing started while awaiting
+    if(!__syncChanged) return; // nothing new from other devices — skip the full redraw entirely
+    __syncChanged = false;
+    whenScrollIdle(()=>{ if(!isUserBusy()) renderAll(); }); // re-check in case typing started while awaiting
   }catch(e){ /* silent — a failed background sync just tries again next tick */ }
 }
 function startAutoSync(){
@@ -10422,7 +10427,42 @@ try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSp
 
 // block pinch-zoom gestures that iOS Safari still allows despite the viewport setting
 ['gesturestart','gesturechange','gestureend'].forEach(ev=> document.addEventListener(ev, e=> e.preventDefault(), {passive:false}));
-document.addEventListener('touchmove', e=>{ if(e.touches && e.touches.length > 1) e.preventDefault(); }, {passive:false});
+
+// ---- smooth scrolling: background sync only redraws when shared data actually changed, and never mid-scroll ----
+let __syncChanged = false;
+const __lastRaw = new Map();
+function trackStorageReads(){
+  if(!window.storage || window.storage.__tracked) return;
+  const origGet = window.storage.get.bind(window.storage);
+  const origSet = window.storage.set.bind(window.storage);
+  window.storage.get = async (k, ...rest)=>{
+    const res = await origGet(k, ...rest);
+    const v = res ? res.value : null;
+    if(__lastRaw.has(k) && __lastRaw.get(k) !== v) __syncChanged = true;
+    __lastRaw.set(k, v);
+    return res;
+  };
+  window.storage.set = async (k, v, ...rest)=>{ const r = await origSet(k, v, ...rest); __lastRaw.set(k, v); return r; }; // our own saves aren't "remote changes"
+  window.storage.__tracked = true;
+}
+let __lastScrollAt = 0;
+window.addEventListener('scroll', ()=>{ __lastScrollAt = Date.now(); }, {passive:true});
+document.addEventListener('touchmove', ()=>{ __lastScrollAt = Date.now(); }, {passive:true});
+function whenScrollIdle(fn){
+  const wait = 900 - (Date.now() - __lastScrollAt);
+  if(wait > 0) setTimeout(()=> whenScrollIdle(fn), wait); else fn();
+}
+// keep background videos from decoding when nobody can see them
+function setupVideoPausing(){
+  const heroVid = document.querySelector('#heroX .hero-x-video');
+  const hero = document.getElementById('heroX');
+  if(heroVid && hero && 'IntersectionObserver' in window){
+    new IntersectionObserver(([en])=>{
+      if(en.isIntersecting && !document.hidden){ const pr = heroVid.play(); if(pr && pr.catch) pr.catch(()=>{}); } else heroVid.pause();
+    }, {threshold:0.05}).observe(hero);
+  }
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) document.querySelectorAll('video').forEach(v=> v.pause()); });
+}
 
 (async function init(){
   // set up the splash screen dismissal FIRST and independently of everything else below —
@@ -10437,7 +10477,7 @@ document.addEventListener('touchmove', e=>{ if(e.touches && e.touches.length > 1
   let seenToday = false;
   try{ seenToday = localStorage.getItem('rangsan_splash_day') === todayKey; localStorage.setItem('rangsan_splash_day', todayKey); }catch(e){}
   const SPLASH_MAX_MS = seenToday ? 1200 : 3200;
-  const dismissSplash = ()=>{ if(splash && !splash.classList.contains('splash-hide')) splash.classList.add('splash-hide'); };
+  const dismissSplash = ()=>{ if(splash && !splash.classList.contains('splash-hide')){ splash.classList.add('splash-hide'); if(splashVideo) setTimeout(()=> splashVideo.pause(), 700); } };
   // the splash leaves only when BOTH its short intro has played and the app's data is ready,
   // so there is never a half-loaded screen in between that looks frozen
   let splashMinDone = false, appDataReady = false;
@@ -10500,6 +10540,7 @@ document.addEventListener('touchmove', e=>{ if(e.touches && e.touches.length > 1
   // fetch everything in parallel instead of one request after another (19 round-trips in a row
   // used to leave a ~3s frozen-looking gap between the splash and the login screen). Only two real
   // dependencies: products need categories first, and the LINE relay setting needs the main state.
+  trackStorageReads();
   const [loadedState] = await Promise.all([
     loadState(),
     loadSharedBookings(),
@@ -10520,6 +10561,7 @@ document.addEventListener('touchmove', e=>{ if(e.touches && e.touches.length > 1
   renderShell();
   renderAll();
   playHeroIntro();
+  setupVideoPausing();
 
   // stay logged in on this device once signed in — skips the name+PIN screen on future opens
   // until the person explicitly taps "ออกจากระบบ" (logout)
