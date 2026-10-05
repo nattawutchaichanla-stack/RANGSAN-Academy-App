@@ -4647,12 +4647,12 @@ const BG_SLOTS = [
 ];
 let customBackgrounds = {};
 async function loadCustomBackgrounds(){
-  for(const slot of BG_SLOTS){
+  await Promise.all(BG_SLOTS.map(async slot=>{
     try{
       const res = await window.storage.get('shared_bg_'+slot.key, true);
       customBackgrounds[slot.key] = (res && res.value) ? res.value : '';
     }catch(e){ console.error('load background failed', slot.key, e); }
-  }
+  }));
   cacheSplashBackground();
 }
 // the splash is only on screen 1-3s, often before shared data finishes loading — keep a per-device
@@ -10276,6 +10276,15 @@ try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSp
   try{ seenToday = localStorage.getItem('rangsan_splash_day') === todayKey; localStorage.setItem('rangsan_splash_day', todayKey); }catch(e){}
   const SPLASH_MAX_MS = seenToday ? 1200 : 3200;
   const dismissSplash = ()=>{ if(splash && !splash.classList.contains('splash-hide')) splash.classList.add('splash-hide'); };
+  // the splash leaves only when BOTH its short intro has played and the app's data is ready,
+  // so there is never a half-loaded screen in between that looks frozen
+  let splashMinDone = false, appDataReady = false;
+  const trySplashDismiss = ()=>{
+    if(splashMinDone && appDataReady) dismissSplash();
+    else if(splashMinDone && splash){ const sk = splash.querySelector('.sp-skip'); if(sk) sk.textContent = 'กำลังโหลดข้อมูล...'; }
+  };
+  window.__markAppReady = ()=>{ appDataReady = true; trySplashDismiss(); };
+  const finishSplashIntro = ()=>{ splashMinDone = true; trySplashDismiss(); };
   const showSplashFallback = ()=>{ if(splashVideo) splashVideo.style.display = 'none'; }; // the branded layout already stands on its own without video
   if(splash){
     splash.style.setProperty('--sp-dur', SPLASH_MAX_MS+'ms');
@@ -10284,15 +10293,15 @@ try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSp
   }
   if(splashVideo && !seenToday){
     if(window.__splashVideoError) showSplashFallback();
-    else if(window.__splashVideoEnded) dismissSplash();
+    else if(window.__splashVideoEnded) finishSplashIntro();
     else {
-      splashVideo.addEventListener('ended', dismissSplash);
+      splashVideo.addEventListener('ended', finishSplashIntro);
       splashVideo.addEventListener('error', showSplashFallback);
       splashVideo.play().catch(showSplashFallback); // autoplay blocked by the browser
     }
   }
-  setTimeout(dismissSplash, SPLASH_MAX_MS);
-  if(splash) splash.onclick = dismissSplash; // tap anywhere to skip
+  setTimeout(finishSplashIntro, SPLASH_MAX_MS);
+  if(splash) splash.onclick = finishSplashIntro; // tap anywhere to skip (as soon as the data is ready)
 
   // safety net: no matter what happens below (a slow/stuck network request while loading shared
   // data, an unexpected error while merging saved state, etc.), the person must always end up at
@@ -10326,29 +10335,35 @@ try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSp
     await promptSetStorageBackendUrl();
     return; // promptSetStorageBackendUrl reloads the page once a URL is entered
   }
-  state = await loadState();
-  await loadSharedBookings();
-  await loadInstructorPhotos();
-  await loadCustomBackgrounds();
+  // fetch everything in parallel instead of one request after another (19 round-trips in a row
+  // used to leave a ~3s frozen-looking gap between the splash and the login screen). Only two real
+  // dependencies: products need categories first, and the LINE relay setting needs the main state.
+  const [loadedState] = await Promise.all([
+    loadState(),
+    loadSharedBookings(),
+    loadInstructorPhotos(),
+    loadCustomBackgrounds(),
+    loadInstructorPins(),
+    loadSharedAdminPin(),
+    loadCustomCategories().then(()=> loadRetailProducts()),
+    loadStandaloneSales(),
+    loadStockMovements(),
+    loadQcLots(),
+    loadSharedEvalFormUrl(),
+    loadCurrentUser(),
+  ]);
+  state = loadedState;
   applyCustomBackgrounds();
-  await loadInstructorPins();
-  await loadSharedAdminPin();
-  await loadCustomCategories();
-  await loadRetailProducts();
-  await loadStandaloneSales();
-  await loadStockMovements();
-  await loadQcLots();
-  await loadSharedEvalFormUrl();
   await loadSharedLineRelayUrl();
-  await loadCurrentUser();
   renderShell();
   renderAll();
   playHeroIntro();
 
   // stay logged in on this device once signed in — skips the name+PIN screen on future opens
   // until the person explicitly taps "ออกจากระบบ" (logout)
-  await playInstructorShowcase();
+  // instructor showcase slides removed by request — go straight from splash to login/app
   reachedLogin = true;
+  if(window.__markAppReady) window.__markAppReady();
   if(currentUser && state.instructors.includes(currentUser)){
     hideLoginScreen();
   } else {
