@@ -3268,6 +3268,14 @@ var qrcode = function() {
     <div style="display:flex; flex-direction:column; gap:10px;">
       <input type="date" id="newBookingDate" class="pill">
       <select id="newBookingCourse" class="pill"></select>
+      <div id="newBookingTimeWrap" style="display:none; flex-direction:column; gap:6px;">
+        <div style="font-size:12px; color:var(--rs-muted); font-weight:600;">เวลาเริ่มสอน (Brew Your Type · ใช้เวลา 1 ชม. 30 นาที)</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="time" id="newBookingTime" class="pill" step="300" value="10:00" style="flex:1;">
+          <span id="newBookingTimeEnd" style="font-size:13px; color:var(--rs-muted); white-space:nowrap;">ถึง 11:30</span>
+        </div>
+        <div id="newBookingTimeChips" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      </div>
       <select id="newBookingInstructor" class="pill"></select>
       <input type="text" id="newBookingNote" placeholder="หมายเหตุ เช่น ยืนยันแล้ว" class="pill">
       <input type="text" id="newBookingAllergy" placeholder="ข้อความพิเศษ / แพ้อาหาร (ถ้ามี)" class="pill">
@@ -7458,6 +7466,25 @@ function resizeInstructorPhoto(file, maxSize=360){
   });
 }
 
+function addMinutesToTime(t, mins){
+  const [h,m] = String(t||'0:0').split(':').map(Number);
+  const tot = ((h*60+m+mins)%1440+1440)%1440;
+  return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');
+}
+function courseDurationMin(courseId){
+  const sched = (state.schedule||{})[courseId];
+  if(!sched || !sched.length) return 90;
+  const toMin = t=>{ const [h,m] = t.split(':').map(Number); return h*60+m; };
+  return toMin(sched[sched.length-1][1]) - toMin(sched[0][0]);
+}
+// a booking's actual teaching window — a custom start time (Brew Your Type) shifts the
+// course's standard schedule; otherwise the course's default schedule times are used
+function bookingTimeRange(b){
+  const sched = (state.schedule||{})[b.courseId];
+  if(b.startTime) return { start:b.startTime, end:addMinutesToTime(b.startTime, courseDurationMin(b.courseId)) };
+  if(!sched || !sched.length) return null;
+  return { start:sched[0][0], end:sched[sched.length-1][1] };
+}
 function renderLogTab(){
   const el = document.getElementById('tab-log');
   el.innerHTML = `
@@ -7871,7 +7898,7 @@ function renderLogTab(){
     // group bookings that share the same course + instructor on this day — normally everyone on
     // a given day is in the same class, so one "confirm taught" action should cover the whole group
     // instead of requiring a separate click per person
-    const groupKey = b => `${b.courseId}__${b.instructor}`;
+    const groupKey = b => `${b.courseId}__${b.instructor}__${b.startTime||''}`;
     const untaughtGroupCounts = {};
     bookings.forEach(b=>{
       if(b.taught) return;
@@ -7890,9 +7917,9 @@ function renderLogTab(){
       const key = groupKey(b);
       if(seenSessionKeys.has(key)) return;
       seenSessionKeys.add(key);
-      const sched = state.schedule[b.courseId];
-      if(!sched || !sched.length) return;
-      distinctSessions.push({ instructor:b.instructor, courseId:b.courseId, start:sched[0][0], end:sched[sched.length-1][1] });
+      const range = bookingTimeRange(b);
+      if(!range) return;
+      distinctSessions.push({ instructor:b.instructor, courseId:b.courseId, start:range.start, end:range.end });
     });
     // distinct instructors actually teaching this day (excluding "not yet assigned" placeholders) —
     // used to drive a rotating avatar in the header when 2+ people are teaching simultaneously
@@ -7999,6 +8026,7 @@ function renderLogTab(){
           ${(b.basicKnowledge || b.equipment) ? `<div class="ac-field"><b>พื้นฐาน</b> ${[b.basicKnowledge, b.equipment ? 'อุปกรณ์ที่เคยใช้: '+b.equipment : ''].filter(Boolean).join(' · ')}</div>` : ''}
           ${b.goal ? `<div class="ac-field"><b>เป้าหมาย</b> ${b.goal}</div>` : ''}
           ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
+          ${b.startTime ? (()=>{ const r = bookingTimeRange(b); return `<div class="ac-field"><b>เวลาสอน</b> ${r.start}–${r.end} น.</div>`; })() : ''}
           ${b.machineModel ? `<div class="ac-field"><b>รุ่นเครื่อง</b> ${b.machineModel}</div>` : ''}
           ${(()=>{
             // three states: no answer on file yet = "pending, ask in person" (neutral, not an
@@ -8142,6 +8170,25 @@ function renderLogTab(){
   };
   renderBookingCards();
 
+  const TIMED_COURSE_IDS = ['c6'];
+  const TIME_CHIPS = ['10:00','14:00'];
+  const syncBookingTimeUI = ()=>{
+    const cid = document.getElementById('newBookingCourse').value;
+    const wrap = document.getElementById('newBookingTimeWrap');
+    const show = TIMED_COURSE_IDS.includes(cid);
+    wrap.style.display = show ? 'flex' : 'none';
+    if(!show) return;
+    const st = document.getElementById('newBookingTime').value || '10:00';
+    const end = addMinutesToTime(st, courseDurationMin(cid));
+    document.getElementById('newBookingTimeEnd').textContent = 'ถึง ' + end;
+    document.getElementById('newBookingTimeChips').innerHTML = TIME_CHIPS.map(t=>
+      `<button type="button" data-t="${t}" style="flex:1; font-weight:600; border:1px solid ${t===st?'var(--rs-forest)':'var(--rs-rule)'}; background:${t===st?'var(--rs-forest)':'var(--rs-field)'}; color:${t===st?'#fff':'var(--rs-green)'}; border-radius:999px; padding:9px 11px; font-size:13.5px; font-family:inherit; cursor:pointer;">${t==='10:00'?'☀️':'🌤️'} รอบ ${t}–${addMinutesToTime(t, courseDurationMin(cid))}</button>`).join('');
+    document.querySelectorAll('#newBookingTimeChips button').forEach(btn=>{
+      btn.onclick = ()=>{ document.getElementById('newBookingTime').value = btn.dataset.t; syncBookingTimeUI(); };
+    });
+  };
+  document.getElementById('newBookingCourse').onchange = syncBookingTimeUI;
+  document.getElementById('newBookingTime').oninput = syncBookingTimeUI;
   const openBookingModalPrefilled = (dateStr)=>{
     document.getElementById('newBookingDate').value = dateStr || new Date().toISOString().slice(0,10);
     document.getElementById('newBookingCourse').innerHTML = state.courses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
@@ -8151,6 +8198,8 @@ function renderLogTab(){
     document.getElementById('newBookingMachine').value = '';
     document.getElementById('newBookingMachineOther').value = '';
     document.getElementById('newBookingMachineOther').style.display = 'none';
+    document.getElementById('newBookingTime').value = '10:00';
+    syncBookingTimeUI();
     openModal('bookingModalOverlay');
   };
   document.getElementById('openBookingModalBtn').onclick = ()=> openBookingModalPrefilled();
@@ -8167,7 +8216,13 @@ function renderLogTab(){
     const machineModel = machineSelectVal === 'other'
       ? document.getElementById('newBookingMachineOther').value.trim()
       : machineSelectVal;
-    sharedBookings.push({ date, courseId, instructor, note, allergy, machineModel });
+    const newBooking = { date, courseId, instructor, note, allergy, machineModel };
+    if(TIMED_COURSE_IDS.includes(courseId)){
+      const st = document.getElementById('newBookingTime').value;
+      if(!/^\d{1,2}:\d{2}$/.test(st)){ alert('กรุณาระบุเวลาเริ่มสอน'); return; }
+      newBooking.startTime = st.padStart(5,'0');
+    }
+    sharedBookings.push(newBooking);
     saveSharedBookings();
     renderBookingCards();
     renderCalendar();
