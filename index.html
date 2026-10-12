@@ -3292,7 +3292,7 @@ var qrcode = function() {
   <video id="splashVideo" src="rangsan-splash.mp4" autoplay muted playsinline webkit-playsinline onerror="window.__splashVideoError=true" onended="window.__splashVideoEnded=true"></video>
   <div class="splash-fallback" id="splashFallback" aria-hidden="true"></div>
   <video id="spLatteBg" class="sp-latte-bg" muted playsinline webkit-playsinline preload="auto" aria-hidden="true"></video>
-  <video id="spLatte" class="sp-latte" muted playsinline webkit-playsinline preload="auto" aria-hidden="true"></video>
+  <video id="spLatte" class="sp-latte" muted autoplay playsinline webkit-playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
   <div class="sp-poster" aria-hidden="true">
     <div class="pp-tl">SCG<br>BUILDING<i></i></div>
     <div class="pp-tr">30 SEP 2026<small>200+ CUPS SERVED</small><i></i></div>
@@ -3318,14 +3318,14 @@ var qrcode = function() {
 <script>
 (function(){ try{
   // full intro once per day — and again right after an update, so a new intro is seen the first time it is opened
-  window.SPLASH_VERSION = 'latte-2026-10-13';
+  window.SPLASH_VERSION = 'latte-2026-10-13b';
   var seen = localStorage.getItem('rangsan_splash_day') === new Date().toISOString().slice(0,10) + '|' + window.SPLASH_VERSION;
   var rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!seen && !rm){ var sp=document.getElementById('splashScreen'); sp.classList.add('sp-latte-mode');
     // decode the embedded latte-art clip into a blob URL now, so it is buffered by the time the finale arrives
     try{ var raw=atob(document.getElementById('spLatteData').textContent.trim()); var buf=new Uint8Array(raw.length);
       for(var i=0;i<raw.length;i++) buf[i]=raw.charCodeAt(i);
-      var u=URL.createObjectURL(new Blob([buf],{type:'video/mp4'})); var v=document.getElementById('spLatte'); v.src=u; v.load(); var vb=document.getElementById('spLatteBg'); vb.src=u; vb.load(); }catch(e){} }
+      var u=URL.createObjectURL(new Blob([buf],{type:'video/mp4'})); var v=document.getElementById('spLatte'); v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.src=u; v.load(); var vb=document.getElementById('spLatteBg'); vb.src=u; vb.load(); }catch(e){} }
 }catch(e){} })();
 </script>
 <div id="instructorShowcase" class="showcase-hide">
@@ -10813,8 +10813,8 @@ function setupVideoPausing(){
           const vb = document.getElementById('spLatteBg'); if(vb && vb.src){ try{ vb.currentTime = 0; vb.play().catch(()=>{}); }catch(e){} }
           setTimeout(giveUp, 9500); // hard cap once playing
         };
-        if(v.readyState >= 2) start();
-        else { v.addEventListener('canplay', start, { once:true }); setTimeout(()=>{ if(!splash.classList.contains('sp-latte-on')) giveUp(); }, 1800); } // still not ready → skip the clip
+        start(); // call play() straight away — iOS only starts loading a video once play() is requested
+        setTimeout(()=>{ if(!splash.classList.contains('sp-latte-on')) giveUp(); }, 3500); // never started (e.g. Low Power Mode) → skip the clip
       }
     };
     window.__splashGoFinal = goFinal;
