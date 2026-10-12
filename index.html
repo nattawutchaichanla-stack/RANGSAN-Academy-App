@@ -3319,7 +3319,7 @@ var qrcode = function() {
 (function(){ try{
   // full intro once per day — and again right after an update, so a new intro is seen the first time it is opened
   window.SPLASH_VERSION = 'latte-2026-10-13b';
-  var seen = localStorage.getItem('rangsan_splash_day') === new Date().toISOString().slice(0,10) + '|' + window.SPLASH_VERSION;
+  var seen = false; // the latte intro now plays every time the app is opened (tap to skip)
   var rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!seen && !rm){ var sp=document.getElementById('splashScreen'); sp.classList.add('sp-latte-mode');
     // decode the embedded latte-art clip into a blob URL now, so it is buffered by the time the finale arrives
@@ -10773,7 +10773,7 @@ function setupVideoPausing(){
   const todayKey = new Date().toISOString().slice(0,10);
   let seenToday = false;
   const splashStamp = todayKey + '|' + (window.SPLASH_VERSION || '');
-  try{ seenToday = localStorage.getItem('rangsan_splash_day') === splashStamp; localStorage.setItem('rangsan_splash_day', splashStamp); }catch(e){}
+  try{ localStorage.setItem('rangsan_splash_day', splashStamp); }catch(e){} // intro plays on every open now, so seenToday stays false
   const reduceMotion = (()=>{ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } })();
   const playStory = !seenToday && !reduceMotion;
   const SCENE_COUNT = (splash && splash.querySelectorAll('.sp-scene').length) || 0;
