@@ -1837,6 +1837,35 @@
   #splashScreen.sp-latte-on .pp-tl, #splashScreen.sp-latte-on .pp-tr, #splashScreen.sp-latte-on .pp-bottom{ opacity:1; transform:none; }
   #splashScreen.sp-latte-on .pp-script{ clip-path:inset(0 0 0 0); -webkit-clip-path:inset(0 0 0 0); }
   @media (max-width:360px){ .pp-tag{ font-size:9px; letter-spacing:.14em; } }
+
+  /* registration list: readable on both the light tab and the dark profile panel, plus confirm-taught action */
+  .reg-course{ color:#5A4433; }
+  .eval-box .reg-name{ color:#EFE8D6; }
+  .eval-box .reg-course{ color:#C9A97A; }
+  .reg-actions{ margin-top:8px; display:flex; justify-content:flex-end; }
+  .reg-confirm-btn{ all:unset; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:999px;
+    background:#DCA73D; color:#1A0F08; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+  .reg-confirm-btn:active{ transform:scale(.97); }
+  .reg-confirm-btn[disabled]{ opacity:.6; cursor:wait; }
+  .reg-done{ font-size:12px; font-weight:700; color:#2E7D4F; background:rgba(46,125,79,.12); padding:6px 12px; border-radius:999px; }
+  .eval-box .reg-done{ color:#8FD19E; background:rgba(143,209,158,.14); }
+  .reg-row.is-done .reg-name{ opacity:.75; }
+
+  .od-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px dashed rgba(239,232,214,.18); }
+  .od-main{ flex:1; min-width:0; }
+  .od-course{ font-weight:700; font-size:14px; color:#EFE8D6; line-height:1.35; }
+  .od-meta{ font-size:12.5px; color:rgba(239,232,214,.72); margin-top:3px; }
+  .od-meta b{ color:#FF9C8F !important; }
+  .od-names{ font-size:12px; color:#DCC08A; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #overdueModalOverlay .btn.ghost{ color:#EFE8D6; border-color:rgba(239,232,214,.35); background:transparent; }
+  .od-go{ flex:none; }
+
+  .vip-wrap{ margin:6px 0 4px; }
+  .vip-badge{ display:inline-block; font-size:11.5px; font-weight:700; color:#5A3D00; background:linear-gradient(135deg,#F6D98A,#DCA73D); padding:3px 10px; border-radius:999px; box-shadow:0 1px 4px rgba(220,167,61,.35); }
+  .vip-past{ font-size:11px; color:#8A6416; margin-top:3px; }
+  .eval-box .vip-past{ color:#DCC08A; }
+  #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
+  #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
   .sp-photo-obj{ filter:drop-shadow(0 26px 24px rgba(26,15,8,.32)); }
   .sp-steam-svg{ position:absolute; left:18%; top:-12%; width:40%; height:auto; }
@@ -3446,6 +3475,19 @@ var qrcode = function() {
   </div>
 </div>
 
+<div class="modal-overlay" id="overdueModalOverlay">
+  <div class="modal-box" style="max-width:520px;">
+    <button class="modal-close" id="overdueModalClose" aria-label="ปิด">✕</button>
+    <h3>⏰ ยังไม่ได้ยืนยันสอนเสร็จ</h3>
+    <p class="hint" id="overdueHint">คลาสเหล่านี้สอนจบแล้วแต่ยังไม่ได้กดยืนยัน กดยืนยันเพื่อบันทึกยอดและสร้างใบสรุป</p>
+    <div id="overdueList"></div>
+    <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+      <button class="btn ghost small" id="overdueSnoozeBtn" style="flex:1;">เตือนอีกครั้งใน 3 ชม.</button>
+      <button class="btn ghost small" id="overdueNotifyBtn" style="flex:1; display:none;">🔔 เปิดแจ้งเตือนบนเครื่องนี้</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="bgSettingsOverlay">
   <div class="modal-box" style="max-width:520px;">
     <button class="modal-close" id="bgSettingsClose" aria-label="ปิด">✕</button>
@@ -3519,6 +3561,9 @@ var qrcode = function() {
         <div id="newBookingTimeChips" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
       </div>
       <select id="newBookingInstructor" class="pill"></select>
+      <input type="text" id="newBookingCustName" placeholder="ชื่อ-นามสกุลผู้เรียน" class="pill" autocomplete="off">
+      <input type="tel" id="newBookingCustPhone" placeholder="เบอร์โทรผู้เรียน" class="pill" inputmode="tel" autocomplete="off">
+      <div id="newBookingVip" style="display:none;"></div>
       <input type="text" id="newBookingNote" placeholder="หมายเหตุ เช่น ยืนยันแล้ว" class="pill">
       <input type="text" id="newBookingAllergy" placeholder="ข้อความพิเศษ / แพ้อาหาร (ถ้ามี)" class="pill">
       <select id="newBookingMachine" class="pill">
@@ -3992,18 +4037,96 @@ function renderRegistrationList(listBoxId){
       const course = courseIdx>=0 ? r[courseIdx] : '';
       const joinDate = dateIdx>=0 ? r[dateIdx] : '';
       const submitted = timeIdx>=0 ? r[timeIdx] : '';
-      return `<div style="padding:9px 0; border-bottom:1px dashed var(--line);">
+      const bk = regBookingForRow(r);
+      const rowIdx = regRowsCache.dataRows.indexOf(r);
+      const vip = vipBadgeHTML(customerHistory(name, phone, dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null, bk && bk.syncKey));
+      const status = bk && bk.taught
+        ? `<span class="reg-done">✓ สอนเสร็จแล้ว${bk.instructor && bk.instructor!=='ยังไม่ระบุ' ? ' · '+bk.instructor : ''}</span>`
+        : `<button type="button" class="reg-confirm-btn" data-row="${rowIdx}">ยืนยันสอนเสร็จ ✓</button>`;
+      return `<div class="reg-row${bk && bk.taught ? ' is-done' : ''}" style="padding:9px 0; border-bottom:1px dashed var(--line);">
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
-          <span style="font-weight:700; font-size:13px;">${name||'-'}</span>
+          <span class="reg-name" style="font-weight:700; font-size:13px;">${name||'-'}</span>
           <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none;">${joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม'}</span>
         </div>
-        <div style="font-size:11.5px; color:#5A4433; margin-top:2px;">${course||'-'}</div>
+        ${vip}
+        <div class="reg-course" style="font-size:11.5px; margin-top:2px;">${course||'-'}</div>
         <div style="font-size:11px; color:#948a78; margin-top:2px;">
           ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} · สมัครเมื่อ ${submitted||'-'}
         </div>
+        <div class="reg-actions">${status}</div>
       </div>`;
     }).join('')}
   `;
+  box.querySelectorAll('.reg-confirm-btn').forEach(btn=>{
+    btn.onclick = ()=> confirmTaughtFromRegistration(regRowsCache.dataRows[+btn.dataset.row], btn, box.id);
+  });
+}
+
+// ---------- returning customers ("ลูกค้าพิเศษ") ----------
+// someone counts as a returning customer when an earlier class of theirs is on record —
+// matched by phone number (last 9 digits) or, if no phone, by full name
+function rsNormPhone(p){ const d = String(p||'').replace(/\D/g,''); return d.length >= 9 ? d.slice(-9) : ''; }
+function rsNormName(n){ return String(n||'').replace(/\s+/g,' ').trim().toLowerCase(); }
+function customerHistory(name, phone, beforeDate, excludeKey){
+  const ph = rsNormPhone(phone), nm = rsNormName(name);
+  if(!ph && !nm) return [];
+  const today = new Date().toISOString().slice(0,10);
+  return (sharedBookings||[]).filter(b=>{
+    if(!b || (excludeKey && b.syncKey === excludeKey)) return false;
+    if(beforeDate && b.date && b.date >= beforeDate) return false;   // only classes before this one
+    if(!(b.taught || (b.date && b.date < today))) return false;      // must have actually happened
+    const bph = rsNormPhone(b.customerPhone), bnm = rsNormName(b.customerName);
+    return (ph && bph && ph === bph) || (!ph || !bph ? (nm && bnm && nm === bnm) : false);
+  }).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+}
+function vipBadgeHTML(hist){
+  if(!hist || !hist.length) return '';
+  const past = hist.map(h=>{
+    const c = courseById(h.courseId);
+    const d = h.date ? new Date(h.date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric', month:'short', year:'2-digit'}) : '';
+    return `${c ? c.name.replace(/^คอร์ส\s*\d+:\s*/,'') : 'คอร์ส'}${d ? ' ('+d+')' : ''}`;
+  });
+  return `<div class="vip-wrap"><span class="vip-badge">⭐ ลูกค้าพิเศษ · เคยเรียนแล้ว ${hist.length} ครั้ง</span>
+    <div class="vip-past">เคยเรียน: ${past.slice(-3).join(', ')}${past.length>3 ? ` +${past.length-3}` : ''}</div></div>`;
+}
+
+// ---------- confirm "taught" straight from the registration list ----------
+// each form row is matched to its booking by the same key the form-sync uses (name + class date + course)
+function regBookingForRow(r){
+  if(!regRowsCache || !r) return null;
+  const { courseIdx, nameIdx, dateIdx } = regRowsCache;
+  const name = nameIdx>=0 ? (r[nameIdx]||'').trim() : '';
+  const iso = dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null;
+  const courseId = matchCourseIdFromText(courseIdx>=0 ? r[courseIdx] : '');
+  if(!name || !iso || !courseId) return null;
+  const key = `form_${name}_${iso}_${courseId}`;
+  return sharedBookings.find(b=> b.syncKey === key) || null;
+}
+async function confirmTaughtFromRegistration(r, btn, boxId){
+  if(!r) return;
+  let b = regBookingForRow(r);
+  if(!b){
+    // not pulled into the booking list yet — sync from the form once, then try again
+    if(btn){ btn.disabled = true; btn.textContent = 'กำลังดึงข้อมูล...'; }
+    try{ await syncBookingsFromGoogleForm(); }catch(e){ console.error('sync before confirm failed', e); }
+    b = regBookingForRow(r);
+    if(btn){ btn.disabled = false; btn.textContent = 'ยืนยันสอนเสร็จ ✓'; }
+  }
+  if(!b){ alert('จับคู่รายการนี้กับคอร์ส/วันที่ไม่ได้ — ตรวจสอบชื่อคอร์สหรือวันที่ในฟอร์มอีกครั้ง'); return; }
+  if(b.taught){ renderRegistrationList(boxId); return; }
+  if(!b.instructor || b.instructor === 'ยังไม่ระบุ'){
+    const me = currentUser || '';
+    if(!me){ alert('กรุณาเข้าสู่ระบบก่อนยืนยันการสอน'); return; }
+    // everyone booked into the same class (same day + course) without a teacher yet gets the same teacher
+    const sameClass = sharedBookings.filter(x=> !x.taught && x.date===b.date && x.courseId===b.courseId && (!x.instructor || x.instructor==='ยังไม่ระบุ'));
+    if(!confirm(`ยืนยันว่า ${me} เป็นผู้สอนคลาสนี้?\n${courseById(b.courseId)?.name || ''} · ${b.date}\n(ผู้เรียนในคลาสเดียวกัน ${sameClass.length} คน)`)) return;
+    sameClass.forEach(x=> x.instructor = me);
+    saveSharedBookings();
+  }
+  const group = sharedBookings.filter(x=> !x.taught && x.date===b.date && x.courseId===b.courseId
+    && x.instructor===b.instructor && (x.startTime||'')===(b.startTime||''));
+  if(boxId === 'profileRegListBox') closeModal('profileModalOverlay');
+  openConfirmTaughtModal(group.length ? group : [b]);
 }
 
 // ---------- Sync bookings from Google Form registration sheet ----------
@@ -6440,6 +6563,7 @@ function confirmBookingTaught(bookingGroup, students, soldProducts, soldProducts
   }
 
   if(document.getElementById('bookingCardGrid')) renderLogTab();
+  try{ ['regListBox','profileRegListBox'].forEach(id=>{ if(document.getElementById(id)) renderRegistrationList(id); }); }catch(e){}
 
   openTaughtReport(booking, students, soldProducts);
 }
@@ -7503,6 +7627,117 @@ function hideLoginScreen(){
   document.getElementById('loginScreen').style.display = 'none';
   const lv = document.querySelector('#loginScreen video'); if(lv) lv.pause();
   startAutoSync();
+  startOverdueReminders();
+}
+
+// ---------- reminder: classes that already ended but were never confirmed as taught ----------
+const OVERDUE_LOOKBACK_DAYS = 14;   // older than this is treated as history, not a reminder
+const OVERDUE_GRACE_MIN = 30;       // remind 30 min after the class's scheduled end time
+function findOverdueClassGroups(){
+  if(!currentUser || !Array.isArray(sharedBookings)) return [];
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - OVERDUE_LOOKBACK_DAYS*86400000).toISOString().slice(0,10);
+  const isAdmin = currentUser === ADMIN_NAME;
+  const groups = {};
+  sharedBookings.forEach(b=>{
+    if(!b || b.taught || !b.date || b.date < cutoff) return;
+    if(!courseById(b.courseId)) return;
+    const unassigned = !b.instructor || b.instructor === 'ยังไม่ระบุ';
+    if(unassigned ? !isAdmin : (b.instructor !== currentUser && !isAdmin)) return;
+    let endISO;
+    try{ const r = bookingTimeRange(b); endISO = `${b.date}T${(r && r.end) || '18:00'}:00`; }catch(e){ endISO = `${b.date}T18:00:00`; }
+    if(now.getTime() < new Date(endISO).getTime() + OVERDUE_GRACE_MIN*60000) return; // class hasn't finished yet
+    const key = [b.date, b.courseId, b.instructor || 'ยังไม่ระบุ', b.startTime || ''].join('|');
+    (groups[key] = groups[key] || { key, date:b.date, courseId:b.courseId, instructor:b.instructor || 'ยังไม่ระบุ', bookings:[] }).bookings.push(b);
+  });
+  return Object.values(groups).sort((a,b)=> a.date.localeCompare(b.date));
+}
+function renderOverdueModal(groups){
+  const list = document.getElementById('overdueList');
+  if(!list) return;
+  list.innerHTML = groups.map((g,i)=>{
+    const c = courseById(g.courseId);
+    const d = new Date(g.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short'});
+    const names = g.bookings.filter(b=> b.customerName).map(b=> (customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey).length ? '⭐ ' : '') + b.customerName);
+    const unassigned = g.instructor === 'ยังไม่ระบุ';
+    return `<div class="od-row">
+      <div class="od-main">
+        <div class="od-course">${c ? c.name : g.courseId}</div>
+        <div class="od-meta">🗓️ ${d} · ${g.bookings.length} คน · ${unassigned ? '<b style="color:#B3261E;">ยังไม่ระบุผู้สอน</b>' : g.instructor}</div>
+        ${names.length ? `<div class="od-names">${names.slice(0,4).join(', ')}${names.length>4 ? ` +${names.length-4}` : ''}</div>` : ''}
+      </div>
+      <button type="button" class="reg-confirm-btn od-go" data-i="${i}">ยืนยัน ✓</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.od-go').forEach(btn=>{
+    btn.onclick = ()=>{
+      const g = groups[+btn.dataset.i];
+      if(!g) return;
+      let bookings = g.bookings.filter(b=> !b.taught);
+      if(!bookings.length){ checkOverdueClasses(true); return; }
+      if(g.instructor === 'ยังไม่ระบุ'){
+        if(!confirm(`ยืนยันว่า ${currentUser} เป็นผู้สอนคลาสนี้?`)) return;
+        bookings.forEach(b=> b.instructor = currentUser);
+        saveSharedBookings();
+      }
+      closeModal('overdueModalOverlay');
+      openConfirmTaughtModal(bookings);
+    };
+  });
+}
+let overdueNotifiedKeys = null;
+function overdueNotifyOnDevice(groups){
+  // a system notification (only while the app is running, if this device allows web notifications)
+  try{
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    if(!overdueNotifiedKeys){ try{ overdueNotifiedKeys = new Set(JSON.parse(localStorage.getItem('rangsan_overdue_notified')||'[]')); }catch(e){ overdueNotifiedKeys = new Set(); } }
+    const fresh = groups.filter(g=> !overdueNotifiedKeys.has(g.key));
+    if(!fresh.length) return;
+    const first = courseById(fresh[0].courseId);
+    new Notification('ยังไม่ได้ยืนยันสอนเสร็จ', {
+      body: fresh.length === 1 ? `${first ? first.name : ''} · ${fresh[0].date}` : `${fresh.length} คลาสรอการยืนยัน`,
+      tag: 'rangsan-overdue'
+    });
+    fresh.forEach(g=> overdueNotifiedKeys.add(g.key));
+    localStorage.setItem('rangsan_overdue_notified', JSON.stringify([...overdueNotifiedKeys].slice(-200)));
+  }catch(e){ /* this browser can't show notifications from a page — the in-app popup still covers it */ }
+}
+function checkOverdueClasses(force){
+  const groups = findOverdueClassGroups();
+  const box = document.getElementById('overdueModalOverlay');
+  if(!groups.length){ if(box && box.classList.contains('open')) closeModal('overdueModalOverlay'); return; }
+  overdueNotifyOnDevice(groups);
+  let snoozeUntil = 0;
+  try{ snoozeUntil = Number(localStorage.getItem('rangsan_overdue_snooze')||0); }catch(e){}
+  if(!force && Date.now() < snoozeUntil) return;
+  // don't stack on top of another open dialog — try again on the next check
+  if(!force && document.querySelector('.modal-overlay.open:not(#overdueModalOverlay)')) return;
+  const splash = document.getElementById('splashScreen');
+  if(!force && splash && !splash.classList.contains('splash-hide')) return;
+  renderOverdueModal(groups);
+  const nb = document.getElementById('overdueNotifyBtn');
+  if(nb) nb.style.display = ('Notification' in window && Notification.permission === 'default') ? '' : 'none';
+  openModal('overdueModalOverlay');
+}
+let overdueTimer = null;
+function startOverdueReminders(){
+  if(overdueTimer) return;
+  const close = document.getElementById('overdueModalClose');
+  if(close) close.onclick = ()=> closeModal('overdueModalOverlay');
+  const snooze = document.getElementById('overdueSnoozeBtn');
+  if(snooze) snooze.onclick = ()=>{ try{ localStorage.setItem('rangsan_overdue_snooze', String(Date.now() + 3*3600000)); }catch(e){} closeModal('overdueModalOverlay'); };
+  const nb = document.getElementById('overdueNotifyBtn');
+  if(nb) nb.onclick = async ()=>{
+    try{ const r = await Notification.requestPermission(); nb.style.display = 'none'; if(r === 'granted') overdueNotifyOnDevice(findOverdueClassGroups()); }catch(e){ nb.style.display = 'none'; }
+  };
+  // first check once the opening video is out of the way, then every 10 minutes while the app is open
+  let tries = 0;
+  const first = setInterval(()=>{
+    const sp = document.getElementById('splashScreen');
+    if((sp && sp.classList.contains('splash-hide')) || ++tries > 40){ clearInterval(first); setTimeout(()=> checkOverdueClasses(false), 900); }
+  }, 500);
+  overdueTimer = setInterval(()=> checkOverdueClasses(false), 10*60000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkOverdueClasses(false); });
 }
 let instructorManageDraft = []; // working copy while the modal is open: [{original, current, markedDelete}]
 async function promptManageInstructors(){
@@ -8250,6 +8485,8 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
+          ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
           <select data-assign-instructor="${b._idx}" class="select-light tk-instructor" style="margin:0 0 8px;">
             <option value="">— เลือกอาจารย์ผู้สอน —</option>
             ${state.instructors.map(n=>`<option value="${n}" ${n===b.instructor?'selected':''}>${n}</option>`).join('')}
@@ -8430,6 +8667,15 @@ function renderLogTab(){
     });
   };
   document.getElementById('newBookingCourse').onchange = syncBookingTimeUI;
+  // as soon as a name/phone matches an earlier student, show the returning-customer badge right in the form
+  const refreshNewBookingVip = ()=>{
+    const box = document.getElementById('newBookingVip');
+    const nm = document.getElementById('newBookingCustName').value, ph = document.getElementById('newBookingCustPhone').value;
+    const d = document.getElementById('newBookingDate').value || null;
+    const html = (nm.trim() || rsNormPhone(ph)) ? vipBadgeHTML(customerHistory(nm, ph, d)) : '';
+    box.innerHTML = html; box.style.display = html ? '' : 'none';
+  };
+  ['newBookingCustName','newBookingCustPhone','newBookingDate'].forEach(id=>{ document.getElementById(id).oninput = refreshNewBookingVip; });
   document.getElementById('newBookingTime').oninput = syncBookingTimeUI;
   const openBookingModalPrefilled = (dateStr)=>{
     document.getElementById('newBookingDate').value = dateStr || new Date().toISOString().slice(0,10);
@@ -8442,6 +8688,9 @@ function renderLogTab(){
     document.getElementById('newBookingMachineOther').style.display = 'none';
     document.getElementById('newBookingTime').value = '10:00';
     syncBookingTimeUI();
+    document.getElementById('newBookingCustName').value = '';
+    document.getElementById('newBookingCustPhone').value = '';
+    document.getElementById('newBookingVip').style.display = 'none';
     openModal('bookingModalOverlay');
   };
   document.getElementById('openBookingModalBtn').onclick = ()=> openBookingModalPrefilled();
@@ -8459,6 +8708,10 @@ function renderLogTab(){
       ? document.getElementById('newBookingMachineOther').value.trim()
       : machineSelectVal;
     const newBooking = { date, courseId, instructor, note, allergy, machineModel };
+    const custName = document.getElementById('newBookingCustName').value.trim();
+    const custPhone = document.getElementById('newBookingCustPhone').value.trim();
+    if(custName) newBooking.customerName = custName;
+    if(custPhone) newBooking.customerPhone = custPhone;
     if(TIMED_COURSE_IDS.includes(courseId)){
       const st = document.getElementById('newBookingTime').value;
       if(!/^\d{1,2}:\d{2}$/.test(st)){ alert('กรุณาระบุเวลาเริ่มสอน'); return; }
