@@ -1865,6 +1865,7 @@
   .vip-past{ font-size:11px; color:#8A6416; margin-top:3px; }
   .eval-box .vip-past{ color:#DCC08A; }
   .reg-age{ font-weight:700; }
+  .tk-age{ font-weight:700; color:#8A6416; }
   #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
   #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
@@ -4186,6 +4187,41 @@ function parseThaiFormDate(text){
   if(!m) return null;
   const [, d, mo, y] = m;
   return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+let ageBackfillDone = false;
+async function backfillAgesFromForm(){
+  if(ageBackfillDone) return;
+  if(!sharedEvalFormUrl){ try{ const r = await window.storage.get('shared_eval_form_url', true); sharedEvalFormUrl = (r && r.value) || ''; }catch(e){} }
+  if(!sharedEvalFormUrl) return;
+  ageBackfillDone = true;
+  const missing = sharedBookings.filter(b=> b.syncKey && !b.age);
+  if(!missing.length) return;
+  try{
+    const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
+    if(!csvUrl) return;
+    const res = await fetch(csvUrl); if(!res.ok) return;
+    const text = await res.text(); if(text.trim().startsWith('<')) return;
+    const rows = parseCSV(text); if(rows.length < 2) return;
+    const headers = rows[0];
+    const ageCols = findAgeCols(headers);
+    if(ageCols.ageIdx < 0 && ageCols.birthIdx < 0) return; // the form doesn't ask for age
+    const findCol = (keywords)=> headers.findIndex(h=> keywords.some(k=> h.includes(k)));
+    const courseIdx = findCol(['คอร์ส']), nameIdx = findCol(['ชื่อ - นามสกุล (ภาษาไทย)', 'ชื่อ']), dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
+    const byKey = {};
+    rows.slice(1).forEach(r=>{
+      const name = nameIdx>=0 ? (r[nameIdx]||'').trim() : '';
+      const iso = dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null;
+      const cid = matchCourseIdFromText(courseIdx>=0 ? r[courseIdx] : '');
+      const age = ageFromRow(r, ageCols);
+      if(name && iso && cid && age) byKey[`form_${name}_${iso}_${cid}`] = age;
+    });
+    let changed = 0;
+    missing.forEach(b=>{ if(byKey[b.syncKey]){ b.age = byKey[b.syncKey]; changed++; } });
+    if(changed){
+      saveSharedBookings();
+      if(document.getElementById('bookingCardGrid')) whenScrollIdle(()=>{ try{ renderLogTab(); }catch(e){} });
+    }
+  }catch(e){ console.warn('age backfill skipped', e); }
 }
 async function syncBookingsFromGoogleForm(){
   if(!sharedEvalFormUrl) return { error: 'ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน' };
@@ -7661,6 +7697,7 @@ function hideLoginScreen(){
   const lv = document.querySelector('#loginScreen video'); if(lv) lv.pause();
   startAutoSync();
   startOverdueReminders();
+  setTimeout(()=>{ backfillAgesFromForm(); }, 4000);
 }
 
 // ---------- reminder: classes that already ended but were never confirmed as taught ----------
@@ -8518,7 +8555,7 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
-          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
           <select data-assign-instructor="${b._idx}" class="select-light tk-instructor" style="margin:0 0 8px;">
             <option value="">— เลือกอาจารย์ผู้สอน —</option>
@@ -8532,7 +8569,6 @@ function renderLogTab(){
           </div>
           ${b.note ? `<div class="ac-field"><b>หมายเหตุ</b> ${b.note}</div>` : ''}
           ${b.allergy ? `<div class="ac-field" style="color:#B8452F;"><b style="color:#B8452F;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
-          ${b.age ? `<div class="ac-field"><b>อายุ</b> ${b.age}</div>` : ''}
           ${b.occupation ? `<div class="ac-field"><b>อาชีพ</b> ${b.occupation}</div>` : ''}
           ${b.income ? `<div class="ac-field"><b>รายได้</b> ${b.income}</div>` : ''}
           ${b.province ? `<div class="ac-field"><b>จังหวัด</b> ${b.province}</div>` : ''}
