@@ -1864,6 +1864,7 @@
   .vip-badge{ display:inline-block; font-size:11.5px; font-weight:700; color:#5A3D00; background:linear-gradient(135deg,#F6D98A,#DCA73D); padding:3px 10px; border-radius:999px; box-shadow:0 1px 4px rgba(220,167,61,.35); }
   .vip-past{ font-size:11px; color:#8A6416; margin-top:3px; }
   .eval-box .vip-past{ color:#DCC08A; }
+  .reg-age{ font-weight:700; }
   #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
   #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
@@ -3981,7 +3982,7 @@ async function loadRegistrationList(filterRowId, listBoxId){
     const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
     const timeIdx = 0;
 
-    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx };
+    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx, ageCols: findAgeCols(headers) };
 
     const courses = ['ทั้งหมด', ...new Set(dataRows.map(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim()).filter(Boolean))];
     if(filterRow){
@@ -4049,7 +4050,7 @@ function renderRegistrationList(listBoxId){
           <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none;">${joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม'}</span>
         </div>
         ${vip}
-        <div class="reg-course" style="font-size:11.5px; margin-top:2px;">${course||'-'}</div>
+        <div class="reg-course" style="font-size:11.5px; margin-top:2px;">${course||'-'}${(()=>{ const a = ageFromRow(r, regRowsCache.ageCols); return a ? ` · <span class="reg-age">อายุ ${a}</span>` : ''; })()}</div>
         <div style="font-size:11px; color:#948a78; margin-top:2px;">
           ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} · สมัครเมื่อ ${submitted||'-'}
         </div>
@@ -4149,6 +4150,35 @@ function matchCourseIdFromText(text){
   if(t.includes('latte art')) return state.courses.find(c=> c.name.includes('Latte Art'))?.id || state.courses[0]?.id || null;
   return null;
 }
+// age from the registration form — works with an "อายุ" answer (25 / 25 ปี / 25-34 ปี)
+// or a birth date / birth year (Thai Buddhist years like 2540 are converted automatically)
+function findAgeCols(headers){
+  const ageIdx = headers.findIndex(h=> /อายุ/.test(h) && !/อายุงาน/.test(h));
+  const birthIdx = headers.findIndex(h=> /วันเกิด|ปีเกิด|เกิดวันที่|birth/i.test(h));
+  return { ageIdx, birthIdx };
+}
+function ageFromRow(r, cols){
+  if(!r || !cols) return '';
+  if(cols.ageIdx >= 0){
+    const v = String(r[cols.ageIdx]||'').trim();
+    if(v) return /ปี/.test(v) ? v : `${v} ปี`;
+  }
+  if(cols.birthIdx >= 0){
+    const v = String(r[cols.birthIdx]||'').trim();
+    if(!v) return '';
+    let y, m = 1, d = 1;
+    const full = v.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if(full){ d = +full[1]; m = +full[2]; y = +full[3]; }
+    else { const yy = v.match(/(\d{4})/); if(yy) y = +yy[1]; }
+    if(!y) return '';
+    if(y > 2400) y -= 543; // พ.ศ. → ค.ศ.
+    const now = new Date();
+    let age = now.getFullYear() - y;
+    if(full && (now.getMonth()+1 < m || (now.getMonth()+1 === m && now.getDate() < d))) age--;
+    return (age > 0 && age < 110) ? `${age} ปี` : '';
+  }
+  return '';
+}
 function parseThaiFormDate(text){
   // expects formats like "10/7/2026" (D/M/YYYY, Gregorian year as entered by Google Forms date field)
   if(!text) return null;
@@ -4185,6 +4215,7 @@ async function syncBookingsFromGoogleForm(){
     const equipmentIdx = findCol(['อุปกรณ์ที่เคยใช้']);
     const goalIdx = findCol(['เป้าหมายการเรียน']);
     const topicsIdx = findCol(['หัวข้อที่อยากให้เน้น']);
+    const ageCols = findAgeCols(headers);
     const photoConsentIdx = findCol(['การยินยอมให้ใช้ภาพถ่ายและวิดีโอ', 'ยินยอมให้ใช้ภาพถ่าย', 'ยินยอมให้ถ่ายรูป', 'ยินยอมให้ถ่ายภาพ', 'อนุญาตให้ถ่ายรูป', 'อนุญาตให้ถ่ายภาพ', 'ยินยอม']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
@@ -4210,6 +4241,7 @@ async function syncBookingsFromGoogleForm(){
       const goal = goalIdx>=0 ? (r[goalIdx]||'').trim() : '';
       const topics = topicsIdx>=0 ? (r[topicsIdx]||'').trim() : '';
       const photoConsent = photoConsentIdx>=0 ? (r[photoConsentIdx]||'').trim() : '';
+      const age = ageFromRow(r, ageCols);
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
@@ -4231,6 +4263,7 @@ async function syncBookingsFromGoogleForm(){
           if(!existing.goal && goal){ existing.goal = goal; changed = true; }
           if(!existing.topics && topics){ existing.topics = topics; changed = true; }
           if(!existing.photoConsent && photoConsent){ existing.photoConsent = photoConsent; changed = true; }
+          if(!existing.age && age){ existing.age = age; changed = true; }
           if(changed) enriched++;
         }
         skipped++;
@@ -4243,7 +4276,7 @@ async function syncBookingsFromGoogleForm(){
         instructor: 'ยังไม่ระบุ',
         note: `จากฟอร์มลงทะเบียน: ${name}${phone ? ' · '+phone : ''}${line ? ' · LINE: '+line : ''}`,
         allergy,
-        occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent,
+        occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent, age,
         customerName: name, customerPhone: phone, customerLine: line,
         source: 'google_form',
         syncKey,
@@ -8499,6 +8532,7 @@ function renderLogTab(){
           </div>
           ${b.note ? `<div class="ac-field"><b>หมายเหตุ</b> ${b.note}</div>` : ''}
           ${b.allergy ? `<div class="ac-field" style="color:#B8452F;"><b style="color:#B8452F;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
+          ${b.age ? `<div class="ac-field"><b>อายุ</b> ${b.age}</div>` : ''}
           ${b.occupation ? `<div class="ac-field"><b>อาชีพ</b> ${b.occupation}</div>` : ''}
           ${b.income ? `<div class="ac-field"><b>รายได้</b> ${b.income}</div>` : ''}
           ${b.province ? `<div class="ac-field"><b>จังหวัด</b> ${b.province}</div>` : ''}
