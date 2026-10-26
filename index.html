@@ -1868,6 +1868,13 @@
   .tk-age{ font-weight:700; color:#8A6416; }
   #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
   #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
+
+  .mp-box{ margin-top:14px; padding:12px 14px; border-radius:14px; background:rgba(220,167,61,.12); border:1px solid rgba(220,167,61,.35); }
+  .mp-title{ font-size:12.5px; font-weight:700; color:var(--gold); margin-bottom:8px; }
+  .mp-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .mp-row span{ flex:none; width:96px; font-size:13px; color:#EFE8D6; }
+  .mp-row input{ flex:1; min-width:0; }
+  .mp-profit{ font-size:13.5px; color:#EFE8D6; text-align:right; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
   .sp-photo-obj{ filter:drop-shadow(0 26px 24px rgba(26,15,8,.32)); }
   .sp-steam-svg{ position:absolute; left:18%; top:-12%; width:40%; height:auto; }
@@ -4923,6 +4930,19 @@ function materialTotals(courseId){
   const equipment = sum(m.equipment);
   return { consumables, equipment, total: consumables+equipment };
 }
+// the machine + grinder course has no fixed price — the actual selling price and cost are typed in per class
+function isManualPricedCourse(courseId){
+  const c = courseById(courseId);
+  return courseId === 'c7' || !!(c && /เครื่องชง/.test(c.name) && /เครื่องบด/.test(c.name));
+}
+// P&L for one confirmed booking: uses the manually entered price/cost when the class had them
+function bookingPL(b){
+  if(b && (b.manualRevenue != null || b.manualCost != null)){
+    const revenue = Number(b.manualRevenue)||0, cost = Number(b.manualCost)||0, profit = revenue - cost;
+    return { revenue, cost, profit, margin: revenue ? profit/revenue : 0, manual:true };
+  }
+  return coursePL_materials(b ? b.courseId : null);
+}
 function coursePL_materials(courseId){
   const course = courseById(courseId);
   const mt = materialTotals(courseId);
@@ -4976,7 +4996,7 @@ function instructorKPI(name){
   let sessions=rows.length, students=0, revenue=0, profit=0, cost=0, verifiedMaterialSales=0;
   rows.forEach(b=>{
     students += Number(b.taughtStudents)||0;
-    const pl = coursePL_materials(b.courseId);
+    const pl = bookingPL(b);
     revenue += pl.revenue; profit += pl.profit; cost += pl.cost;
     // only count material sales that have a payment slip attached as proof
     if(b.soldProductsSlip && b.soldProducts && b.soldProducts.length){
@@ -6163,7 +6183,7 @@ async function sendTextToLineGroupAuto(msg, btn){
 
 function buildDailyTeachingSummary(booking, students, soldProducts){
   const course = courseById(booking.courseId);
-  const pl = coursePL_materials(booking.courseId);
+  const pl = bookingPL(booking);
   const retailTotal = (soldProducts||[]).reduce((s,p)=> s + p.price*p.qty, 0);
   const grandTotal = pl.profit + retailTotal;
   const dateStr = booking.date
@@ -6197,7 +6217,7 @@ function computeDaySummary(dateStr){
   const bookingsToday = sharedBookings.filter(b=> b.taught && b.date === dateStr);
   let teachRevenue=0, teachCost=0, teachProfit=0;
   const sessions = bookingsToday.map(b=>{
-    const pl = coursePL_materials(b.courseId);
+    const pl = bookingPL(b);
     teachRevenue += pl.revenue; teachCost += pl.cost; teachProfit += pl.profit;
     return { instructor:b.instructor, course: courseById(b.courseId), students:b.taughtStudents||0, pl };
   });
@@ -6329,7 +6349,7 @@ function computeMonthSummary(year, month){ // month 0-11
   let teachRevenue=0, teachCost=0, teachProfit=0;
   const perInstructor = {};
   bookingsInMonth.forEach(b=>{
-    const pl = coursePL_materials(b.courseId);
+    const pl = bookingPL(b);
     teachRevenue += pl.revenue; teachCost += pl.cost; teachProfit += pl.profit;
     if(!perInstructor[b.instructor]) perInstructor[b.instructor] = { sessions:0, profit:0 };
     perInstructor[b.instructor].sessions++;
@@ -6496,6 +6516,13 @@ function openConfirmTaughtModal(bookingGroup){
     <div style="display:flex; flex-direction:column; gap:10px;">
       <input type="number" id="confirmStudentsInput" class="pill" min="1" value="${groupSize>1 ? groupSize : (course ? course.students : 1)}" placeholder="จำนวนผู้เรียนจริง">
     </div>
+    ${isManualPricedCourse(booking.courseId) ? `
+    <div class="mp-box">
+      <div class="mp-title">💰 ราคาคอร์สนี้ (กรอกเอง)</div>
+      <label class="mp-row"><span>ราคาขาย (บาท)</span><input type="number" inputmode="decimal" min="0" id="confirmManualRevenue" class="pill" placeholder="เช่น 3500" value="${booking.manualRevenue != null ? booking.manualRevenue : (course && course.price ? course.price : '')}"></label>
+      <label class="mp-row"><span>ต้นทุน (บาท)</span><input type="number" inputmode="decimal" min="0" id="confirmManualCost" class="pill" placeholder="เช่น 800" value="${booking.manualCost != null ? booking.manualCost : ''}"></label>
+      <div class="mp-profit" id="confirmManualProfit"></div>
+    </div>` : ''}
     <div style="margin-top:16px; padding-top:12px; border-top:1px dashed rgba(255,255,255,.2);">
       <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom:8px;">🛍️ แตะสินค้าเพื่อใส่ตะกร้า (ถ้ามี)</div>
       ${retailProducts.length
@@ -6567,8 +6594,21 @@ function openConfirmTaughtModal(bookingGroup){
   }
   renderConfirmCart();
 
+  const mpRev = document.getElementById('confirmManualRevenue'), mpCost = document.getElementById('confirmManualCost');
+  const refreshManualProfit = ()=>{
+    const out = document.getElementById('confirmManualProfit'); if(!out) return;
+    const r = Number(mpRev.value)||0, c = Number(mpCost.value)||0, p = r - c;
+    out.innerHTML = `กำไร <b style="color:${p<0?'#FF9C8F':'#8FD19E'};">${fmt(p)}</b>${r ? ` <span style="opacity:.7;">(${Math.round(p/r*100)}%)</span>` : ''}`;
+  };
+  if(mpRev){ mpRev.oninput = refreshManualProfit; mpCost.oninput = refreshManualProfit; refreshManualProfit(); }
+
   document.getElementById('confirmTaughtBtn').onclick = ()=>{
     const students = Number(document.getElementById('confirmStudentsInput').value) || 1;
+    let manualPrice = null;
+    if(mpRev){
+      if(mpRev.value === '' ){ alert('กรุณากรอกราคาขายของคอร์สนี้'); mpRev.focus(); return; }
+      manualPrice = { revenue: Number(mpRev.value)||0, cost: Number(mpCost.value)||0 };
+    }
     const soldProducts = [];
     Object.keys(confirmCart).forEach(i=>{
       const qty = confirmCart[i];
@@ -6581,12 +6621,12 @@ function openConfirmTaughtModal(bookingGroup){
     const taughtBtn = document.getElementById('confirmTaughtBtn');
     if(taughtBtn.dataset.busy) return; // already confirming — ignore repeat taps
     taughtBtn.dataset.busy = '1'; taughtBtn.disabled = true;
-    confirmBookingTaught(bookings, students, soldProducts, pendingConfirmSlipDataUrl);
+    confirmBookingTaught(bookings, students, soldProducts, pendingConfirmSlipDataUrl, manualPrice);
   };
   openModal('reportModalOverlay');
 }
 
-function confirmBookingTaught(bookingGroup, students, soldProducts, soldProductsSlip){
+function confirmBookingTaught(bookingGroup, students, soldProducts, soldProductsSlip, manualPrice){
   // accepts an array of bookings (same date/course/instructor) that all get confirmed together —
   // the full student count and any product sale only gets attributed ONCE (to the first booking)
   // so per-instructor stats that sum taughtStudents/soldProducts across bookings aren't double-counted
@@ -6602,6 +6642,12 @@ function confirmBookingTaught(bookingGroup, students, soldProducts, soldProducts
       sharedBookings[idx].taughtStudents = i===0 ? students : 0; // avoid inflating group-summed stats
       sharedBookings[idx].soldProducts = i===0 ? (soldProducts || []) : [];
       sharedBookings[idx].soldProductsSlip = i===0 ? (soldProductsSlip || '') : '';
+      if(manualPrice){
+        // the whole class's price/cost sits on the first booking; the rest are 0 so totals aren't counted twice
+        sharedBookings[idx].manualRevenue = i===0 ? manualPrice.revenue : 0;
+        sharedBookings[idx].manualCost = i===0 ? manualPrice.cost : 0;
+        if(i===0){ booking.manualRevenue = manualPrice.revenue; booking.manualCost = manualPrice.cost; }
+      }
     }
   });
   saveSharedBookings();
@@ -6643,7 +6689,7 @@ function openTaughtReport(booking, students, soldProducts){
   const dateStr = booking.date
     ? new Date(booking.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'})
     : '-';
-  const pl = coursePL_materials(booking.courseId);
+  const pl = bookingPL(booking);
   const retailTotal = (soldProducts||[]).reduce((s,p)=> s + p.price*p.qty, 0);
   const grandTotal = pl.profit + retailTotal;
   const productLines = (soldProducts||[]).map(p=>
