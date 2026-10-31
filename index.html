@@ -1869,6 +1869,8 @@
   #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
   #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
 
+  .fee-preview{ font-size:13px; color:#EFE8D6; padding:8px 12px; border-radius:12px; background:rgba(239,232,214,.08); }
+  .fee-preview b{ color:#DCA73D; }
   .mp-box{ margin-top:14px; padding:12px 14px; border-radius:14px; background:rgba(220,167,61,.12); border:1px solid rgba(220,167,61,.35); }
   .mp-title{ font-size:12.5px; font-weight:700; color:var(--gold); margin-bottom:8px; }
   .mp-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
@@ -1885,6 +1887,16 @@
     border-radius:6px; padding:2px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
   .cal-cell.cal-busy-day{ background:repeating-linear-gradient(135deg, rgba(179,38,30,.06) 0 6px, transparent 6px 12px); }
   .busy-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+  .busy-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:700; font-size:13px;
+    border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.18); position:relative; filter:grayscale(.35); }
+  .busy-av-stack{ display:inline-flex; align-items:center; flex:none; }
+  .cal-busy .busy-av{ border-width:1px; font-size:8px; margin-right:2px; vertical-align:middle; filter:none; }
+  .cal-busy{ display:flex; align-items:center; }
+  .cal-busy-txt{ overflow:hidden; text-overflow:ellipsis; }
+  .cal-chip-busy{ filter:grayscale(.85) brightness(.95); }
+  .cal-chip-busy::after{ content:'🚫'; position:absolute; top:4px; right:4px; font-size:12px; filter:none; }
+  .cal-busy-team{ position:absolute; inset:26px 4px 20px 4px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+  .cal-busy-team .cal-chip-name{ font-size:10px; font-weight:700; color:#7A2E1F; }
   .busy-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:14px; background:#F6E9E4; border:1px solid #EBCFC6; }
   .busy-date{ flex:none; font-size:12.5px; font-weight:700; color:#7A2E1F; min-width:72px; }
   .busy-main{ flex:1; min-width:0; }
@@ -4968,13 +4980,55 @@ function isManualPricedCourse(courseId){
   const c = courseById(courseId);
   return courseId === 'c7' || !!(c && /เครื่องชง/.test(c.name) && /เครื่องบด/.test(c.name));
 }
-// P&L for one confirmed booking: uses the manually entered price/cost when the class had them
+// how a course is charged when a class is confirmed:
+//  • workshop / group class → per person (price per head × students who came)
+//  • private / semi-private  → one flat price for the whole class, however many people came
+function isPerPersonCourse(courseId){
+  const c = courseById(courseId);
+  if(!c) return false;
+  if(c.pricing) return c.pricing === 'per_person';
+  return /workshop|group/i.test(c.name);
+}
+const DEFAULT_PER_PERSON_PRICE = { c3:1690, c6:590 }; // matches the prices customers see on the registration form
+function perPersonPrice(courseId){
+  const c = courseById(courseId);
+  if(!c) return 0;
+  if(c.perPersonPrice > 0) return Number(c.perPersonPrice);
+  if(DEFAULT_PER_PERSON_PRICE[courseId]) return DEFAULT_PER_PERSON_PRICE[courseId];
+  return c.students ? Math.round(c.price / c.students) : c.price;
+}
+// course fee + cost for ONE class with this many students
+function classPL(courseId, students){
+  const c = courseById(courseId);
+  const mt = materialTotals(courseId);
+  if(!c) return { revenue:0, cost:mt.total, profit:-mt.total, margin:0 };
+  let revenue, cost;
+  if(isPerPersonCourse(courseId)){
+    const n = Math.max(0, Number(students)||0);
+    revenue = perPersonPrice(courseId) * n;
+    // consumables scale with headcount, equipment/handouts are per class
+    cost = mt.equipment + (c.students ? mt.consumables / c.students * n : mt.consumables);
+  } else {
+    revenue = c.price;
+    cost = mt.total;
+  }
+  const profit = revenue - cost;
+  return { revenue, cost, profit, margin: revenue ? profit/revenue : 0, perPerson: isPerPersonCourse(courseId), students };
+}
+// P&L for one confirmed booking. A class confirmed together puts its whole headcount on the first booking
+// (the others carry 0), so the fee is counted exactly once per class.
 function bookingPL(b){
   if(b && (b.manualRevenue != null || b.manualCost != null)){
     const revenue = Number(b.manualRevenue)||0, cost = Number(b.manualCost)||0, profit = revenue - cost;
     return { revenue, cost, profit, margin: revenue ? profit/revenue : 0, manual:true };
   }
-  return coursePL_materials(b ? b.courseId : null);
+  if(!b) return coursePL_materials(null);
+  if(b.taught){
+    const n = Number(b.taughtStudents)||0;
+    if(n <= 0) return { revenue:0, cost:0, profit:0, margin:0, grouped:true }; // part of a class already counted on its first booking
+    return classPL(b.courseId, n);
+  }
+  return coursePL_materials(b.courseId);
 }
 function coursePL_materials(courseId){
   const course = courseById(courseId);
@@ -6549,6 +6603,7 @@ function openConfirmTaughtModal(bookingGroup){
     <p class="hint">${booking.instructor} · ${course ? course.name : '-'} · ${dateStr}</p>
     <div style="display:flex; flex-direction:column; gap:10px;">
       <input type="number" id="confirmStudentsInput" class="pill" min="1" value="${groupSize>1 ? groupSize : (course ? course.students : 1)}" placeholder="จำนวนผู้เรียนจริง">
+      ${isManualPricedCourse(booking.courseId) ? '' : `<div class="fee-preview" id="confirmFeePreview"></div>`}
     </div>
     ${isManualPricedCourse(booking.courseId) ? `
     <div class="mp-box">
@@ -6628,6 +6683,16 @@ function openConfirmTaughtModal(bookingGroup){
   }
   renderConfirmCart();
 
+  const feeBox = document.getElementById('confirmFeePreview');
+  const refreshFeePreview = ()=>{
+    if(!feeBox) return;
+    const n = Number(document.getElementById('confirmStudentsInput').value)||0;
+    const pl = classPL(booking.courseId, n);
+    feeBox.innerHTML = isPerPersonCourse(booking.courseId)
+      ? `👥 เวิร์กช็อป คิดรายคน: <b>${fmt(perPersonPrice(booking.courseId))}</b> × ${n} คน = <b>${fmt(pl.revenue)}</b>`
+      : `🔒 ไพรเวท คิดราคาเหมาคอร์ส: <b>${fmt(pl.revenue)}</b> <span style="opacity:.7;">(ไม่ขึ้นกับจำนวนคน)</span>`;
+  };
+  if(feeBox){ document.getElementById('confirmStudentsInput').addEventListener('input', refreshFeePreview); refreshFeePreview(); }
   const mpRev = document.getElementById('confirmManualRevenue'), mpCost = document.getElementById('confirmManualCost');
   const refreshManualProfit = ()=>{
     const out = document.getElementById('confirmManualProfit'); if(!out) return;
@@ -6785,6 +6850,9 @@ function renderPLTab(){
         <div style="display:flex; align-items:center; gap:6px;">ราคาขายต่อรอบ:
           <input type="number" id="coursePriceInput" class="pill mono" value="${course.price}" style="width:100px; padding:5px 10px; font-size:13.5px;"> บาท
         </div>
+        ${isPerPersonCourse(course.id) ? `<div style="display:flex; align-items:center; gap:6px;">ราคาต่อคน (ใช้ตอนสรุปยอด):
+          <input type="number" id="coursePerPersonInput" class="pill mono" value="${perPersonPrice(course.id)}" style="width:90px; padding:5px 10px; font-size:13.5px;"> บาท
+        </div>` : ''}
         <div>จำนวนผู้เรียน: <b class="mono">${course.students}</b> คน</div>
       </div>
       <div id="menuToggleList"></div>
@@ -6898,6 +6966,13 @@ function renderPLTab(){
     course.price = val;
     scheduleSave();
     renderPLTab();
+  };
+  const ppInput = document.getElementById('coursePerPersonInput');
+  if(ppInput) ppInput.onchange = (e)=>{
+    const val = Number(e.target.value);
+    if(!val || val < 0){ alert('กรุณากรอกราคาให้ถูกต้อง'); e.target.value = perPersonPrice(course.id); return; }
+    course.perPersonPrice = val;
+    scheduleSave();
   };
   document.getElementById('storageSettingsBtn').onclick = promptSetStorageBackendUrl;
   document.getElementById('storageTestBtn').onclick = testStorageBackendConnection;
@@ -7195,6 +7270,21 @@ async function saveSharedBusy(){
 const BUSY_ALL = 'ทั้งทีม';
 function busyOn(dateStr, instructor){
   return sharedBusy.filter(x=> x.date === dateStr && (!instructor || x.who === BUSY_ALL || x.who === instructor));
+}
+// round avatar(s) for a busy entry — the instructor's photo (or initial), or every instructor for "ทั้งทีม"
+function busyAvatarHTML(x, size){
+  size = size || 34;
+  const one = (name, extra)=>{
+    const photo = (typeof instructorPhotos !== 'undefined' && instructorPhotos) ? instructorPhotos[name] : '';
+    const init = String(name||'?').replace('อาจารย์','').trim().charAt(0) || '?';
+    const palette = ['#165028','#8F5A26','#2E5E8C','#7A2E1F','#5B4B8A','#3F7D4E'];
+    let h = 0; for(const ch of String(name)) h = (h*31 + ch.charCodeAt(0)) >>> 0;
+    const bg = photo ? `background:#ddd url('${photo}') center/cover` : `background:${palette[h % palette.length]}`;
+    return `<span class="busy-av" style="width:${size}px;height:${size}px;${bg};${extra||''}" title="${name}">${photo ? '' : init}</span>`;
+  };
+  if(x.who !== BUSY_ALL) return one(x.who);
+  const team = (state && state.instructors) || [];
+  return `<span class="busy-av-stack">${team.slice(0,4).map((n,i)=> one(n, `margin-left:${i? -Math.round(size*.38) : 0}px; z-index:${10-i};`)).join('')}</span>`;
 }
 function busyLabel(x){ return `${x.title || 'มีกิจกรรม'}${x.from ? ` (${x.from}–${x.to||''})` : ''}`; }
 async function loadSharedBookings(){
@@ -8396,6 +8486,7 @@ function renderLogTab(){
         const d = new Date(x.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short'});
         const canDelete = currentUser === ADMIN_NAME || currentUser === x.createdBy || currentUser === x.who;
         return `<div class="busy-row">
+          ${busyAvatarHTML(x, 40)}
           <div class="busy-date">${d}</div>
           <div class="busy-main"><div class="busy-title">${x.title || 'มีกิจกรรม'}</div>
             <div class="busy-meta">${x.who === BUSY_ALL ? '👥 ทั้งทีม · ปิดรับสอน' : '👤 '+x.who}${x.from ? ` · ${x.from}–${x.to||''}` : ' · ทั้งวัน'}</div></div>
@@ -8524,7 +8615,17 @@ function renderLogTab(){
       const calDow = new Date(y, m, day).getDay();
       const calExtra = `${calDow===1?'cal-closed':''} ${dateStr < todayStr?'cal-past':''} ${items.length?'cal-booked':''}`;
       const busyHere = busyOn(dateStr);
-      const busyChip = busyHere.length ? `<div class="cal-busy" title="${busyHere.map(x=> (x.who===BUSY_ALL?'ทั้งทีม':x.who)+': '+busyLabel(x)).join('\n').replace(/"/g,'&quot;')}">🚫 ${busyHere.length===1 ? (busyHere[0].title||'ไม่ว่าง') : busyHere.length+' กิจกรรม'}</div>` : '';
+      const busyChip = busyHere.length ? `<div class="cal-busy" title="${busyHere.map(x=> (x.who===BUSY_ALL?'ทั้งทีม':x.who)+': '+busyLabel(x)).join('\n').replace(/"/g,'&quot;')}">${items.length ? busyHere.map(x=> busyAvatarHTML(x, 14)).join('') : ''}<span class="cal-busy-txt">🚫 ${busyHere.length===1 ? (busyHere[0].title||'ไม่ว่าง') : busyHere.length+' กิจกรรม'}</span></div>` : '';
+      if(busyHere.length && !items.length){
+        // no classes that day — the busy person's photo takes the cell, greyed, so it's obvious who is away
+        const x = busyHere[0];
+        const photo = x.who !== BUSY_ALL ? instructorPhotos[x.who] : '';
+        const short = x.who === BUSY_ALL ? 'ทั้งทีม' : x.who.replace('อาจารย์','').trim();
+        chip = x.who === BUSY_ALL
+          ? `<div class="cal-busy-team">${busyAvatarHTML(x, 26)}<div class="cal-chip-name">ทั้งทีม</div></div>`
+          : `<div class="cal-chip cal-chip-busy ${photo?'':'no-photo'}" style="${photo ? `background-image:url('${photo}')` : `background:${instructorColorCal(x.who)}`}"><div class="cal-chip-label"><div class="cal-chip-name">${short}</div><div class="cal-chip-course">ไม่ว่าง</div></div></div>`;
+        hasPhotoClass = 'has-photo';
+      }
       const busyCls = busyHere.some(x=> x.who===BUSY_ALL) && !items.length ? 'cal-busy-day' : '';
       html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra} ${busyCls}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}${busyChip}</div>`;
     }
