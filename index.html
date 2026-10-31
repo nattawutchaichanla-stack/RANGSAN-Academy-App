@@ -1875,6 +1875,22 @@
   .mp-row span{ flex:none; width:96px; font-size:13px; color:#EFE8D6; }
   .mp-row input{ flex:1; min-width:0; }
   .mp-profit{ font-size:13.5px; color:#EFE8D6; text-align:right; }
+
+  .bk-mode{ display:flex; gap:6px; background:rgba(239,232,214,.1); padding:4px; border-radius:999px; margin:6px 0 10px; }
+  .bk-mode-btn{ all:unset; flex:1; text-align:center; cursor:pointer; padding:8px 10px; border-radius:999px; font-size:13px; font-weight:700; color:rgba(239,232,214,.75); font-family:inherit; }
+  .bk-mode-btn.on{ background:#EFE8D6; color:#0B2A15; }
+  .bk-allday{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:#EFE8D6; padding:0 4px; }
+  .bk-allday input{ width:18px; height:18px; accent-color:#DCA73D; }
+  .cal-busy{ position:absolute; left:4px; right:4px; bottom:4px; font-size:10px; font-weight:700; line-height:1.25; color:#7A2E1F; background:rgba(246,225,219,.95);
+    border-radius:6px; padding:2px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
+  .cal-cell.cal-busy-day{ background:repeating-linear-gradient(135deg, rgba(179,38,30,.06) 0 6px, transparent 6px 12px); }
+  .busy-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+  .busy-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:14px; background:#F6E9E4; border:1px solid #EBCFC6; }
+  .busy-date{ flex:none; font-size:12.5px; font-weight:700; color:#7A2E1F; min-width:72px; }
+  .busy-main{ flex:1; min-width:0; }
+  .busy-title{ font-size:14px; font-weight:700; color:#3A1A12; }
+  .busy-meta{ font-size:12px; color:#8A5A4E; margin-top:2px; }
+  .busy-del{ all:unset; cursor:pointer; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#7A2E1F; background:rgba(122,46,31,.08); font-size:13px; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
   .sp-photo-obj{ filter:drop-shadow(0 26px 24px rgba(26,15,8,.32)); }
   .sp-steam-svg{ position:absolute; left:18%; top:-12%; width:40%; height:auto; }
@@ -3556,10 +3572,26 @@ var qrcode = function() {
       <svg viewBox="0 0 100 100" fill="#DCA73D"><ellipse cx="50" cy="50" rx="42" ry="46"/><path d="M50 8 C40 30,60 40,46 55 C34 68,58 78,50 92" stroke="#171310" stroke-width="7" fill="none" stroke-linecap="round"/></svg>
     </div>
     <button class="modal-close" id="bookingModalClose">✕</button>
-    <h3>+ จองคิวสอน</h3>
-    <p class="hint">เลือกวันที่ คอร์ส และชื่อของคุณ เพื่อลงคิวสอนล่วงหน้า</p>
+    <h3 id="bkModalTitle">+ จองคิวสอน</h3>
+    <div class="bk-mode" role="tablist">
+      <button type="button" class="bk-mode-btn on" data-mode="class">📚 จองคิวสอน</button>
+      <button type="button" class="bk-mode-btn" data-mode="busy">🚫 ไม่ว่าง / มีกิจกรรม</button>
+    </div>
+    <p class="hint" id="bkModalHint">เลือกวันที่ คอร์ส และชื่อของคุณ เพื่อลงคิวสอนล่วงหน้า</p>
     <div style="display:flex; flex-direction:column; gap:10px;">
       <input type="date" id="newBookingDate" class="pill">
+      <div id="bkBusyFields" style="display:none; flex-direction:column; gap:10px;">
+        <select id="newBusyWho" class="pill"></select>
+        <input type="text" id="newBusyTitle" class="pill" placeholder="กิจกรรม เช่น ออกบูธงาน SCG, ลาพักร้อน, อบรมทีม" autocomplete="off">
+        <label class="bk-allday"><input type="checkbox" id="newBusyAllDay" checked> ไม่ว่างทั้งวัน</label>
+        <div id="newBusyTimeRow" style="display:none; gap:8px; align-items:center;">
+          <input type="time" id="newBusyFrom" class="pill" value="10:00" style="flex:1;">
+          <span style="color:var(--rs-muted);">ถึง</span>
+          <input type="time" id="newBusyTo" class="pill" value="17:00" style="flex:1;">
+        </div>
+        <button class="btn-arrow" id="addBusyBtn" style="justify-content:center;">บันทึกวันไม่ว่าง<span class="circ">🚫</span></button>
+      </div>
+      <div id="bkClassFields" style="display:flex; flex-direction:column; gap:10px;">
       <select id="newBookingCourse" class="pill"></select>
       <div id="newBookingTimeWrap" style="display:none; flex-direction:column; gap:6px;">
         <div style="font-size:12px; color:var(--rs-muted); font-weight:600;">เวลาเริ่มสอน (Brew Your Type · ใช้เวลา 1 ชม. 30 นาที)</div>
@@ -3586,6 +3618,7 @@ var qrcode = function() {
       </select>
       <input type="text" id="newBookingMachineOther" placeholder="ระบุรุ่นเครื่องชง/เครื่องบด" class="pill" style="display:none;">
       <button class="btn-arrow" id="addBookingBtn" style="justify-content:center;">จองคิวสอน<span class="circ">+</span></button>
+      </div>
     </div>
   </div>
 </div>
@@ -6249,6 +6282,7 @@ function computeOpenDaysForMonth(year, month, todayStr){ // month 0-11
     const dow = new Date(year, month, day).getDay(); // 0=Sun..6=Sat
     if(dow === 1) continue; // Monday — never teaches
     if(bookedDates.has(dateStr)) continue; // already has at least one booking
+    if(sharedBusy.some(x=> x.date === dateStr && x.who === BUSY_ALL)) continue; // whole team away (event / booth / closed)
     openDays.push({ day, dow });
   }
   return openDays;
@@ -7142,7 +7176,29 @@ function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight){
 
 /* ============================= RENDER: TEACHING LOG ============================= */
 let sharedBookings = [];
+// days an instructor (or the whole team) is unavailable — events, booths, leave. Kept in its own
+// shared list so none of the class/booking statistics ever have to filter these out.
+let sharedBusy = [];
+async function loadSharedBusy(){
+  try{
+    const res = await window.storage.get('shared_busy_days', true);
+    sharedBusy = (res && res.value) ? JSON.parse(res.value) : [];
+  }catch(e){ console.error('load busy days failed, keeping existing data', e); }
+}
+async function saveSharedBusy(){
+  try{
+    await backupBeforeSave('shared_busy_days');
+    await window.storage.set('shared_busy_days', JSON.stringify(sharedBusy), true);
+    flashSaved();
+  }catch(e){ console.error('save busy days failed', e); alert('บันทึกวันไม่ว่างไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+}
+const BUSY_ALL = 'ทั้งทีม';
+function busyOn(dateStr, instructor){
+  return sharedBusy.filter(x=> x.date === dateStr && (!instructor || x.who === BUSY_ALL || x.who === instructor));
+}
+function busyLabel(x){ return `${x.title || 'มีกิจกรรม'}${x.from ? ` (${x.from}–${x.to||''})` : ''}`; }
 async function loadSharedBookings(){
+  loadSharedBusy(); // runs alongside — every place that reloads bookings also picks up busy days
   try{
     const res = await window.storage.get('shared_teaching_bookings', true);
     if(res && res.value) sharedBookings = JSON.parse(res.value);
@@ -7207,7 +7263,7 @@ async function promptRestoreAllFromBackup(){
 
 // ---------- export / import all shared data (for moving between domains, e.g. Vercel <-> GitHub Pages) ----------
 const ALL_SHARED_STORAGE_KEYS = [
-  'shared_teaching_bookings', 'shared_instructor_photos', 'shared_instructor_pins',
+  'shared_teaching_bookings', 'shared_busy_days', 'shared_instructor_photos', 'shared_instructor_pins',
   'shared_admin_pin', 'shared_retail_products', 'shared_standalone_sales',
   'shared_stock_movements', 'shared_eval_form_url', 'shared_qc_lots',
   'shared_promptpay_id', 'shared_custom_categories', 'shared_line_relay_url',
@@ -8137,6 +8193,7 @@ function renderLogTab(){
         <button class="btn small ghost" id="summarizeAvailabilityBtn">📅 สรุปคิวว่าง 2 เดือนให้ลูกค้า</button>
       </div>
       <div style="margin:14px 0; border-top:1px dashed var(--line);"></div>
+      <div id="busyListSection"></div>
       <h3 style="margin:0 0 10px; font-size:14px; color:var(--ink);">คิวที่กำลังจะถึง</h3>
       <div class="card-grid" id="bookingCardGrid"></div>
       <div id="historySection" style="margin-top:18px; display:none;">
@@ -8328,7 +8385,36 @@ function renderLogTab(){
     const idx = state.instructors.indexOf(name);
     return INSTRUCTOR_COLORS_CAL[idx>=0 ? idx%INSTRUCTOR_COLORS_CAL.length : 0];
   };
+  const renderBusyList = ()=>{
+    const box = document.getElementById('busyListSection');
+    if(!box) return;
+    const todayStr = new Date().toISOString().slice(0,10);
+    const up = sharedBusy.filter(x=> x.date >= todayStr).sort((a,b)=> a.date.localeCompare(b.date));
+    if(!up.length){ box.innerHTML = ''; return; }
+    box.innerHTML = `<h3 style="margin:0 0 10px; font-size:14px; color:var(--ink);">🚫 วันไม่ว่าง / กิจกรรม</h3>
+      <div class="busy-list">${up.map(x=>{
+        const d = new Date(x.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short'});
+        const canDelete = currentUser === ADMIN_NAME || currentUser === x.createdBy || currentUser === x.who;
+        return `<div class="busy-row">
+          <div class="busy-date">${d}</div>
+          <div class="busy-main"><div class="busy-title">${x.title || 'มีกิจกรรม'}</div>
+            <div class="busy-meta">${x.who === BUSY_ALL ? '👥 ทั้งทีม · ปิดรับสอน' : '👤 '+x.who}${x.from ? ` · ${x.from}–${x.to||''}` : ' · ทั้งวัน'}</div></div>
+          ${canDelete ? `<button type="button" class="busy-del" data-busy-id="${x.id}" aria-label="ลบ">✕</button>` : ''}
+        </div>`;
+      }).join('')}</div>
+      <div style="margin:14px 0; border-top:1px dashed var(--line);"></div>`;
+    box.querySelectorAll('.busy-del').forEach(btn=>{
+      btn.onclick = async ()=>{
+        const x = sharedBusy.find(z=> z.id === btn.dataset.busyId);
+        if(!x || !confirm(`ลบ "${x.title || 'มีกิจกรรม'}" วันที่ ${x.date} ?`)) return;
+        sharedBusy = sharedBusy.filter(z=> z.id !== x.id);
+        await saveSharedBusy();
+        renderBusyList(); renderCalendar();
+      };
+    });
+  };
   const renderCalendar = ()=>{
+    try{ renderBusyList(); }catch(e){}
     const y = window._calYear, m = window._calMonth;
     const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     document.getElementById('calTitle').textContent = `${monthNames[m]} ${y+543}`;
@@ -8437,7 +8523,10 @@ function renderLogTab(){
       }
       const calDow = new Date(y, m, day).getDay();
       const calExtra = `${calDow===1?'cal-closed':''} ${dateStr < todayStr?'cal-past':''} ${items.length?'cal-booked':''}`;
-      html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}</div>`;
+      const busyHere = busyOn(dateStr);
+      const busyChip = busyHere.length ? `<div class="cal-busy" title="${busyHere.map(x=> (x.who===BUSY_ALL?'ทั้งทีม':x.who)+': '+busyLabel(x)).join('\n').replace(/"/g,'&quot;')}">🚫 ${busyHere.length===1 ? (busyHere[0].title||'ไม่ว่าง') : busyHere.length+' กิจกรรม'}</div>` : '';
+      const busyCls = busyHere.some(x=> x.who===BUSY_ALL) && !items.length ? 'cal-busy-day' : '';
+      html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra} ${busyCls}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}${busyChip}</div>`;
     }
     document.getElementById('calGrid').innerHTML = html;
     document.querySelectorAll('#calGrid .cal-chip[data-instructor]').forEach(chip=>{
@@ -8793,7 +8882,44 @@ function renderLogTab(){
   };
   ['newBookingCustName','newBookingCustPhone','newBookingDate'].forEach(id=>{ document.getElementById(id).oninput = refreshNewBookingVip; });
   document.getElementById('newBookingTime').oninput = syncBookingTimeUI;
+  const setBookingMode = (mode)=>{
+    const busy = mode === 'busy';
+    document.querySelectorAll('.bk-mode-btn').forEach(b=> b.classList.toggle('on', b.dataset.mode === mode));
+    document.getElementById('bkClassFields').style.display = busy ? 'none' : 'flex';
+    document.getElementById('bkBusyFields').style.display = busy ? 'flex' : 'none';
+    document.getElementById('bkModalTitle').textContent = busy ? '🚫 ไม่ว่าง / มีกิจกรรม' : '+ จองคิวสอน';
+    document.getElementById('bkModalHint').textContent = busy
+      ? 'บันทึกวันที่อาจารย์ไม่ว่าง หรือทั้งทีมมีกิจกรรม วันนั้นจะขึ้นในปฏิทินและไม่ถูกนับเป็นวันว่างให้ลูกค้า'
+      : 'เลือกวันที่ คอร์ส และชื่อของคุณ เพื่อลงคิวสอนล่วงหน้า';
+  };
+  document.querySelectorAll('.bk-mode-btn').forEach(b=>{ b.onclick = ()=> setBookingMode(b.dataset.mode); });
+  document.getElementById('newBusyAllDay').onchange = (e)=>{ document.getElementById('newBusyTimeRow').style.display = e.target.checked ? 'none' : 'flex'; };
+  document.getElementById('addBusyBtn').onclick = async ()=>{
+    const btn = document.getElementById('addBusyBtn');
+    if(btn.dataset.busy) return;
+    const date = document.getElementById('newBookingDate').value;
+    if(!date){ alert('กรุณาเลือกวันที่'); return; }
+    const who = document.getElementById('newBusyWho').value || BUSY_ALL;
+    const title = document.getElementById('newBusyTitle').value.trim();
+    if(!title){ alert('กรุณาระบุกิจกรรม'); document.getElementById('newBusyTitle').focus(); return; }
+    const allDay = document.getElementById('newBusyAllDay').checked;
+    const entry = { id: 'busy_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date, who, title, createdBy: currentUser || '' };
+    if(!allDay){ entry.from = document.getElementById('newBusyFrom').value; entry.to = document.getElementById('newBusyTo').value; }
+    const clash = sharedBookings.filter(b=> b.date === date && !b.taught && (who === BUSY_ALL || b.instructor === who));
+    if(clash.length && !confirm(`วันนี้มีคิวสอนอยู่แล้ว ${clash.length} คิว — ยังต้องการบันทึกว่าไม่ว่างหรือไม่?`)) return;
+    btn.dataset.busy = '1';
+    sharedBusy.push(entry);
+    await saveSharedBusy();
+    delete btn.dataset.busy;
+    renderCalendar();
+    closeModal('bookingModalOverlay');
+  };
   const openBookingModalPrefilled = (dateStr)=>{
+    setBookingMode('class');
+    document.getElementById('newBusyWho').innerHTML = `<option value="${BUSY_ALL}">👥 ทั้งทีม (ปิดรับสอนวันนี้)</option>` + state.instructors.map(n=>`<option value="${n}" ${n===currentUser?'selected':''}>${n}</option>`).join('');
+    document.getElementById('newBusyTitle').value = '';
+    document.getElementById('newBusyAllDay').checked = true;
+    document.getElementById('newBusyTimeRow').style.display = 'none';
     document.getElementById('newBookingDate').value = dateStr || new Date().toISOString().slice(0,10);
     document.getElementById('newBookingCourse').innerHTML = state.courses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
     document.getElementById('newBookingInstructor').innerHTML = state.instructors.map(n=>`<option value="${n}" ${n===currentUser?'selected':''}>${n}</option>`).join('');
@@ -8823,6 +8949,8 @@ function renderLogTab(){
     const machineModel = machineSelectVal === 'other'
       ? document.getElementById('newBookingMachineOther').value.trim()
       : machineSelectVal;
+    const busyClash = busyOn(date, instructor);
+    if(busyClash.length && !confirm(`วันนี้ ${busyClash[0].who === BUSY_ALL ? 'ทั้งทีม' : busyClash[0].who} ไม่ว่าง: ${busyLabel(busyClash[0])}\nยังต้องการจองคิวสอนหรือไม่?`)) return;
     const newBooking = { date, courseId, instructor, note, allergy, machineModel };
     const custName = document.getElementById('newBookingCustName').value.trim();
     const custPhone = document.getElementById('newBookingCustPhone').value.trim();
