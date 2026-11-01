@@ -1903,6 +1903,26 @@
   .busy-title{ font-size:14px; font-weight:700; color:#3A1A12; }
   .busy-meta{ font-size:12px; color:#8A5A4E; margin-top:2px; }
   .busy-del{ all:unset; cursor:pointer; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#7A2E1F; background:rgba(122,46,31,.08); font-size:13px; }
+
+  .rs-toast{ position:fixed; left:50%; top:calc(14px + env(safe-area-inset-top,0px)); transform:translate(-50%,-140%); z-index:400; max-width:min(92vw,420px);
+    background:#0B2A15; color:#EFE8D6; padding:12px 16px; border-radius:16px; font-size:13.5px; line-height:1.5; box-shadow:0 10px 30px rgba(0,0,0,.3);
+    transition:transform .45s cubic-bezier(.16,1,.3,1); cursor:pointer; }
+  .rs-toast.show{ transform:translate(-50%,0); }
+  .rf-card{ margin:0 0 14px; padding:14px; border-radius:16px; background:#FBF6EC; border:1px solid var(--rs-rule,#E7DECB); }
+  .rf-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .rf-title{ font-weight:700; font-size:14.5px; color:#0B2A15; }
+  .rf-sub{ font-size:12px; color:#7A6F5E; margin-top:3px; line-height:1.5; }
+  .rf-sub b{ color:#165028; }
+  .rf-live{ color:#3F7D4E; white-space:nowrap; }
+  .rf-issues{ flex:none; font-size:12px; font-weight:700; color:#7A2E1F; background:#F6E1DB; padding:4px 10px; border-radius:999px; }
+  .rf-row{ padding:9px 0; border-top:1px dashed var(--rs-rule,#E7DECB); }
+  .rf-row.is-new .rf-name{ color:#165028; }
+  .rf-name{ font-weight:700; font-size:13.5px; color:#2B2118; }
+  .rf-new{ font-size:10.5px; font-weight:700; color:#fff; background:#3F7D4E; padding:1px 7px; border-radius:999px; margin-right:6px; vertical-align:1px; }
+  .rf-meta{ font-size:12px; color:#5A4433; margin-top:2px; }
+  .rf-time{ font-size:11.5px; color:#948a78; margin-top:1px; }
+  .rf-flag{ display:inline-block; margin:5px 6px 0 0; font-size:11.5px; font-weight:700; color:#7A2E1F; background:#F6E1DB; padding:2px 9px; border-radius:999px; }
+  .rf-more{ all:unset; cursor:pointer; display:block; text-align:center; margin-top:8px; font-size:12.5px; font-weight:700; color:#165028; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
   .sp-photo-obj{ filter:drop-shadow(0 26px 24px rgba(26,15,8,.32)); }
   .sp-steam-svg{ position:absolute; left:18%; top:-12%; width:40%; height:auto; }
@@ -4275,12 +4295,106 @@ async function backfillAgesFromForm(){
     }
   }catch(e){ console.warn('age backfill skipped', e); }
 }
+// Google Forms timestamps look like "10/7/2026, 10:13:26" (D/M/YYYY H:MM:SS)
+function parseFormTimestamp(t){
+  const m = String(t||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(!m) return null;
+  let y = +m[3]; if(y > 2400) y -= 543;
+  return new Date(y, +m[2]-1, +m[1], +m[4], +m[5], +(m[6]||0));
+}
+let regFeedCache = null;     // latest form rows (name, class date, submit time) for the "new registrations" panel
+let formLiveTimer = null;
+const FORM_LIVE_INTERVAL_MS = 60000; // check the form once a minute while the app is open
+function rsToast(html, ms){
+  let t = document.getElementById('rsToast');
+  if(!t){ t = document.createElement('div'); t.id = 'rsToast'; t.className = 'rs-toast'; document.body.appendChild(t); t.onclick = ()=> t.classList.remove('show'); }
+  t.innerHTML = html; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=> t.classList.remove('show'), ms || 9000);
+}
+const fmtTimeTH = d => d ? d.toLocaleString('th-TH',{day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '-';
+async function runFormLiveSync(){
+  if(document.hidden || !currentUser) return;
+  if(typeof isUserBusy === 'function' && isUserBusy()) return;
+  if(criticalOpInProgress) return;
+  if(!sharedEvalFormUrl){ try{ const r = await window.storage.get('shared_eval_form_url', true); sharedEvalFormUrl = (r && r.value) || ''; }catch(e){} }
+  if(!sharedEvalFormUrl) return;
+  const res = await syncBookingsFromGoogleForm();
+  if(!res || res.error) return;
+  const addedN = (res.addedList||[]).length, removedN = (res.removedList||[]).length;
+  if(addedN || removedN){
+    const parts = [];
+    if(addedN) parts.push(`🆕 <b>สมัครใหม่ ${addedN} คน</b><br>${res.addedList.slice(0,4).map(a=> `${a.name} <span style="opacity:.75;">(${a.submitted ? a.submitted.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '-'})</span>`).join('<br>')}${addedN>4 ? `<br>+${addedN-4} คน` : ''}`);
+    if(removedN) parts.push(`🗑️ <b>ลบออกจากฟอร์ม ${removedN} คน</b><br>${res.removedList.slice(0,4).map(a=> a.name).join(', ')}`);
+    rsToast(parts.join('<hr style="border:none;border-top:1px solid rgba(255,255,255,.2);margin:8px 0;">'));
+    try{ if('Notification' in window && Notification.permission === 'granted' && addedN) new Notification('ลงทะเบียนใหม่ '+addedN+' คน', { body: res.addedList.map(a=>a.name).join(', '), tag:'rangsan-reg' }); }catch(e){}
+    if(document.getElementById('bookingCardGrid')) whenScrollIdle(()=>{ try{ renderLogTab(); }catch(e){} });
+  } else {
+    try{ renderRegFeed(); }catch(e){}
+  }
+  if(res.removalSkipped) console.warn('form sync: many rows missing from the sheet at once — nothing was deleted');
+}
+function startFormLiveSync(){
+  if(formLiveTimer) return;
+  setTimeout(runFormLiveSync, 6000);
+  formLiveTimer = setInterval(runFormLiveSync, FORM_LIVE_INTERVAL_MS);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(runFormLiveSync, 1500); });
+}
+// panel: who registered recently, when, and anything that looks wrong (duplicate entry / class over capacity)
+function renderRegFeed(){
+  const box = document.getElementById('regFeedSection');
+  if(!box) return;
+  if(!regFeedCache || !regFeedCache.rows.length){ box.innerHTML = ''; return; }
+  const rows = regFeedCache.rows;
+  const now = new Date(), startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const week = new Date(now.getTime() - 7*86400000);
+  const today = rows.filter(r=> r.submitted && r.submitted >= startToday).length;
+  const last7 = rows.filter(r=> r.submitted && r.submitted >= week).length;
+  // duplicates: same person (phone, or name if no phone) entered more than once for the same class
+  const idOf = r=> (rsNormPhone(r.phone) || rsNormName(r.name)) + '|' + r.classDate + '|' + r.courseId;
+  const dupCount = {}; rows.forEach(r=>{ const k = idOf(r); dupCount[k] = (dupCount[k]||0) + 1; });
+  // capacity: registrations per class (date + course) vs. the course's seat count
+  const classCount = {}, seenPeople = new Set();
+  rows.forEach(r=>{ if(seenPeople.has(idOf(r))) return; seenPeople.add(idOf(r)); const k = r.classDate+'|'+r.courseId; classCount[k] = (classCount[k]||0) + 1; }); // a duplicate entry isn't an extra seat
+  const flagsOf = r=>{
+    const f = [];
+    if(dupCount[idOf(r)] > 1) f.push(`<span class="rf-flag">⚠️ กรอกซ้ำ ${dupCount[idOf(r)]} ครั้ง</span>`);
+    const c = courseById(r.courseId), n = classCount[r.classDate+'|'+r.courseId];
+    if(c && c.students && n > c.students) f.push(`<span class="rf-flag">⚠️ เกินที่รับ ${n}/${c.students}</span>`);
+    return f.join('');
+  };
+  const recent = rows.filter(r=> r.submitted).sort((a,b)=> b.submitted - a.submitted);
+  const expanded = box.dataset.expanded === '1';
+  const list = recent.slice(0, expanded ? 40 : 6);
+  const issues = rows.filter(r=> flagsOf(r)).length;
+  box.innerHTML = `<div class="rf-card">
+    <div class="rf-head">
+      <div><div class="rf-title">📥 ผู้สมัครผ่านฟอร์ม</div>
+        <div class="rf-sub">วันนี้ <b>+${today}</b> · 7 วัน <b>+${last7}</b> · ทั้งหมด ${rows.length} · อัปเดต ${regFeedCache.fetchedAt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} <span class="rf-live">● อัตโนมัติทุก 1 นาที</span></div></div>
+      ${issues ? `<div class="rf-issues">⚠️ ${issues}</div>` : ''}
+    </div>
+    ${list.map(r=>{
+      const c = courseById(r.courseId);
+      const fresh = r.submitted >= startToday;
+      return `<div class="rf-row ${fresh ? 'is-new' : ''}">
+        <div class="rf-name">${fresh ? '<span class="rf-new">ใหม่</span>' : ''}${r.name}</div>
+        <div class="rf-meta">${c ? c.name.replace(/^คอร์ส\s*\d+:\s*/,'').slice(0,34) : '-'} · เรียน ${new Date(r.classDate+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric', month:'short'})}</div>
+        <div class="rf-time">กรอกเมื่อ ${fmtTimeTH(r.submitted)}</div>
+        ${flagsOf(r)}
+      </div>`;
+    }).join('')}
+    ${recent.length > 6 ? `<button type="button" class="rf-more" id="rfMoreBtn">${expanded ? 'ย่อ' : `ดูทั้งหมด (${Math.min(recent.length,40)})`}</button>` : ''}
+  </div>`;
+  const more = document.getElementById('rfMoreBtn');
+  if(more) more.onclick = ()=>{ box.dataset.expanded = expanded ? '' : '1'; renderRegFeed(); };
+}
 async function syncBookingsFromGoogleForm(){
   if(!sharedEvalFormUrl) return { error: 'ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน' };
   const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
   if(!csvUrl) return { error: 'ลิงก์ไม่ถูกต้อง' };
   criticalOpInProgress = true; // pause background auto-sync so it can't interleave with this read-modify-save
   try{
+    // work from the freshest shared list, so another device's recent change isn't overwritten
+    try{ await loadSharedBookings(); }catch(e){}
     const res = await fetch(csvUrl);
     if(!res.ok) throw new Error('status ' + res.status);
     const text = await res.text();
@@ -4308,6 +4422,7 @@ async function syncBookingsFromGoogleForm(){
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
     let added = 0, skipped = 0, unmatched = 0, enriched = 0;
+    const addedList = [], liveKeys = new Set(), feedRows = [];
 
     dataRows.forEach(r=>{
       const courseText = courseIdx>=0 ? r[courseIdx] : '';
@@ -4335,6 +4450,8 @@ async function syncBookingsFromGoogleForm(){
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
 
       const syncKey = `form_${name.trim()}_${isoDate}_${courseId}`;
+      liveKeys.add(syncKey);
+      feedRows.push({ key:syncKey, name:name.trim(), phone, courseId, courseText, classDate:isoDate, submittedRaw: r[0]||'', submitted: parseFormTimestamp(r[0]) });
       if(existingKeys.has(syncKey)){
         // already synced before — backfill any newer fields (like occupation/income/allergy/province added
         // in a later version of the app) onto the existing record instead of just skipping it silently,
@@ -4372,10 +4489,28 @@ async function syncBookingsFromGoogleForm(){
       });
       existingKeys.add(syncKey);
       added++;
+      addedList.push({ name: name.trim(), courseId, classDate: isoDate, submittedRaw: r[0]||'', submitted: parseFormTimestamp(r[0]) });
     });
 
-    if(added > 0 || enriched > 0) await saveSharedBookings();
-    return { added, skipped, unmatched, enriched };
+    // responses deleted from the form/sheet disappear from the app too — except classes already confirmed
+    // as taught (those are revenue history). Safety net: if the sheet suddenly looks empty or most rows
+    // vanished at once (wrong tab, sheet being edited), don't delete anything.
+    let removedList = [], removalSkipped = false;
+    const formBookings = sharedBookings.filter(b=> b.source === 'google_form' && b.syncKey);
+    const gone = formBookings.filter(b=> !b.taught && !liveKeys.has(b.syncKey));
+    const columnsOk = nameIdx >= 0 && dateIdx >= 0 && courseIdx >= 0 && liveKeys.size > 0;
+    if(gone.length){
+      if(!columnsOk || gone.length > Math.max(3, Math.floor(formBookings.length * 0.5))) removalSkipped = true;
+      else {
+        const goneSet = new Set(gone);
+        removedList = gone.map(b=> ({ name: b.customerName || '-', courseId: b.courseId, classDate: b.date }));
+        sharedBookings = sharedBookings.filter(b=> !goneSet.has(b));
+      }
+    }
+
+    regFeedCache = { rows: feedRows, fetchedAt: new Date() };
+    if(added > 0 || enriched > 0 || removedList.length) await saveSharedBookings();
+    return { added, skipped, unmatched, enriched, addedList, removedList, removalSkipped };
   }catch(err){
     return { error: err.message };
   }finally{
@@ -7890,6 +8025,7 @@ function hideLoginScreen(){
   startAutoSync();
   startOverdueReminders();
   setTimeout(()=>{ backfillAgesFromForm(); }, 4000);
+  startFormLiveSync();
 }
 
 // ---------- reminder: classes that already ended but were never confirmed as taught ----------
@@ -8272,6 +8408,7 @@ function renderLogTab(){
         </div>
       </div>
       <div id="syncFormResultBanner" style="display:none;"></div>
+      <div id="regFeedSection"></div>
       <input type="file" id="importDataFileInput" accept="application/json" style="display:none;">
       <div class="cal-nav">
         <button id="calPrevBtn">‹</button>
@@ -8475,6 +8612,7 @@ function renderLogTab(){
     const idx = state.instructors.indexOf(name);
     return INSTRUCTOR_COLORS_CAL[idx>=0 ? idx%INSTRUCTOR_COLORS_CAL.length : 0];
   };
+  try{ renderRegFeed(); }catch(e){}
   const renderBusyList = ()=>{
     const box = document.getElementById('busyListSection');
     if(!box) return;
@@ -9108,7 +9246,7 @@ function renderLogTab(){
     } else {
       banner.style.background = 'var(--sage-soft)';
       banner.style.color = 'var(--ink)';
-      banner.innerHTML = `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.enriched ? ` · เติมข้อมูลเพิ่มให้ ${result.enriched} รายการเดิม` : ''}${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
+      banner.innerHTML = `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ${result.removedList && result.removedList.length ? ` · ลบตามฟอร์ม <b>${result.removedList.length}</b> รายการ` : ''} · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.enriched ? ` · เติมข้อมูลเพิ่มให้ ${result.enriched} รายการเดิม` : ''}${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
     }
   };
 
