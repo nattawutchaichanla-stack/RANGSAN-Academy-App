@@ -1888,6 +1888,7 @@
     border-radius:6px; padding:2px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
   .cal-cell.cal-busy-day{ background:repeating-linear-gradient(135deg, rgba(179,38,30,.06) 0 6px, transparent 6px 12px); }
   .busy-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+  .busy-decoy{ font-size:11.5px; font-weight:600; color:#8A6416; margin-top:3px; }
   .busy-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:700; font-size:13px;
     border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.18); position:relative; filter:grayscale(.35); }
   .busy-av-stack{ display:inline-flex; align-items:center; flex:none; }
@@ -1924,51 +1925,6 @@
   .rf-time{ font-size:11.5px; color:#948a78; margin-top:1px; }
   .rf-flag{ display:inline-block; margin:5px 6px 0 0; font-size:11.5px; font-weight:700; color:#7A2E1F; background:#F6E1DB; padding:2px 9px; border-radius:999px; }
   .rf-more{ all:unset; cursor:pointer; display:block; text-align:center; margin-top:8px; font-size:12.5px; font-weight:700; color:#165028; }
-
-  /* ---------- calendar v2: rounded tiles, count badge that pops on hover, optional bookings list ---------- */
-  .cal-dow{ background:#0B2A15; color:#EFE8D6 !important; border-radius:10px; padding:5px 0 !important; font-size:11.5px !important; margin-bottom:2px; }
-  .cal-dow.cal-dow-closed{ background:#CFC5B1; color:#fff !important; }
-  .cal-cell{ border-radius:16px !important; }
-  .cal-cell:not(.cal-booked):not(.empty){ background:#FFFDF8; box-shadow:0 0 0 1px #EEE6D6; }
-  .cal-cell.cal-closed:not(.cal-booked){ background:repeating-linear-gradient(135deg, #F6F1E6 0 6px, #EFE8D9 6px 7px) !important; box-shadow:none; }
-  .cal-count{ position:absolute; right:6px; bottom:6px; z-index:4; width:22px; height:22px; border-radius:999px; display:flex; align-items:center; justify-content:center;
-    background:#0B2A15; color:#EFE8D6; font-size:11px; font-weight:700; box-shadow:0 0 0 1.5px #EFE8D6;
-    transition:right .45s cubic-bezier(.34,1.56,.64,1), bottom .45s cubic-bezier(.34,1.56,.64,1), width .45s cubic-bezier(.34,1.56,.64,1), height .45s cubic-bezier(.34,1.56,.64,1), font-size .3s, transform .45s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }
-  .cal-cell.has-count:hover .cal-count, .cal-cell.is-focus .cal-count{ right:50%; bottom:50%; transform:translate(50%,50%); width:44px; height:44px; font-size:17px; box-shadow:0 0 0 2px #DCA73D, 0 8px 18px rgba(0,0,0,.28); }
-  .cal-cell.is-focus{ box-shadow:0 0 0 2.5px #DCA73D !important; }
-  @media (max-width:480px){ .cal-count{ width:17px; height:17px; font-size:9.5px; right:3px; bottom:3px; box-shadow:0 0 0 1px #EFE8D6; } .cal-cell.is-focus .cal-count{ width:34px; height:34px; font-size:14px; } }
-  .cal-cell.has-count .cal-busy{ right:32px; }
-  @media (hover:none){ .cal-cell.has-count:hover .cal-count{ right:6px; bottom:6px; transform:none; width:22px; height:22px; font-size:11px; box-shadow:0 0 0 1.5px #EFE8D6; } }
-  .cal-nav{ gap:8px; }
-  .cal-nav .cal-title{ flex:1; text-align:center; }
-  .cal-view-toggle{ all:unset; position:relative; display:inline-flex; align-items:center; gap:10px; padding:4px 7px; border-radius:10px; border:1px solid #D9CFB9; color:#0B2A15; cursor:pointer; flex:none; }
-  .cal-nav .cal-view-toggle{ width:auto; height:auto; border-radius:10px; background:transparent; border:1px solid #D9CFB9; padding:4px 7px; }
-  .cal-view-toggle svg{ width:18px; height:18px; position:relative; z-index:2; transition:color .3s; }
-  .cal-view-toggle .cvt-thumb{ position:absolute; top:50%; left:3px; width:26px; height:calc(100% - 6px); border-radius:7px; background:#0B2A15; transform:translateY(-50%); transition:transform .35s cubic-bezier(.34,1.56,.64,1); z-index:1; }
-  .cal-view-toggle svg:first-of-type{ color:#EFE8D6; }
-  .cal-view-toggle.on .cvt-thumb{ transform:translateY(-50%) translateX(28px); }
-  .cal-view-toggle.on svg:first-of-type{ color:#0B2A15; } .cal-view-toggle.on svg:last-of-type{ color:#EFE8D6; }
-  .cal-split{ display:flex; flex-direction:column; gap:18px; }
-  .cal-main{ min-width:0; }
-  @media (min-width:900px){ .cal-split.list-on{ flex-direction:row; align-items:flex-start; } .cal-split.list-on .cal-main{ flex:1.15; } .cal-split.list-on .cal-list{ flex:1; position:sticky; top:12px; } }
-  .cal-list{ animation:clIn .35s ease both; }
-  @keyframes clIn{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
-  .cl-title{ font-family:'Noto Serif Thai',serif; font-weight:700; font-size:22px; color:var(--rs-green,#0B2A15); }
-  .cl-sub{ font-size:12.5px; color:#948a78; margin:2px 0 10px; }
-  .cl-box{ max-height:620px; overflow-y:auto; border-radius:16px; border:2px solid #E7DECB; background:#FFFDF8; -webkit-overflow-scrolling:touch; }
-  .cl-day{ border-bottom:2px solid #E7DECB; will-change:transform; }
-  .cl-day:last-child{ border-bottom:none; }
-  .cl-day.is-focus{ background:#FBF3DF; }
-  .cl-item{ padding:12px 14px; border-bottom:1px solid #EEE6D6; }
-  .cl-day .cl-item:last-child{ border-bottom:none; }
-  .cl-row{ display:flex; justify-content:space-between; font-size:12.5px; color:#7A6F5E; margin-bottom:4px; }
-  .cl-name{ font-size:15px; font-weight:700; color:#0B2A15; margin-bottom:3px; }
-  .cl-people{ font-size:12.5px; color:#5A4433; margin-bottom:5px; }
-  .cl-loc{ display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:#165028; }
-  .cl-loc .busy-av{ filter:none; border-width:1px; font-size:9px; }
-  .cl-busy{ background:#FBEFEB; } .cl-busy .cl-name{ color:#7A2E1F; }
-  .cl-done{ font-size:11px; color:#2E7D4F; background:rgba(46,125,79,.12); padding:1px 8px; border-radius:999px; vertical-align:2px; }
-  .cl-empty{ padding:22px; text-align:center; color:#948a78; font-size:13px; }
   .sp-photo-obj img{ width:100%; height:auto; display:block; }
   .sp-photo-obj{ filter:drop-shadow(0 26px 24px rgba(26,15,8,.32)); }
   .sp-steam-svg{ position:absolute; left:18%; top:-12%; width:40%; height:auto; }
@@ -3666,6 +3622,12 @@ var qrcode = function() {
           <input type="time" id="newBusyFrom" class="pill" value="10:00" style="flex:1;">
           <span style="color:var(--rs-muted);">ถึง</span>
           <input type="time" id="newBusyTo" class="pill" value="17:00" style="flex:1;">
+        </div>
+        <label class="bk-allday"><input type="checkbox" id="newBusyDecoy"> 👁 ให้ลูกค้าเห็นเป็นคอร์สที่มีคนจองแล้ว</label>
+        <div id="newBusyDecoyRow" style="display:none; flex-direction:column; gap:8px;">
+          <select id="newBusyDecoyCourse" class="pill"></select>
+          <select id="newBusyDecoyInstr" class="pill"></select>
+          <div style="font-size:12px; color:rgba(239,232,214,.7); padding:0 4px;">ในแอพยังเห็นเป็นวันไม่ว่างตามจริง — เฉพาะอินโฟกราฟิกและสรุปคิวว่างที่ส่งลูกค้าจะแสดงเป็นคอร์สนี้</div>
         </div>
         <label class="bk-allday"><input type="checkbox" id="newBusyNotifyLine" checked> 📣 แจ้งเข้ากลุ่ม LINE</label>
         <button class="btn-arrow" id="addBusyBtn" style="justify-content:center;">บันทึกวันไม่ว่าง<span class="circ">🚫</span></button>
@@ -6562,6 +6524,7 @@ function computeOpenDaysForMonth(year, month, todayStr){ // month 0-11
     if(dow === 1) continue; // Monday — never teaches
     if(bookedDates.has(dateStr)) continue; // already has at least one booking
     if(sharedBusy.some(x=> x.date === dateStr && x.who === BUSY_ALL)) continue; // whole team away (event / booth / closed)
+    if(sharedBusy.some(x=> x.date === dateStr && x.decoy)) continue;          // shown to customers as already booked
     openDays.push({ day, dow });
   }
   return openDays;
@@ -7498,7 +7461,14 @@ async function buildMonthInfographic(y, m){
     const list = classesByDate[b.date] = classesByDate[b.date] || [];
     if(!list.some(c=> c.k === k)) list.push({ k, courseId:b.courseId, instructor:b.instructor, startTime:b.startTime });
   });
-  const teachers = [...new Set(monthBookings.map(b=> b.instructor))];
+  // days marked busy with a "show customers as booked" course appear as a normal booked class
+  (sharedBusy||[]).filter(x=> x.decoy && x.date && x.date.startsWith(prefix) && courseById(x.decoy.courseId)).forEach(x=>{
+    const k = ['decoy', x.decoy.courseId, x.decoy.instructor, x.from||''].join('|');
+    const list = classesByDate[x.date] = classesByDate[x.date] || [];
+    if(!list.some(c=> c.k === k)) list.push({ k, courseId:x.decoy.courseId, instructor:x.decoy.instructor, startTime:x.from });
+  });
+  const decoyInstructors = (sharedBusy||[]).filter(x=> x.decoy && x.date && x.date.startsWith(prefix)).map(x=> x.decoy.instructor).filter(Boolean);
+  const teachers = [...new Set([...monthBookings.map(b=> b.instructor), ...decoyInstructors])];
   const team = teachers.length ? teachers : (state.instructors||[]);
   const photos = {};
   await Promise.all(team.map(async n=>{ photos[n] = await loadImg(instructorPhotos[n]); }));
@@ -8730,22 +8700,12 @@ function renderLogTab(){
       <div id="syncFormResultBanner" style="display:none;"></div>
       <div id="regFeedSection"></div>
       <input type="file" id="importDataFileInput" accept="application/json" style="display:none;">
-      <div class="cal-split" id="calSplit">
-      <div class="cal-main">
       <div class="cal-nav">
         <button id="calPrevBtn">‹</button>
         <div class="cal-title" id="calTitle"></div>
         <button id="calNextBtn">›</button>
-        <button type="button" class="cal-view-toggle" id="calViewToggle" aria-label="สลับมุมมองปฏิทิน / รายการจอง" title="ปฏิทิน / ปฏิทิน + รายการจอง">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg>
-          <span class="cvt-thumb"></span>
-        </button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
-      </div>
-      <div class="cal-list" id="calListPanel" hidden></div>
-      </div>
       <div style="text-align:center; margin-top:10px;">
         <button class="btn small ghost" id="summarizeAvailabilityBtn">📅 สรุปคิวว่าง 2 เดือนให้ลูกค้า</button>
         <button class="btn small ghost" id="monthInfographicBtn">🖼️ อินโฟกราฟิกตารางเดือนนี้</button>
@@ -8944,77 +8904,6 @@ function renderLogTab(){
     return INSTRUCTOR_COLORS_CAL[idx>=0 ? idx%INSTRUCTOR_COLORS_CAL.length : 0];
   };
   try{ renderRegFeed(); }catch(e){}
-  const calListOn = ()=>{ try{ return localStorage.getItem('rangsan_cal_list') === '1'; }catch(e){ return false; } };
-  const applyCalView = ()=>{
-    const on = calListOn();
-    const split = document.getElementById('calSplit'), panel = document.getElementById('calListPanel'), tg = document.getElementById('calViewToggle');
-    if(split) split.classList.toggle('list-on', on);
-    if(panel) panel.hidden = !on;
-    if(tg) tg.classList.toggle('on', on);
-  };
-  const setCalFocus = (d, soft)=>{
-    window._calFocus = d; window._calFocusSoft = !!soft;
-    document.querySelectorAll('#calGrid .cal-cell').forEach(c=> c.classList.toggle('is-focus', !!d && c.dataset.cellDate === d));
-    renderCalList();
-  };
-  // bookings for the shown month, one block per day — the hovered/tapped day slides to the top
-  const renderCalList = ()=>{
-    const panel = document.getElementById('calListPanel');
-    if(!panel || !calListOn()) return;
-    const y = window._calYear, m = window._calMonth;
-    const prefix = `${y}-${String(m+1).padStart(2,'0')}-`;
-    const byDate = {};
-    sharedBookings.filter(b=> b.date && b.date.startsWith(prefix)).forEach(b=>{
-      const k = [b.courseId, b.instructor||'', b.startTime||''].join('|');
-      const day = byDate[b.date] = byDate[b.date] || { classes:{}, busy:[] };
-      (day.classes[k] = day.classes[k] || []).push(b);
-    });
-    (sharedBusy||[]).filter(x=> x.date && x.date.startsWith(prefix)).forEach(x=>{ (byDate[x.date] = byDate[x.date] || { classes:{}, busy:[] }).busy.push(x); });
-    let dates = Object.keys(byDate).sort();
-    const focus = window._calFocus;
-    if(focus && byDate[focus]) dates = [focus, ...dates.filter(d=> d !== focus)];
-    // FLIP: remember where each day block was, so re-ordering animates instead of jumping
-    const before = {};
-    panel.querySelectorAll('.cl-day[data-d]').forEach(el=>{ before[el.dataset.d] = el.getBoundingClientRect().top; });
-    const head = `<div class="cl-head"><div class="cl-title">รายการจอง</div><div class="cl-sub">ดูคิวสอนและกิจกรรมทั้งเดือน · ชี้หรือแตะวันในปฏิทินเพื่อดึงวันนั้นขึ้นบนสุด</div></div>`;
-    if(!dates.length){ panel.innerHTML = head + `<div class="cl-box"><div class="cl-empty">ยังไม่มีคิวในเดือนนี้</div></div>`; return; }
-    panel.innerHTML = head + `<div class="cl-box">${dates.map(d=>{
-      const day = byDate[d];
-      const dLabel = new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short'});
-      const classes = Object.values(day.classes).map(group=>{
-        const b = group[0], c = courseById(b.courseId);
-        let range = ''; try{ const r = bookingTimeRange(b); if(r) range = `${r.start}–${r.end} น.`; }catch(e){}
-        const names = group.map(x=> x.customerName).filter(Boolean);
-        const who = names.length ? names.join(', ') : `${group.length} คิว`;
-        const taught = group.some(x=> x.taught);
-        const instr = b.instructor && b.instructor !== 'ยังไม่ระบุ' ? b.instructor : '';
-        return `<div class="cl-item">
-          <div class="cl-row"><span>${dLabel}</span><span>${range}</span></div>
-          <div class="cl-name">${c ? c.name.replace(/^คอร์ส\s*\d+:\s*/,'') : '-'}${taught ? ' <span class="cl-done">✓ สอนแล้ว</span>' : ''}</div>
-          <div class="cl-people">👥 ${who}</div>
-          <div class="cl-loc">${instr ? busyAvatarHTML({ who: instr }, 20) + ' ' + instr : '<span style="color:#B3261E;">ยังไม่ระบุผู้สอน</span>'}</div>
-        </div>`;
-      }).join('');
-      const busy = day.busy.map(x=> `<div class="cl-item cl-busy">
-          <div class="cl-row"><span>${dLabel}</span><span>${x.from ? `${x.from}–${x.to||''} น.` : 'ทั้งวัน'}</span></div>
-          <div class="cl-name">🚫 ${x.title || 'มีกิจกรรม'}</div>
-          <div class="cl-loc">${busyAvatarHTML(x, 20)} ${x.who === BUSY_ALL ? 'ทั้งทีม' : x.who}</div>
-        </div>`).join('');
-      return `<div class="cl-day ${d === focus ? 'is-focus' : ''}" data-d="${d}">${classes}${busy}</div>`;
-    }).join('')}</div>`;
-    panel.querySelectorAll('.cl-day[data-d]').forEach(el=>{
-      const prev = before[el.dataset.d]; if(prev == null) return;
-      const dy = prev - el.getBoundingClientRect().top; if(!dy) return;
-      el.style.transform = `translateY(${dy}px)`; el.style.transition = 'none';
-      requestAnimationFrame(()=>{ el.style.transition = 'transform .45s cubic-bezier(.22,1,.36,1)'; el.style.transform = ''; });
-    });
-  };
-  const tgBtn = document.getElementById('calViewToggle');
-  if(tgBtn) tgBtn.onclick = ()=>{
-    try{ localStorage.setItem('rangsan_cal_list', calListOn() ? '0' : '1'); }catch(e){}
-    window._calFocus = null; applyCalView(); renderCalList();
-  };
-  applyCalView();
   const renderBusyList = ()=>{
     const box = document.getElementById('busyListSection');
     if(!box) return;
@@ -9032,7 +8921,8 @@ function renderLogTab(){
           ${busyAvatarHTML(x, 40)}
           <div class="busy-date">${d}</div>
           <div class="busy-main"><div class="busy-title">${x.title || 'มีกิจกรรม'}</div>
-            <div class="busy-meta">${x.who === BUSY_ALL ? '👥 ทั้งทีม · ปิดรับสอน' : '👤 '+x.who}${x.from ? ` · ${x.from}–${x.to||''}` : ' · ทั้งวัน'}</div></div>
+            <div class="busy-meta">${x.who === BUSY_ALL ? '👥 ทั้งทีม · ปิดรับสอน' : '👤 '+x.who}${x.from ? ` · ${x.from}–${x.to||''}` : ' · ทั้งวัน'}</div>
+            ${x.decoy && courseById(x.decoy.courseId) ? `<div class="busy-decoy">👁 ลูกค้าเห็นเป็น: ${courseById(x.decoy.courseId).name.replace(/^คอร์ส\s*\d+:\s*/,'')} · ${x.decoy.instructor}</div>` : ''}</div>
           ${canDelete ? `<button type="button" class="busy-del" data-busy-id="${x.id}" aria-label="ลบ">✕</button>` : ''}
         </div>`;
       }).join('')}</div>
@@ -9135,7 +9025,7 @@ function renderLogTab(){
           }
         }
         if(items.length>1){
-          moreBadge = '';
+          moreBadge = `<div class="cal-more-badge">+${items.length-1}</div>`;
         }
         if(items.some(x=>x.taught)){
           passBadge = `<div class="cal-pass-badge" title="ยืนยันสอนแล้ว">
@@ -9182,9 +9072,7 @@ function renderLogTab(){
         hasPhotoClass = 'has-photo';
       }
       const busyCls = busyHere.some(x=> x.who===BUSY_ALL) && !items.length ? 'cal-busy-day' : '';
-      const classCount = items.length;
-      const countBadge = classCount ? `<div class="cal-count" title="${classCount} คิว">${classCount}</div>` : '';
-      html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra} ${busyCls} ${classCount?'has-count':''}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}${busyChip}${countBadge}</div>`;
+      html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra} ${busyCls}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}${busyChip}</div>`;
     }
     document.getElementById('calGrid').innerHTML = html;
     document.querySelectorAll('#calGrid .cal-chip[data-instructor]').forEach(chip=>{
@@ -9201,16 +9089,8 @@ function renderLogTab(){
     });
     document.querySelectorAll('#calGrid .cal-cell[data-cell-date]').forEach(cell=>{
       cell.style.cursor = 'pointer';
-      cell.onclick = ()=>{
-        const d = cell.dataset.cellDate;
-        if(calListOn() && cell.classList.contains('has-count')){ setCalFocus(window._calFocus === d ? null : d); return; }
-        openBookingModalPrefilled(d);
-      };
-      cell.onpointerenter = (e)=>{ if(e.pointerType !== 'touch' && calListOn()) setCalFocus(cell.classList.contains('has-count') ? cell.dataset.cellDate : null, true); };
+      cell.onclick = ()=> openBookingModalPrefilled(cell.dataset.cellDate);
     });
-    const grid = document.getElementById('calGrid');
-    if(grid) grid.onpointerleave = (e)=>{ if(e.pointerType !== 'touch' && calListOn() && window._calFocusSoft) setCalFocus(null); };
-    renderCalList();
     setupRotatingAvatars();
   };
   renderCalendar();
@@ -9561,6 +9441,8 @@ function renderLogTab(){
       : 'เลือกวันที่ คอร์ส และชื่อของคุณ เพื่อลงคิวสอนล่วงหน้า';
   };
   document.querySelectorAll('.bk-mode-btn').forEach(b=>{ b.onclick = ()=> setBookingMode(b.dataset.mode); });
+  document.getElementById('newBusyWho').onchange = (e)=>{ const v = e.target.value; const di = document.getElementById('newBusyDecoyInstr'); if(v && v !== BUSY_ALL && [...di.options].some(o=> o.value === v)) di.value = v; };
+  document.getElementById('newBusyDecoy').onchange = (e)=>{ document.getElementById('newBusyDecoyRow').style.display = e.target.checked ? 'flex' : 'none'; };
   document.getElementById('newBusyAllDay').onchange = (e)=>{ document.getElementById('newBusyTimeRow').style.display = e.target.checked ? 'none' : 'flex'; };
   document.getElementById('addBusyBtn').onclick = async ()=>{
     const btn = document.getElementById('addBusyBtn');
@@ -9573,6 +9455,9 @@ function renderLogTab(){
     const allDay = document.getElementById('newBusyAllDay').checked;
     const entry = { id: 'busy_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), date, who, title, createdBy: currentUser || '' };
     if(!allDay){ entry.from = document.getElementById('newBusyFrom').value; entry.to = document.getElementById('newBusyTo').value; }
+    if(document.getElementById('newBusyDecoy').checked){
+      entry.decoy = { courseId: document.getElementById('newBusyDecoyCourse').value, instructor: document.getElementById('newBusyDecoyInstr').value };
+    }
     const clash = sharedBookings.filter(b=> b.date === date && !b.taught && (who === BUSY_ALL || b.instructor === who));
     if(clash.length && !confirm(`วันนี้มีคิวสอนอยู่แล้ว ${clash.length} คิว — ยังต้องการบันทึกว่าไม่ว่างหรือไม่?`)) return;
     btn.dataset.busy = '1';
@@ -9589,6 +9474,10 @@ function renderLogTab(){
     document.getElementById('newBusyTitle').value = '';
     document.getElementById('newBusyAllDay').checked = true;
     document.getElementById('newBusyNotifyLine').checked = true;
+    document.getElementById('newBusyDecoy').checked = false;
+    document.getElementById('newBusyDecoyRow').style.display = 'none';
+    document.getElementById('newBusyDecoyCourse').innerHTML = state.courses.map(c=>`<option value="${c.id}">แสดงเป็น: ${c.name}</option>`).join('');
+    document.getElementById('newBusyDecoyInstr').innerHTML = state.instructors.map(n=>`<option value="${n}" ${n===currentUser?'selected':''}>ผู้สอนที่แสดง: ${n}</option>`).join('');
     document.getElementById('newBusyTimeRow').style.display = 'none';
     document.getElementById('newBookingDate').value = dateStr || new Date().toISOString().slice(0,10);
     document.getElementById('newBookingCourse').innerHTML = state.courses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
