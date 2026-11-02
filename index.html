@@ -7443,6 +7443,31 @@ function drawAvatar(ctx, img, name, cx, cy, r, ring){
   }
   ctx.restore();
 }
+// Safari/iPad measures Thai text (with tone marks) wrongly on <canvas>, which pushes centred
+// Thai text off to the right. Measure with the page's own text layout instead, which is correct.
+const __domTextW = {};
+function domTextWidth(text, font){
+  const key = font + '\u0001' + text;
+  if(__domTextW[key] != null) return __domTextW[key];
+  let el = document.getElementById('__measureSpan');
+  if(!el){ el = document.createElement('span'); el.id = '__measureSpan'; el.style.cssText = 'position:absolute;left:-9999px;top:-9999px;white-space:pre;visibility:hidden;'; document.body.appendChild(el); }
+  el.style.font = font; el.textContent = text;
+  return (__domTextW[key] = el.getBoundingClientRect().width);
+}
+function patchCanvasTextAlign(ctx){
+  const rawFill = ctx.fillText.bind(ctx);
+  ctx.fillText = (t, x, y, mw)=>{
+    const a = ctx.textAlign;
+    if(a === 'center' || a === 'right' || a === 'end'){
+      const w = domTextWidth(String(t), ctx.font);
+      ctx.textAlign = 'left';
+      rawFill(t, a === 'center' ? x - w/2 : x - w, y);
+      ctx.textAlign = a;
+    } else rawFill(t, x, y);
+  };
+  const rawMeasure = ctx.measureText.bind(ctx);
+  ctx.measureText = (t)=>{ const m = rawMeasure(t); try{ return Object.assign({}, { width: domTextWidth(String(t), ctx.font), actualBoundingBoxAscent: m.actualBoundingBoxAscent, actualBoundingBoxDescent: m.actualBoundingBoxDescent }); }catch(e){ return m; } };
+}
 async function buildMonthInfographic(y, m){
   try{ await document.fonts.load('40px "FC Jong Jaroen"', 'ตารางเรียน'); }catch(e){}
   try{ await document.fonts.ready; }catch(e){}
@@ -7483,6 +7508,7 @@ async function buildMonthInfographic(y, m){
   const H = headerH + dowH + gridH + legendH + teamH + footerH;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
+  patchCanvasTextAlign(ctx);
   // background
   ctx.fillStyle = '#F4EEE1'; ctx.fillRect(0,0,W,H);
   const hg = ctx.createLinearGradient(0,0,W,headerH);
@@ -7605,7 +7631,9 @@ async function buildMonthInfographic(y, m){
     ctx.fillStyle = '#1A0F08'; ctx.textAlign = 'left'; ctx.fillText(tag, phX + 24, phY + phH - 28);
     // name + this month's stats
     ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
-    ctx.fillStyle = '#0B2A15'; ctx.font = `36px ${HEAD}`; ctx.fillText(name, cx0 + cardW/2, phY + phH + 50);
+    let nameSize = 36; ctx.font = `${nameSize}px ${HEAD}`;
+    while(nameSize > 22 && ctx.measureText(name).width > cardW - 28){ nameSize -= 2; ctx.font = `${nameSize}px ${HEAD}`; }
+    ctx.fillStyle = '#0B2A15'; ctx.fillText(name, cx0 + cardW/2, phY + phH + 50);
     const st = statOf(name);
     ctx.fillStyle = '#8A6416'; ctx.font = '600 19px "IBM Plex Sans Thai", sans-serif';
     ctx.fillText(st.n ? `สอน ${st.n} คลาสเดือนนี้` : 'พร้อมรับคลาสเดือนนี้', cx0 + cardW/2, phY + phH + 84);
