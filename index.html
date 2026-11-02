@@ -7506,7 +7506,10 @@ async function buildMonthInfographic(y, m){
   const W = 1080, PAD = 54, GAP = 10;
   const cellW = Math.floor((W - PAD*2 - GAP*6) / 7), cellH = 168;
   const headerH = 250, dowH = 46, gridH = weeks*(cellH+GAP);
-  const teamH = 300, legendH = 70, footerH = 96;
+  // team section: one profile card per instructor, up to 3 per row
+  const perRow = Math.min(3, Math.max(1, team.length)), teamRows = Math.ceil(team.length / perRow);
+  const cardGap = 22, cardH = 430;
+  const teamH = 130 + teamRows*(cardH + cardGap) + 40, legendH = 70, footerH = 96;
   const H = headerH + dowH + gridH + legendH + teamH + footerH;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -7575,17 +7578,79 @@ async function buildMonthInfographic(y, m){
     ctx.fillStyle = '#3A3026'; ctx.fillText(t, lx+40, top+30); lx += 40 + ctx.measureText(t).width + 40;
   });
   top += legendH;
-  // instructor team
-  rrect(ctx, PAD, top, W-PAD*2, teamH-30, 26); ctx.fillStyle = '#0B2A15'; ctx.fill();
+  // instructor team — portrait profile cards
+  const panelH = teamH - 30;
+  const pg = ctx.createLinearGradient(0, top, 0, top+panelH);
+  pg.addColorStop(0, '#165028'); pg.addColorStop(1, '#0B2A15');
+  rrect(ctx, PAD, top, W-PAD*2, panelH, 30); ctx.fillStyle = pg; ctx.fill();
+  // soft coffee-bean watermark dots
+  ctx.save(); rrect(ctx, PAD, top, W-PAD*2, panelH, 30); ctx.clip(); ctx.globalAlpha = .07; ctx.fillStyle = '#DCA73D';
+  for(let i=0;i<14;i++){ const bx = PAD + 40 + (i*137)%(W-PAD*2-80), by = top + 30 + (i*89)%(panelH-60); ctx.beginPath(); ctx.ellipse(bx, by, 16, 22, (i%5)*0.6, 0, Math.PI*2); ctx.fill(); }
+  ctx.restore();
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#DCA73D'; ctx.font = `36px ${HEAD}`; ctx.fillText('ทีมอาจารย์ผู้สอน', W/2, top+54);
-  const n = team.length, r = 62, slot = Math.min(260, (W-PAD*2-40)/Math.max(1,n));
-  const startX = W/2 - slot*(n-1)/2;
-  team.forEach((name,i)=>{
-    const cx = startX + i*slot, cy = top + 140;
-    drawAvatar(ctx, photos[name], name, cx, cy, r, 4);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#EFE8D6'; ctx.font = `27px ${HEAD}`;
-    ctx.fillText(name, cx, cy + r + 42);
+  ctx.fillStyle = '#DCA73D'; ctx.font = `40px ${HEAD}`; ctx.fillText('ทีมอาจารย์ผู้สอน', W/2, top+66);
+  const tw = ctx.measureText('ทีมอาจารย์ผู้สอน').width;
+  ctx.strokeStyle = 'rgba(220,167,61,.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W/2 - tw/2 - 90, top+52); ctx.lineTo(W/2 - tw/2 - 22, top+52); ctx.moveTo(W/2 + tw/2 + 22, top+52); ctx.lineTo(W/2 + tw/2 + 90, top+52); ctx.stroke();
+  ctx.fillStyle = 'rgba(239,232,214,.7)'; ctx.font = '500 20px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText(teachers.length ? `สอนประจำเดือน${monthNames[m]}` : 'พร้อมดูแลทุกคลาส', W/2, top+100);
+  // per-instructor stats for this month
+  const statOf = name=>{
+    let n = 0; const courses = new Set();
+    Object.values(classesByDate).forEach(list=> list.forEach(c=>{ if(c.instructor === name){ n++; courses.add(c.courseId); } }));
+    return { n, courses:[...courses] };
+  };
+  const innerW = W - PAD*2 - 48;
+  const cardW = Math.min(300, Math.floor((innerW - cardGap*(perRow-1)) / perRow));
+  team.forEach((name, i)=>{
+    const row = Math.floor(i / perRow), col = i % perRow;
+    const inRow = Math.min(perRow, team.length - row*perRow);
+    const rowW = inRow*cardW + (inRow-1)*cardGap;
+    const cx0 = W/2 - rowW/2 + col*(cardW + cardGap), cy0 = top + 130 + row*(cardH + cardGap);
+    // card
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+    rrect(ctx, cx0, cy0, cardW, cardH, 24); ctx.fillStyle = '#FBF6EC'; ctx.fill(); ctx.restore();
+    // portrait photo (rounded, cover-fit) with a gold keyline
+    const phX = cx0 + 14, phY = cy0 + 14, phW = cardW - 28, phH = 250;
+    ctx.save(); rrect(ctx, phX, phY, phW, phH, 18); ctx.clip();
+    const img = photos[name];
+    if(img){
+      const sc = Math.max(phW/img.width, phH/img.height);
+      ctx.drawImage(img, phX + (phW - img.width*sc)/2, phY + (phH - img.height*sc)/2.6, img.width*sc, img.height*sc);
+    } else {
+      const g2 = ctx.createLinearGradient(phX, phY, phX, phY+phH); g2.addColorStop(0, '#2E5E3A'); g2.addColorStop(1, '#0B2A15');
+      ctx.fillStyle = g2; ctx.fillRect(phX, phY, phW, phH);
+      ctx.fillStyle = '#DCA73D'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `110px ${HEAD}`;
+      ctx.fillText(String(name).replace('อาจารย์','').trim().charAt(0) || '?', phX + phW/2, phY + phH/2 + 6);
+    }
+    // gentle fade at the bottom of the photo
+    const fade = ctx.createLinearGradient(0, phY+phH-70, 0, phY+phH); fade.addColorStop(0, 'rgba(11,42,21,0)'); fade.addColorStop(1, 'rgba(11,42,21,.45)');
+    ctx.fillStyle = fade; ctx.fillRect(phX, phY+phH-70, phW, 70);
+    ctx.restore();
+    rrect(ctx, phX, phY, phW, phH, 18); ctx.strokeStyle = 'rgba(220,167,61,.85)'; ctx.lineWidth = 3; ctx.stroke();
+    // role tag on the photo
+    ctx.textBaseline = 'middle'; ctx.font = '700 15px "IBM Plex Sans Thai", sans-serif';
+    const tag = 'BARISTA INSTRUCTOR'; const tagW = ctx.measureText(tag).width + 24;
+    rrect(ctx, phX + 12, phY + phH - 44, tagW, 30, 15); ctx.fillStyle = '#DCA73D'; ctx.fill();
+    ctx.fillStyle = '#1A0F08'; ctx.textAlign = 'left'; ctx.fillText(tag, phX + 24, phY + phH - 28);
+    // name + this month's stats
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#0B2A15'; ctx.font = `36px ${HEAD}`; ctx.fillText(name, cx0 + cardW/2, phY + phH + 50);
+    const st = statOf(name);
+    ctx.fillStyle = '#8A6416'; ctx.font = '600 19px "IBM Plex Sans Thai", sans-serif';
+    ctx.fillText(st.n ? `สอน ${st.n} คลาสเดือนนี้` : 'พร้อมรับคลาสเดือนนี้', cx0 + cardW/2, phY + phH + 84);
+    // course pills
+    const pills = st.courses.slice(0, 2).map(id=> infoCourseLabel(id));
+    ctx.font = '600 15px "IBM Plex Sans Thai", sans-serif'; ctx.textBaseline = 'middle';
+    const pw = pills.map(t=> Math.min(cardW - 40, ctx.measureText(t).width + 22));
+    let py = phY + phH + 112;
+    pills.forEach((t, k)=>{
+      rrect(ctx, cx0 + cardW/2 - pw[k]/2, py - 14, pw[k], 28, 14); ctx.fillStyle = '#E9F0E4'; ctx.fill();
+      ctx.fillStyle = '#165028'; ctx.textAlign = 'center';
+      let label = t; while(ctx.measureText(label).width > pw[k] - 18 && label.length > 3) label = label.slice(0,-2) + '…';
+      ctx.fillText(label, cx0 + cardW/2, py + 1); py += 34;
+    });
+    ctx.textBaseline = 'alphabetic';
   });
   top += teamH;
   // footer
