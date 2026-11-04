@@ -1866,6 +1866,8 @@
   .vip-past{ font-size:11px; color:#8A6416; margin-top:3px; }
   .eval-box .vip-past{ color:#DCC08A; }
   .reg-age{ font-weight:700; }
+  .name-en{ font-weight:500; font-size:.92em; opacity:.8; margin-left:6px; letter-spacing:.01em; }
+  .reg-name .name-en{ display:block; margin:1px 0 0; }
   .tk-age{ font-weight:700; color:#8A6416; }
   #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
   #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
@@ -3643,7 +3645,8 @@ var qrcode = function() {
         <div id="newBookingTimeChips" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
       </div>
       <select id="newBookingInstructor" class="pill"></select>
-      <input type="text" id="newBookingCustName" placeholder="ชื่อ-นามสกุลผู้เรียน" class="pill" autocomplete="off">
+      <input type="text" id="newBookingCustName" placeholder="ชื่อ-นามสกุลผู้เรียน (ภาษาไทย)" class="pill" autocomplete="off">
+      <input type="text" id="newBookingCustNameEn" placeholder="Full name in English (ชื่อ-นามสกุลภาษาอังกฤษ)" class="pill" autocomplete="off" autocapitalize="words">
       <input type="tel" id="newBookingCustPhone" placeholder="เบอร์โทรผู้เรียน" class="pill" inputmode="tel" autocomplete="off">
       <div id="newBookingVip" style="display:none;"></div>
       <input type="text" id="newBookingNote" placeholder="หมายเหตุ เช่น ยืนยันแล้ว" class="pill">
@@ -4058,13 +4061,13 @@ async function loadRegistrationList(filterRowId, listBoxId){
 
     const findCol = (keywords)=> headers.findIndex(h=> keywords.some(k=> h.includes(k)));
     const courseIdx = findCol(['คอร์ส']);
-    const nameIdx = findCol(['ชื่อ - นามสกุล (ภาษาไทย)', 'ชื่อ']);
+    const nameIdx = (()=>{ const en = findEnNameCol(headers); let i = headers.findIndex(h=> h.includes('ชื่อ - นามสกุล (ภาษาไทย)')); if(i < 0) i = headers.findIndex((h,k)=> h.includes('ชื่อ') && k !== en); return i; })();
     const phoneIdx = findCol(['เบอร์โทร']);
     const lineIdx = findCol(['LINE']);
     const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
     const timeIdx = 0;
 
-    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx, ageCols: findAgeCols(headers) };
+    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx, ageCols: findAgeCols(headers), enNameIdx: findEnNameCol(headers) };
 
     const courses = ['ทั้งหมด', ...new Set(dataRows.map(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim()).filter(Boolean))];
     if(filterRow){
@@ -4128,7 +4131,7 @@ function renderRegistrationList(listBoxId){
         : `<button type="button" class="reg-confirm-btn" data-row="${rowIdx}">ยืนยันสอนเสร็จ ✓</button>`;
       return `<div class="reg-row${bk && bk.taught ? ' is-done' : ''}" style="padding:9px 0; border-bottom:1px dashed var(--line);">
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
-          <span class="reg-name" style="font-weight:700; font-size:13px;">${name||'-'}</span>
+          <span class="reg-name" style="font-weight:700; font-size:13px;">${name||'-'}${(()=>{ const en = regRowsCache.enNameIdx>=0 ? (r[regRowsCache.enNameIdx]||'').trim() : ''; return en ? `<span class="name-en">${en}</span>` : ''; })()}</span>
           <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none;">${joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม'}</span>
         </div>
         ${vip}
@@ -4287,7 +4290,7 @@ async function backfillAgesFromForm(){
     const ageCols = findAgeCols(headers);
     if(ageCols.ageIdx < 0 && ageCols.birthIdx < 0) return; // the form doesn't ask for age
     const findCol = (keywords)=> headers.findIndex(h=> keywords.some(k=> h.includes(k)));
-    const courseIdx = findCol(['คอร์ส']), nameIdx = findCol(['ชื่อ - นามสกุล (ภาษาไทย)', 'ชื่อ']), dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
+    const courseIdx = findCol(['คอร์ส']), nameIdx = (()=>{ const en = findEnNameCol(headers); let i = headers.findIndex(h=> h.includes('ชื่อ - นามสกุล (ภาษาไทย)')); if(i < 0) i = headers.findIndex((h,k)=> h.includes('ชื่อ') && k !== en); return i; })(), dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
     const byKey = {};
     rows.slice(1).forEach(r=>{
       const name = nameIdx>=0 ? (r[nameIdx]||'').trim() : '';
@@ -4305,6 +4308,9 @@ async function backfillAgesFromForm(){
   }catch(e){ console.warn('age backfill skipped', e); }
 }
 // Google Forms timestamps look like "10/7/2026, 10:13:26" (D/M/YYYY H:MM:SS)
+function findEnNameCol(headers){
+  return headers.findIndex(h=> /(อังกฤษ|english|eng\b)/i.test(h) && /(ชื่อ|name)/i.test(h));
+}
 function parseFormTimestamp(t){
   const m = String(t||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
   if(!m) return null;
@@ -4414,7 +4420,9 @@ async function syncBookingsFromGoogleForm(){
     const dataRows = rows.slice(1).filter(r=> r.some(c=>c && c.trim()));
     const findCol = (keywords)=> headers.findIndex(h=> keywords.some(k=> h.includes(k)));
     const courseIdx = findCol(['คอร์ส']);
-    const nameIdx = findCol(['ชื่อ - นามสกุล (ภาษาไทย)', 'ชื่อ']);
+    const enNameIdx = findEnNameCol(headers);
+    let nameIdx = headers.findIndex(h=> h.includes('ชื่อ - นามสกุล (ภาษาไทย)'));
+    if(nameIdx < 0) nameIdx = headers.findIndex((h,i)=> h.includes('ชื่อ') && i !== enNameIdx);
     const phoneIdx = findCol(['เบอร์โทร']);
     const lineIdx = findCol(['LINE']);
     const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
@@ -4454,6 +4462,7 @@ async function syncBookingsFromGoogleForm(){
       const topics = topicsIdx>=0 ? (r[topicsIdx]||'').trim() : '';
       const photoConsent = photoConsentIdx>=0 ? (r[photoConsentIdx]||'').trim() : '';
       const age = ageFromRow(r, ageCols);
+      const nameEn = enNameIdx>=0 ? (r[enNameIdx]||'').trim() : '';
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
       if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
@@ -4478,6 +4487,7 @@ async function syncBookingsFromGoogleForm(){
           if(!existing.topics && topics){ existing.topics = topics; changed = true; }
           if(!existing.photoConsent && photoConsent){ existing.photoConsent = photoConsent; changed = true; }
           if(!existing.age && age){ existing.age = age; changed = true; }
+          if(!existing.customerNameEn && nameEn){ existing.customerNameEn = nameEn; changed = true; }
           if(changed) enriched++;
         }
         skipped++;
@@ -4491,7 +4501,7 @@ async function syncBookingsFromGoogleForm(){
         note: `จากฟอร์มลงทะเบียน: ${name}${phone ? ' · '+phone : ''}${line ? ' · LINE: '+line : ''}`,
         allergy,
         occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent, age,
-        customerName: name, customerPhone: phone, customerLine: line,
+        customerName: name, customerNameEn: nameEn, customerPhone: phone, customerLine: line,
         source: 'google_form',
         syncKey,
         taught: false
@@ -9266,7 +9276,7 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
-          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.customerNameEn ? ` <span class="name-en">(${b.customerNameEn})</span>` : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
           <select data-assign-instructor="${b._idx}" class="select-light tk-instructor" style="margin:0 0 8px;">
             <option value="">— เลือกอาจารย์ผู้สอน —</option>
@@ -9518,6 +9528,7 @@ function renderLogTab(){
     document.getElementById('newBookingTime').value = '10:00';
     syncBookingTimeUI();
     document.getElementById('newBookingCustName').value = '';
+    document.getElementById('newBookingCustNameEn').value = '';
     document.getElementById('newBookingCustPhone').value = '';
     document.getElementById('newBookingVip').style.display = 'none';
     openModal('bookingModalOverlay');
@@ -9542,6 +9553,8 @@ function renderLogTab(){
     const custName = document.getElementById('newBookingCustName').value.trim();
     const custPhone = document.getElementById('newBookingCustPhone').value.trim();
     if(custName) newBooking.customerName = custName;
+    const custNameEn = document.getElementById('newBookingCustNameEn').value.trim();
+    if(custNameEn) newBooking.customerNameEn = custNameEn;
     if(custPhone) newBooking.customerPhone = custPhone;
     if(TIMED_COURSE_IDS.includes(courseId)){
       const st = document.getElementById('newBookingTime').value;
