@@ -1866,6 +1866,8 @@
   .vip-past{ font-size:11px; color:#8A6416; margin-top:3px; }
   .eval-box .vip-past{ color:#DCC08A; }
   .reg-age{ font-weight:700; }
+  .en-name{ all:unset; cursor:pointer; font-weight:600; color:#165028; margin-left:4px; border-bottom:1px solid rgba(22,80,40,.35); }
+  .en-name.is-auto{ color:#8A7D68; font-style:italic; font-weight:500; border-bottom:1px dashed #B9AC93; }
   .name-en{ font-weight:500; font-size:.92em; opacity:.8; margin-left:6px; letter-spacing:.01em; }
   .reg-name .name-en{ display:block; margin:1px 0 0; }
   .tk-age{ font-weight:700; color:#8A6416; }
@@ -4308,6 +4310,83 @@ async function backfillAgesFromForm(){
   }catch(e){ console.warn('age backfill skipped', e); }
 }
 // Google Forms timestamps look like "10/7/2026, 10:13:26" (D/M/YYYY H:MM:SS)
+// suggest an English spelling for a Thai name (RTGS-style). People spell their own names in many ways,
+// so this is only a starting point — staff confirm or correct it on the booking card.
+function thaiRomanize(text){
+  const INIT = {ก:'k',ข:'kh',ฃ:'kh',ค:'kh',ฅ:'kh',ฆ:'kh',ง:'ng',จ:'ch',ฉ:'ch',ช:'ch',ซ:'s',ฌ:'ch',ญ:'y',ฎ:'d',ฏ:'t',ฐ:'th',ฑ:'th',ฒ:'th',ณ:'n',ด:'d',ต:'t',ถ:'th',ท:'th',ธ:'th',น:'n',บ:'b',ป:'p',ผ:'ph',ฝ:'f',พ:'ph',ฟ:'f',ภ:'ph',ม:'m',ย:'y',ร:'r',ล:'l',ว:'w',ศ:'s',ษ:'s',ส:'s',ห:'h',ฬ:'l',อ:'',ฮ:'h'};
+  const FIN = {ก:'k',ข:'k',ค:'k',ฆ:'k',ง:'ng',จ:'t',ช:'t',ซ:'t',ฌ:'t',ฎ:'t',ฏ:'t',ฐ:'t',ฑ:'t',ฒ:'t',ด:'t',ต:'t',ถ:'t',ท:'t',ธ:'t',ศ:'t',ษ:'t',ส:'t',ญ:'n',ณ:'n',น:'n',ร:'n',ล:'n',ฬ:'n',บ:'p',ป:'p',พ:'p',ฟ:'p',ภ:'p',ม:'m',ย:'i',ว:'o'};
+  const C = c=> !!c && (c in INIT);
+  const V = c=> !!c && 'ะัาำิีึืุู็'.includes(c);
+  const L = c=> !!c && 'เแโใไ'.includes(c);
+  const word = raw=>{
+    let w = raw.replace(/[่้๊๋]/g,'').replace(/([ก-ฮ])ทร์/g,'$1').replace(/[ก-ฮ][ิุ]?์/g,'').replace(/ๆ/g,'');
+    w = w.replace(/([าูุ][ก-ฮ])ิ$/,'$1');   // Pali-style silent final i: ชาติ → chat, ภูมิ → phum, วุฒิ → wut
+    const at = k=> w[k] || '';
+    // a consonant at k "owns" a following vowel (so it begins the next syllable)
+    const carriesVowel = k=> C(at(k)) && (V(at(k+1)) || (at(k+1)==='อ' && !V(at(k+2))) && false);
+    let out = '', i = 0;
+    while(i < w.length){
+      let lead = '';
+      if(L(at(i))){ lead = at(i); i++; }
+      if(!C(at(i))){ i++; continue; }
+      const c1 = at(i); let init = INIT[c1]; i++;
+      // clusters / silent leading ห, อย, ทร = s
+      if(c1==='ห' && C(at(i)) && 'งญนมยรลว'.includes(at(i)) && (V(at(i+1)) || lead || !C(at(i+1)))){ init = INIT[at(i)]; i++; }
+      else if(c1==='อ' && at(i)==='ย'){ init='y'; i++; }
+      else if(c1==='ท' && at(i)==='ร' && (V(at(i+1)) || lead)){ init='s'; i++; }
+      else if('ศสซ'.includes(c1) && at(i)==='ร' && V(at(i+1))){ i++; }
+      else if('กขคตปผพ'.includes(c1) && C(at(i)) && 'รลว'.includes(at(i)) && (V(at(i+1)) || (lead && C(at(i+1)) && at(i)!=='ว'))){ init += INIT[at(i)]; i++; }
+      let v = null, closed = false;
+      const ch = at(i);
+      if(lead==='เ'){
+        if(ch==='ี' && at(i+1)==='ย'){ v='ia'; i+=2; }
+        else if(ch==='ื' && at(i+1)==='อ'){ v='uea'; i+=2; }
+        else if(ch==='า'){ v='ao'; i++; closed=true; }
+        else if(ch==='อ'){ v='oe'; i++; }
+        else if(ch==='ะ'){ v='e'; i++; closed=true; }
+        else if(ch==='็'){ v='e'; i++; }
+        else if(ch==='ิ'){ v='oe'; i++; }
+        else v='e';
+      } else if(lead==='แ'){ if(ch==='็') i++; else if(ch==='ะ'){ i++; closed=true; } v='ae'; }
+      else if(lead==='โ'){ if(ch==='ะ'){ i++; closed=true; } v='o'; }
+      else if(lead==='ใ' || lead==='ไ'){ v='ai'; closed=true; if(at(i)==='ย' && !V(at(i+1))) i++; }
+      else if(ch==='ั' && at(i+1)==='ว'){ v='ua'; i+=2; }
+      else if(ch==='ั'){ v='a'; i++; }
+      else if(ch==='ะ'){ v='a'; i++; closed=true; }
+      else if(ch==='า'){ v='a'; i++; }
+      else if(ch==='ำ'){ v='am'; i++; closed=true; }
+      else if(ch==='ิ' || ch==='ี'){ v='i'; i++; }
+      else if(ch==='ึ' || ch==='ื'){ v='ue'; i++; if(at(i)==='อ' && !V(at(i+1))) i++; }
+      else if(ch==='ุ' || ch==='ู'){ v='u'; i++; }
+      else if(ch==='็'){ v='o'; i++; }
+      else if(ch==='อ' && !V(at(i+1))){ v='o'; i++; }
+      else if(ch==='ว' && C(at(i+1)) && !V(at(i+1)) && !V(at(i+2))){ v='ua'; i++; }
+      else if(ch==='ร' && at(i+1)==='ร'){ i+=2; if(C(at(i)) && !V(at(i+1))){ out += init+'a'+(FIN[at(i)]||''); i++; } else out += init+'an'; continue; }
+      if(v===null){
+        // no written vowel: look at the consonants that follow
+        const after = []; let k = i;
+        while(C(at(k)) && !(at(k)==='ร' && at(k+1)==='ร')) { after.push(k); k++; }
+        const moreAfter = !!at(k);
+        if(V(at(k)) && after.length) after.pop();           // last one owns the next vowel
+        if(at(k)==='อ' && after.length && !V(at(k+1))) after.pop();
+        if(after.length === 1 || (after.length === 2 && moreAfter)){ out += init + 'o' + (FIN[at(after[0])]||''); i = after[0]+1; continue; }
+        out += init + 'a'; continue;                           // open syllable
+      }
+      // final consonant after a written vowel
+      if(!closed && C(at(i)) && !V(at(i+1))){
+        const nxt = i+1;
+        // the next consonant is final unless what follows can't make a syllable on its own
+        let followsOk = !(C(at(nxt)) && C(at(nxt+1)) && C(at(nxt+2)) && at(nxt+1)!=='ว');  // 3+ bare consonants → this one opens a syllable
+        if(C(at(nxt)) && !at(nxt+1)) followsOk = false;                                  // C + C at the end read together (…พร = phon)
+        if(at(i)==='ร' && at(nxt) && at(nxt)!=='ร') followsOk = false;                   // names: ธีรวัฒน์ thirawat, จิรายุ
+        if(followsOk && !(v==='ua' && at(i)==='ว')){ out += init + v + (FIN[at(i)]||''); i++; continue; }
+      }
+      out += init + v;
+    }
+    return out;
+  };
+  return String(text||'').trim().split(/\s+/).map(x=>{ const r = word(x); return r ? r[0].toUpperCase()+r.slice(1) : ''; }).filter(Boolean).join(' ');
+}
 function findEnNameCol(headers){
   return headers.findIndex(h=> /(อังกฤษ|english|eng\b)/i.test(h) && /(ชื่อ|name)/i.test(h));
 }
@@ -9276,7 +9355,9 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
-          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.customerNameEn ? ` <span class="name-en">(${b.customerNameEn})</span>` : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.customerName ? (b.customerNameEn
+              ? ` <button type="button" class="en-name" data-en-name="${b._idx}" title="แก้ชื่อภาษาอังกฤษ">${b.customerNameEn} ✎</button>`
+              : ` <button type="button" class="en-name is-auto" data-en-name="${b._idx}" title="ระบบสะกดให้ — แตะเพื่อยืนยันหรือแก้">${thaiRomanize(b.customerName)} ✎</button>`) : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
           <select data-assign-instructor="${b._idx}" class="select-light tk-instructor" style="margin:0 0 8px;">
             <option value="">— เลือกอาจารย์ผู้สอน —</option>
@@ -9375,6 +9456,18 @@ function renderLogTab(){
         const bookingGroup = JSON.parse(btn.dataset.confirmTaughtGroup);
         await loadRetailProducts(); // make sure the product list is fresh no matter which tab was open last
         openConfirmTaughtModal(bookingGroup);
+      };
+    });
+    container.querySelectorAll('[data-en-name]').forEach(btn=>{
+      btn.onclick = (e)=>{
+        e.stopPropagation();
+        const bk = sharedBookings[Number(btn.dataset.enName)];
+        if(!bk) return;
+        const v = prompt(`ชื่อ-นามสกุลภาษาอังกฤษของ ${bk.customerName || 'ผู้เรียน'}\n(ระบบสะกดให้เบื้องต้น ตรวจตามที่ลูกค้าสะกดจริง)`, bk.customerNameEn || thaiRomanize(bk.customerName));
+        if(v === null) return;
+        bk.customerNameEn = v.trim().replace(/\s+/g,' ');
+        saveSharedBookings();
+        renderBookingCards();
       };
     });
     container.querySelectorAll('[data-assign-instructor]').forEach(sel=>{
