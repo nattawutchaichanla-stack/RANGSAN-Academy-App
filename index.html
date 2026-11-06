@@ -1369,6 +1369,16 @@
   .tk-wd{ font-size:12px; font-weight:500; color:rgba(239,232,214,.7); }
   .tk-day{ font-family:'Fraunces',serif; font-weight:700; font-size:40px; line-height:1; letter-spacing:-.03em; }
   .tk-mo{ font-size:12.5px; font-weight:600; color:#DCA73D; }
+  .call-chk{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:2px 0 8px; padding:7px 10px; border-radius:10px; font-size:13px; font-weight:600; color:#3A3226; background:#F7F2E6; border:1px solid #E7DECB; cursor:pointer; }
+  .call-chk input{ width:18px; height:18px; accent-color:#165028; margin:0; flex:none; }
+  .call-chk .call-meta{ font-weight:500; font-size:11.5px; color:#7A6F5E; }
+  .call-chk.is-due{ background:#FBF0D6; border-color:#DCA73D; color:#8A6416; }
+  .call-chk.is-due .call-meta{ color:#8A6416; }
+  .call-chk.is-late{ background:#F7E1DB; border-color:#EBC2B7; color:#B8452F; }
+  .call-chk.is-late .call-meta{ color:#B8452F; }
+  .call-chk.is-done{ background:#E5EFE7; border-color:#CFE0D3; color:#165028; }
+  .tk-call{ margin-top:6px; font-size:10.5px; padding:2px 8px; border-radius:999px; background:rgba(220,167,61,.18); color:#DCA73D; text-align:center; line-height:1.35; border-radius:10px; }
+  .tk-call.is-done{ background:rgba(239,232,214,.1); color:rgba(239,232,214,.8); }
   .tk-head{ flex:none; font-size:12px; font-weight:600; white-space:nowrap; padding:3px 9px; border-radius:999px; background:#E5EFE7; color:#165028; border:1px solid #CFE0D3; }
   .tk-head.is-full{ background:#F6EBD3; color:#8A6416; border-color:#E8D3A6; }
   .tk-head.is-over{ background:#F7E1DB; color:#B8452F; border-color:#EBC2B7; }
@@ -8439,11 +8449,48 @@ function hideLoginScreen(){
   startOverdueReminders();
   setTimeout(()=>{ backfillAgesFromForm(); }, 4000);
   startFormLiveSync();
+  setTimeout(remindCallsDue, 7000);
 }
 
 // ---------- reminder: classes that already ended but were never confirmed as taught ----------
 const OVERDUE_LOOKBACK_DAYS = 14;   // older than this is treated as history, not a reminder
 const OVERDUE_GRACE_MIN = 30;       // remind 30 min after the class's scheduled end time
+// ===== โทรแจ้งลูกค้าก่อนเรียน 1 วัน =====
+function rsLocalYMD(dt){ const d = dt || new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function daysUntilClass(dateStr){
+  if(!dateStr) return null;
+  const t = new Date(rsLocalYMD()+'T00:00:00'), c = new Date(dateStr+'T00:00:00');
+  if(isNaN(c)) return null;
+  return Math.round((c - t)/86400000);
+}
+function remindCallsDue(){
+  try{
+    if(!currentUser || !Array.isArray(sharedBookings)) return;
+    const isAdmin = currentUser === ADMIN_NAME;
+    const due = sharedBookings.filter(b=> b && !b.taught && !b.calledAt && daysUntilClass(b.date) === 1 &&
+      (isAdmin || !b.instructor || b.instructor === 'ยังไม่ระบุ' || b.instructor === currentUser));
+    if(!due.length) return;
+    const names = due.slice(0,4).map(b=> b.customerName || 'ไม่ระบุชื่อ').join(', ') + (due.length>4?` และอีก ${due.length-4} คน`:'');
+    rsToast(`📞 พรุ่งนี้มีเรียน — ยังไม่ได้โทรแจ้ง <b>${due.length} คน</b><br><span style="opacity:.8">${names}</span>`, 9000);
+  }catch(e){}
+}
+function callRowHTML(b){
+  if(!b || b.taught) return '';
+  const idx = b._idx;
+  if(b.calledAt){
+    const d = new Date(b.calledAt);
+    const when = isNaN(d) ? '' : `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} น.`;
+    return `<label class="call-chk is-done"><input type="checkbox" data-called="${idx}" checked> ✅ โทรแจ้งแล้ว<span class="call-meta">${when}${b.calledBy?` · ${b.calledBy}`:''}</span></label>`;
+  }
+  const dd = daysUntilClass(b.date);
+  let tag = '', cls = '';
+  if(dd === 1){ tag = 'พรุ่งนี้เรียน · ต้องโทรวันนี้'; cls = 'is-due'; }
+  else if(dd === 0){ tag = 'เรียนวันนี้ · ยังไม่ได้โทร'; cls = 'is-late'; }
+  else if(dd !== null && dd > 1){ tag = `โทรวันที่ ${(()=>{ const x=new Date(b.date+'T00:00:00'); x.setDate(x.getDate()-1); return `${x.getDate()}/${x.getMonth()+1}`; })()}`; }
+  else if(dd !== null && dd < 0) return '';
+  return `<label class="call-chk ${cls}"><input type="checkbox" data-called="${idx}"> 📞 โทรแจ้งก่อนเรียน${tag?`<span class="call-meta">${tag}</span>`:''}</label>`;
+}
+
 function findOverdueClassGroups(){
   if(!currentUser || !Array.isArray(sharedBookings)) return [];
   const now = new Date();
@@ -9385,6 +9432,7 @@ function renderLogTab(){
           ${b.goal ? `<div class="ac-field"><b>เป้าหมาย</b> ${b.goal}</div>` : ''}
           ${b.topics ? `<div class="ac-field"><b>อยากเน้น</b> ${b.topics}</div>` : ''}
           ${b.startTime ? (()=>{ const r = bookingTimeRange(b); return `<div class="ac-field"><b>เวลาสอน</b> ${r.start}–${r.end} น.</div>`; })() : ''}
+          ${callRowHTML(b)}
           ${b.machineModel ? `<div class="ac-field"><b>รุ่นเครื่อง</b> ${b.machineModel}</div>` : ''}
           ${(()=>{
             // three states: no answer on file yet = "pending, ask in person" (neutral, not an
@@ -9422,6 +9470,7 @@ function renderLogTab(){
       <div class="tk-stub">
         ${tkHasDate ? `<span class="tk-wd">${tkWeekday}</span><span class="tk-day">${tkDay}</span><span class="tk-mo">${tkMonth}</span>` : `<span class="tk-mo">ไม่ระบุวันที่</span>`}
         <span class="tk-count">${bookings.length} คิว</span>
+        ${(()=>{ const open=bookings.filter(x=>!x.taught); if(!open.length) return ''; const c=open.filter(x=>x.calledAt).length; return `<span class="tk-call ${c===open.length?'is-done':''}">📞 โทรแล้ว<br><b>${c}/${open.length}</b></span>`; })()}
         ${(()=>{ const m={}; bookings.forEach(x=>{ m[x.courseId]=(m[x.courseId]||0)+1; }); const ks=Object.keys(m); if(ks.length<1) return ''; return `<div class="tk-cc">${ks.map(k=>{ const c=state.courses.find(c=>c.id===k); const nm=c?c.name:'ไม่ระบุคอร์ส'; const sh=nm.includes(':')?nm.split(':')[0].trim():(nm.length>10?nm.slice(0,10)+'…':nm); return `<span title="${nm}">${sh}<br><b>${m[k]}</b> คน</span>`; }).join('')}</div>`; })()}
         ${headerAvatarHTML}
       </div>
@@ -9464,6 +9513,17 @@ function renderLogTab(){
         const bookingGroup = JSON.parse(btn.dataset.confirmTaughtGroup);
         await loadRetailProducts(); // make sure the product list is fresh no matter which tab was open last
         openConfirmTaughtModal(bookingGroup);
+      };
+    });
+    container.querySelectorAll('[data-called]').forEach(chk=>{
+      chk.onclick = (e)=>e.stopPropagation();
+      chk.onchange = ()=>{
+        const bk = sharedBookings[Number(chk.dataset.called)];
+        if(!bk) return;
+        if(chk.checked){ bk.calledAt = new Date().toISOString(); bk.calledBy = currentUser || ''; }
+        else { if(!confirm('ยกเลิกสถานะ "โทรแจ้งแล้ว" ?')){ chk.checked = true; return; } delete bk.calledAt; delete bk.calledBy; }
+        saveSharedBookings();
+        renderBookingCards();
       };
     });
     container.querySelectorAll('[data-en-name]').forEach(btn=>{
