@@ -1369,6 +1369,12 @@
   .tk-wd{ font-size:12px; font-weight:500; color:rgba(239,232,214,.7); }
   .tk-day{ font-family:'Fraunces',serif; font-weight:700; font-size:40px; line-height:1; letter-spacing:-.03em; }
   .tk-mo{ font-size:12.5px; font-weight:600; color:#DCA73D; }
+  .tk-head{ flex:none; font-size:12px; font-weight:600; white-space:nowrap; padding:3px 9px; border-radius:999px; background:#E5EFE7; color:#165028; border:1px solid #CFE0D3; }
+  .tk-head.is-full{ background:#F6EBD3; color:#8A6416; border-color:#E8D3A6; }
+  .tk-head.is-over{ background:#F7E1DB; color:#B8452F; border-color:#EBC2B7; }
+  .tk-cc{ margin-top:6px; display:flex; flex-direction:column; gap:3px; align-items:center; max-width:100%; }
+  .tk-cc span{ font-size:10.5px; line-height:1.3; color:rgba(239,232,214,.85); text-align:center; word-break:break-word; }
+  .tk-cc b{ color:#DCA73D; font-size:12px; }
   .tk-count{ margin-top:8px; font-size:11.5px; color:rgba(239,232,214,.75); background:rgba(239,232,214,.08); border-radius:999px; padding:2px 9px; }
   .tk-stub .ac-header-avatar, .tk-stub .ac-header-avatar-stack{ width:44px; height:44px; margin-top:10px; font-size:18px; box-shadow:none; }
   .tk-perf{ flex:none; width:0; position:relative; border-left:2px dashed #E7DECB; }
@@ -9368,6 +9374,7 @@ function renderLogTab(){
             <select data-assign-course="${b._idx}" class="select-light" style="flex:1; min-width:0; max-width:100%;">
               ${state.courses.map(c=>`<option value="${c.id}" ${c.id===b.courseId?'selected':''}>${c.name}</option>`).join('')}
             </select>
+            ${(()=>{ const n=bookings.filter(x=>x.courseId===b.courseId && (x.startTime||'')===(b.startTime||'')).length; const c=state.courses.find(c=>c.id===b.courseId); const cap=Number(c&&c.students)||0; const st=cap? (n>cap?'is-over':(n===cap?'is-full':'')) : ''; return `<span class="tk-head ${st}" title="จำนวนผู้จองคอร์สนี้ในวันนี้">👥 ${n}${cap?`/${cap}`:''} คน</span>`; })()}
           </div>
           ${b.note ? `<div class="ac-field"><b>หมายเหตุ</b> ${b.note}</div>` : ''}
           ${b.allergy ? `<div class="ac-field" style="color:#B8452F;"><b style="color:#B8452F;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
@@ -9415,6 +9422,7 @@ function renderLogTab(){
       <div class="tk-stub">
         ${tkHasDate ? `<span class="tk-wd">${tkWeekday}</span><span class="tk-day">${tkDay}</span><span class="tk-mo">${tkMonth}</span>` : `<span class="tk-mo">ไม่ระบุวันที่</span>`}
         <span class="tk-count">${bookings.length} คิว</span>
+        ${(()=>{ const m={}; bookings.forEach(x=>{ m[x.courseId]=(m[x.courseId]||0)+1; }); const ks=Object.keys(m); if(ks.length<1) return ''; return `<div class="tk-cc">${ks.map(k=>{ const c=state.courses.find(c=>c.id===k); const nm=c?c.name:'ไม่ระบุคอร์ส'; const sh=nm.includes(':')?nm.split(':')[0].trim():(nm.length>10?nm.slice(0,10)+'…':nm); return `<span title="${nm}">${sh}<br><b>${m[k]}</b> คน</span>`; }).join('')}</div>`; })()}
         ${headerAvatarHTML}
       </div>
       <div class="tk-perf" aria-hidden="true"></div>
