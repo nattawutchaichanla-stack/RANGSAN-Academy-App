@@ -1612,6 +1612,15 @@
   .bg-actions .btn.ghost{ background:transparent; color:#EFE8D6; border-color:rgba(239,232,214,.3); }
   .bg-status{ font-size:12px; color:#E9D7AE; margin-top:6px; min-height:0; }
   @media (max-width:420px){ .bg-preview{ width:88px; } }
+  .bg-preview.is-video{ position:relative; overflow:hidden; background:#0B2A15; }
+  .bg-preview.is-video video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .bg-vid-tag{ position:absolute; left:6px; bottom:5px; font-size:10px; padding:1px 6px; border-radius:999px; background:rgba(11,42,21,.75); color:#DCA73D; }
+  .bg-actions .btn.vid{ background:transparent; color:#DCA73D; border:1px solid rgba(220,167,61,.6); }
+  .hero-x-video.is-custom-bg{ opacity:.7; display:block !important; }
+  #pageBgVideoWrap{ position:fixed; inset:0; z-index:-1; pointer-events:none; }
+  #pageBgVideoWrap video{ width:100%; height:100%; object-fit:cover; }
+  #pageBgVideoWrap::after{ content:''; position:absolute; inset:0; background:rgba(245,240,230,.84); }
+  #splashScreen.sp-custom-vid .sp-latte{ object-position:50% 50%; }
 
   /* ---------- Splash: branded, short ---------- */
   #splashScreen{ background:radial-gradient(120% 80% at 85% 0%, #165028 0%, #0B2A15 55%, #1A0F08 100%) !important; cursor:pointer; isolation:isolate; }
@@ -3431,9 +3440,25 @@ var qrcode = function() {
   var rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!seen && !rm){ var sp=document.getElementById('splashScreen'); sp.classList.add('sp-latte-mode');
     // decode the embedded latte-art clip into a blob URL now, so it is buffered by the time the finale arrives
-    try{ var raw=atob(document.getElementById('spLatteData').textContent.trim()); var buf=new Uint8Array(raw.length);
+    var useLatte=function(){ try{ var raw=atob(document.getElementById('spLatteData').textContent.trim()); var buf=new Uint8Array(raw.length);
       for(var i=0;i<raw.length;i++) buf[i]=raw.charCodeAt(i);
-      var u=URL.createObjectURL(new Blob([buf],{type:'video/mp4'})); var v=document.getElementById('spLatte'); v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.src=u; v.load(); var vb=document.getElementById('spLatteBg'); vb.src=u; vb.load(); }catch(e){} }
+      var u=URL.createObjectURL(new Blob([buf],{type:'video/mp4'})); var v=document.getElementById('spLatte'); v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.src=u; v.load(); var vb=document.getElementById('spLatteBg'); vb.src=u; vb.load(); }catch(e){} };
+    // a custom splash video chosen in "ภาพพื้นหลัง" is cached on this device (IndexedDB) — use it instead of the latte clip
+    var cid=null; try{ cid=localStorage.getItem('rangsan_bg_splash_vid'); }catch(e){}
+    if(cid && window.indexedDB){
+      window.__spVidP = new Promise(function(done){
+        var fin=false, finish=function(ok){ if(fin) return; fin=true; if(!ok) useLatte(); done(); };
+        setTimeout(function(){ finish(false); }, 1200);
+        try{ var rq=indexedDB.open('rangsan_media',1);
+          rq.onupgradeneeded=function(){ rq.result.createObjectStore('bg'); };
+          rq.onerror=function(){ finish(false); };
+          rq.onsuccess=function(){ try{ var g=rq.result.transaction('bg','readonly').objectStore('bg').get('splash');
+            g.onsuccess=function(){ var r=g.result; if(!r || r.id!==cid || !r.blob){ finish(false); return; }
+              var u=URL.createObjectURL(r.blob); var v=document.getElementById('spLatte'); v.muted=true; v.defaultMuted=true; v.setAttribute('muted',''); v.src=u; v.load(); sp.classList.add('sp-custom-vid'); finish(true); };
+            g.onerror=function(){ finish(false); }; }catch(e){ finish(false); } };
+        }catch(e){ finish(false); }
+      });
+    } else useLatte(); }
 }catch(e){} })();
 </script>
 <div id="instructorShowcase" class="showcase-hide">
@@ -5471,7 +5496,7 @@ document.getElementById('bgSettingsClose').onclick = ()=> closeModal('bgSettings
 
 /* ============================= CUSTOM BACKGROUNDS (admin) ============================= */
 const BG_SLOTS = [
-  { key:'splash', label:'หน้าเปิดแอพ (Splash)',        hint:'แทนวิดีโอตอนเปิดแอพ',        max:1600 },
+  { key:'splash', label:'หน้าเปิดแอพ (Splash)',        hint:'แทนวิดีโอตอนเปิดแอพ (ใส่ได้ทั้งรูปและวิดีโอ)',        max:1600 },
   { key:'hero',  label:'แถบด้านบน (Hero)',            hint:'แทนวิดีโอด้านบนของแอพ', max:1600 },
   { key:'login', label:'หน้าเลือกผู้ใช้และหน้ารหัส',   hint:'ตอนเลือกชื่อและกรอก PIN',       max:1400 },
   { key:'page',  label:'พื้นหลังทั้งแอพ',              hint:'แสดงจางๆ ด้านหลังการ์ดทุกแท็บ',                max:1600 },
@@ -5498,20 +5523,113 @@ async function loadCustomBackgrounds(){
     })(),
   ]);
   cacheSplashBackground();
+  loadBgVideos();
 }
 // the splash is only on screen 1-3s, often before shared data finishes loading — keep a per-device
 // copy so a custom splash image can appear from the very first frame on the next open
 function cacheSplashBackground(){
   try{
-    if(customBackgrounds.splash) localStorage.setItem('rangsan_bg_splash', customBackgrounds.splash);
+    if(customBackgrounds.splash && !isBgVideo(customBackgrounds.splash)) localStorage.setItem('rangsan_bg_splash', customBackgrounds.splash);
     else localStorage.removeItem('rangsan_bg_splash');
     localStorage.setItem('rangsan_bg_splash_motion', bgMotion.splash || 'zoom');
   }catch(e){ /* storage full — the splash just falls back to the video, nothing breaks */ }
 }
+// ---- background videos: chunked into shared rows, cached per device in IndexedDB ----
+const BG_VIDEO_SLOTS = ['splash','hero','login','page'];
+const BG_VIDEO_MAX_MB = 8;
+const BG_CHUNK = 600000;
+const bgVideoUrls = {};
+const isBgVideo = v => typeof v === 'string' && v.startsWith('vid:');
+function parseBgVideo(v){ const p = String(v).split(':'); return { id:p[1], n:Number(p[2])||0, mime:decodeURIComponent(p[3]||'video/mp4') }; }
+function bgIdb(){
+  return new Promise((ok, no)=>{
+    if(!window.indexedDB) return no(new Error('no idb'));
+    const rq = indexedDB.open('rangsan_media', 1);
+    rq.onupgradeneeded = ()=> rq.result.createObjectStore('bg');
+    rq.onsuccess = ()=> ok(rq.result); rq.onerror = ()=> no(rq.error);
+  });
+}
+async function bgIdbGet(key){ try{ const db = await bgIdb(); return await new Promise(ok=>{ const g = db.transaction('bg','readonly').objectStore('bg').get(key); g.onsuccess = ()=> ok(g.result); g.onerror = ()=> ok(null); }); }catch(e){ return null; } }
+async function bgIdbPut(key, val){ try{ const db = await bgIdb(); await new Promise(ok=>{ const t = db.transaction('bg','readwrite'); t.objectStore('bg').put(val, key); t.oncomplete = ok; t.onerror = ok; }); }catch(e){} }
+function b64ToBlob(b64, mime){ const raw = atob(b64); const buf = new Uint8Array(raw.length); for(let i=0;i<raw.length;i++) buf[i] = raw.charCodeAt(i); return new Blob([buf], {type:mime}); }
+async function getBgVideoBlob(slot, meta){
+  const hit = await bgIdbGet(slot);
+  if(hit && hit.id === meta.id && hit.blob) return hit.blob;
+  const parts = await Promise.all([...Array(meta.n)].map((_,i)=> window.storage.get(`shared_bg_${slot}_${meta.id}_${i}`, true).then(r=> (r && r.value) || '')));
+  if(parts.some(x=>!x)) throw new Error('video chunk missing');
+  const blob = b64ToBlob(parts.join(''), meta.mime);
+  await bgIdbPut(slot, { id:meta.id, blob });
+  return blob;
+}
+async function loadBgVideos(){
+  for(const slot of BG_VIDEO_SLOTS){
+    const v = customBackgrounds[slot];
+    if(!isBgVideo(v)){ if(bgVideoUrls[slot]){ URL.revokeObjectURL(bgVideoUrls[slot].url); delete bgVideoUrls[slot]; } continue; }
+    const meta = parseBgVideo(v);
+    if(bgVideoUrls[slot] && bgVideoUrls[slot].id === meta.id) continue;
+    try{ const blob = await getBgVideoBlob(slot, meta); bgVideoUrls[slot] = { id:meta.id, url:URL.createObjectURL(blob) }; }
+    catch(e){ console.error('load background video failed', slot, e); }
+  }
+  applyBgVideos();
+}
+function playQuiet(v){ v.muted = true; v.defaultMuted = true; v.setAttribute('muted',''); v.loop = true; v.playsInline = true; v.setAttribute('playsinline',''); const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }
+function applyBgVideos(){
+  const set = (vid, slot, fallbackSrc)=>{
+    if(!vid) return;
+    const cur = bgVideoUrls[slot];
+    const want = cur ? cur.url : fallbackSrc;
+    if(vid.dataset.bgSrc !== want){ vid.dataset.bgSrc = want; vid.src = want; vid.load(); }
+    vid.classList.toggle('is-custom-bg', !!cur);
+    if(cur) playQuiet(vid);
+  };
+  // the built-in clip (rangsan-splash.mp4) removes itself when the file is not deployed, so make a player when needed
+  const ensure = (host, cls, slot)=>{
+    const hostEl = document.getElementById(host);
+    if(!hostEl) return;
+    let v = hostEl.querySelector('video.'+cls.split(' ').pop());
+    if(bgVideoUrls[slot]){
+      if(!v){ v = document.createElement('video'); v.className = cls; v.setAttribute('aria-hidden','true'); v.dataset.made = '1'; hostEl.prepend(v); }
+      set(v, slot, '');
+    } else if(v && v.classList.contains('is-custom-bg')){
+      if(v.dataset.made){ v.pause(); v.remove(); }
+      else { v.classList.remove('is-custom-bg'); v.dataset.bgSrc = ''; v.src = 'rangsan-splash.mp4'; }
+    }
+  };
+  ensure('heroX', 'hero-x-video', 'hero');
+  ensure('loginScreen', 'hero-x-video login-video', 'login');
+  let pv = document.getElementById('pageBgVideo');
+  if(bgVideoUrls.page){
+    if(!pv){ const w = document.createElement('div'); w.id = 'pageBgVideoWrap'; w.innerHTML = '<video id="pageBgVideo" muted loop playsinline webkit-playsinline aria-hidden="true"></video>'; document.body.prepend(w); pv = document.getElementById('pageBgVideo'); }
+    set(pv, 'page', '');
+  } else if(pv){ pv.pause(); pv.parentNode.remove(); }
+  try{
+    if(bgVideoUrls.splash) localStorage.setItem('rangsan_bg_splash_vid', bgVideoUrls.splash.id);
+    else localStorage.removeItem('rangsan_bg_splash_vid');
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) document.querySelectorAll('video.is-custom-bg').forEach(v=>{ if(v.offsetParent !== null || v.id==='pageBgVideo'){ const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); } }); });
+function readFileB64(file){ return new Promise((ok,no)=>{ const r = new FileReader(); r.onload = ()=> ok(String(r.result).split(',')[1] || ''); r.onerror = ()=> no(r.error); r.readAsDataURL(file); }); }
+async function clearBgVideoChunks(slot, oldVal){
+  if(!isBgVideo(oldVal)) return;
+  const m = parseBgVideo(oldVal);
+  for(let i=0;i<m.n;i++){ try{ await window.storage.set(`shared_bg_${slot}_${m.id}_${i}`, '', true); }catch(e){} }
+}
+async function uploadBgVideo(slot, file, onProgress){
+  const b64 = await readFileB64(file);
+  const id = Date.now().toString(36);
+  const n = Math.ceil(b64.length / BG_CHUNK);
+  for(let i=0;i<n;i++){
+    onProgress && onProgress(i, n);
+    await window.storage.set(`shared_bg_${slot}_${id}_${i}`, b64.slice(i*BG_CHUNK, (i+1)*BG_CHUNK), true);
+  }
+  const mime = file.type || 'video/mp4';
+  await bgIdbPut(slot, { id, blob:file.slice(0, file.size, mime) });
+  return `vid:${id}:${n}:${encodeURIComponent(mime)}`;
+}
 function applyCustomBackgrounds(){
   let el = document.getElementById('customBgStyle');
   if(!el){ el = document.createElement('style'); el.id = 'customBgStyle'; document.head.appendChild(el); }
-  const u = k => customBackgrounds[k] ? `url("${customBackgrounds[k]}")` : '';
+  const u = k => (customBackgrounds[k] && !isBgVideo(customBackgrounds[k])) ? `url("${customBackgrounds[k]}")` : '';
   const ANIM = { zoom:'rsMoZoom 9s ease-in-out infinite alternate', pan:'rsMoPan 11s ease-in-out infinite alternate', float:'rsMoFloat 6s ease-in-out infinite alternate', none:'none' };
   // a separate oversized layer behind the content carries the image so it can move without exposing edges
   const layer = (sel, img, z, motion, overlay) => `${sel}::before{ content:''; position:absolute; inset:-8%; z-index:${z}; pointer-events:none;
@@ -5536,18 +5654,26 @@ function renderBgSettings(){
   const list = document.getElementById('bgSettingsList');
   if(!list) return;
   list.innerHTML = BG_SLOTS.map(slot=>{
-    const img = customBackgrounds[slot.key];
+    const raw = customBackgrounds[slot.key];
+    const isVid = isBgVideo(raw);
+    const img = raw;
+    const canVid = BG_VIDEO_SLOTS.includes(slot.key);
+    const vurl = isVid && bgVideoUrls[slot.key] ? bgVideoUrls[slot.key].url : '';
     return `
     <div class="bg-row" data-bg-slot="${slot.key}">
-      <div class="bg-preview ${img?'':'is-default'} ${img?'mo-'+(bgMotion[slot.key]||'none'):''}" ${img?`style="background-image:url('${img}')"`:''}>${img?'':'แบบเดิม'}</div>
+      ${isVid
+        ? `<div class="bg-preview is-video">${vurl ? `<video src="${vurl}" muted autoplay loop playsinline webkit-playsinline></video>` : 'กำลังโหลดวิดีโอ...'}<span class="bg-vid-tag">▶ วิดีโอ</span></div>`
+        : `<div class="bg-preview ${img?'':'is-default'} ${img?'mo-'+(bgMotion[slot.key]||'none'):''}" ${img?`style="background-image:url('${img}')"`:''}>${img?'':'แบบเดิม'}</div>`}
       <div class="bg-info">
         <div class="bg-label">${slot.label}</div>
         <div class="bg-hint">${slot.hint}</div>
         <div class="bg-actions">
           <label class="btn small">${img?'เปลี่ยนรูป':'เลือกรูป'}<input type="file" accept="image/*" data-bg-file="${slot.key}" hidden></label>
+          ${canVid ? `<label class="btn small vid">🎬 ${isVid?'เปลี่ยนวิดีโอ':'ใส่วิดีโอ'}<input type="file" accept="video/*" data-bg-file="${slot.key}" hidden></label>` : ''}
           ${img?`<button type="button" class="btn small ghost" data-bg-remove="${slot.key}">ลบ กลับเป็นแบบเดิม</button>`:''}
         </div>
-        ${img ? `<div class="bg-motion" role="radiogroup" aria-label="ลักษณะการขยับ">${BG_MOTIONS.map(m=>`<button type="button" role="radio" aria-checked="${(bgMotion[slot.key]||'none')===m.key}" class="bg-motion-chip ${(bgMotion[slot.key]||'none')===m.key?'on':''}" data-bg-motion="${slot.key}" data-motion="${m.key}">${m.label}</button>`).join('')}</div>` : ''}
+        ${isVid ? `<div class="bg-hint" style="margin-top:8px;">วิดีโอเล่นวนอัตโนมัติ ไม่มีเสียง${slot.key==='splash'?' · หน้าเปิดแอพเล่นได้ไม่เกิน 9 วินาที':''} · เครื่องอื่นจะโหลดครั้งแรกครั้งเดียว</div>` : ''}
+        ${img && !isVid ? `<div class="bg-motion" role="radiogroup" aria-label="ลักษณะการขยับ">${BG_MOTIONS.map(m=>`<button type="button" role="radio" aria-checked="${(bgMotion[slot.key]||'none')===m.key}" class="bg-motion-chip ${(bgMotion[slot.key]||'none')===m.key?'on':''}" data-bg-motion="${slot.key}" data-motion="${m.key}">${m.label}</button>`).join('')}</div>` : ''}
         <div class="bg-status" data-bg-status="${slot.key}" aria-live="polite"></div>
       </div>
     </div>`;
@@ -5559,12 +5685,32 @@ function renderBgSettings(){
       if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่เปลี่ยนภาพพื้นหลังได้`); return; }
       const slot = BG_SLOTS.find(s=>s.key===key);
       const status = list.querySelector(`[data-bg-status="${key}"]`);
+      const old = customBackgrounds[key];
+      if((file.type||'').startsWith('video/') || /\.(mp4|mov|m4v|webm)$/i.test(file.name||'')){
+        if(file.size > BG_VIDEO_MAX_MB*1024*1024){ if(status) status.textContent = `วิดีโอใหญ่เกินไป (${(file.size/1048576).toFixed(1)} MB) — ใช้คลิปสั้นๆ ไม่เกิน ${BG_VIDEO_MAX_MB} MB`; inp.value=''; return; }
+        try{
+          const meta = await uploadBgVideo(key, file, (i,n)=>{ if(status) status.textContent = `กำลังอัปโหลดวิดีโอ ${Math.round(i/n*100)}%`; });
+          await window.storage.set('shared_bg_'+key, meta, true);
+          customBackgrounds[key] = meta;
+          clearBgVideoChunks(key, old);
+          if(key==='splash') cacheSplashBackground();
+          applyCustomBackgrounds();
+          await loadBgVideos();
+          renderBgSettings();
+          flashSaved();
+        }catch(e){
+          console.error('background video upload failed', e);
+          if(status) status.textContent = 'อัปโหลดวิดีโอไม่สำเร็จ ลองคลิปที่สั้นลง หรือเช็คอินเทอร์เน็ตแล้วลองอีกครั้ง';
+        }
+        return;
+      }
       if(status) status.textContent = 'กำลังอัปโหลด...';
       try{
         let data = await resizeImageFile(file, slot.max, 0.72);
         if(data.length > 900000) data = await resizeImageFile(file, Math.round(slot.max*0.7), 0.62); // keep each shared row reasonably small
         await window.storage.set('shared_bg_'+key, data, true);
         customBackgrounds[key] = data;
+        clearBgVideoChunks(key, old); loadBgVideos();
         if(key==='splash') cacheSplashBackground();
         applyCustomBackgrounds();
         renderBgSettings();
@@ -5592,8 +5738,10 @@ function renderBgSettings(){
       if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่เปลี่ยนภาพพื้นหลังได้`); return; }
       const key = btn.dataset.bgRemove;
       try{
+        const old = customBackgrounds[key];
         await window.storage.set('shared_bg_'+key, '', true);
         customBackgrounds[key] = '';
+        clearBgVideoChunks(key, old); loadBgVideos();
         if(key==='splash') cacheSplashBackground();
         applyCustomBackgrounds();
         renderBgSettings();
@@ -12060,6 +12208,7 @@ function setupVideoPausing(){
     const goFinal = (skipping)=>{
       if(splash.classList.contains('sp-final')) return;
       scenes.forEach(sc=> sc.classList.remove('on')); splash.classList.add('sp-final'); splash.dataset.scene = 'final';
+      if(skipping !== true && window.__spVidP && !window.__spVidDone){ window.__spVidP.then(()=>{ window.__spVidDone = true; if(!splash.classList.contains('splash-hide')){ splash.classList.remove('sp-final'); goFinal(); } }); return; }
       const v = document.getElementById('spLatte');
       if(skipping !== true && playStory && v && v.src){
         latteState = 'playing';
