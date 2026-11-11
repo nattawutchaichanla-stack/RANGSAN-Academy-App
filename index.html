@@ -2094,6 +2094,30 @@
   #custBook .cb-form .cb-other{ grid-column:1 / -1; align-items:center; }
   #custBook .cb-form [data-q="consent"] .cb-opts, #custBook .cb-form [data-q="ackLang"] .cb-opts{ grid-template-columns:repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
   #custBook .cb-sum{ max-width:34em; }
+  /* ---------- slide-by-slide form ---------- */
+  .cb-stepper{ margin:0 0 14px; }
+  .cbs-dots{ display:flex; align-items:center; justify-content:center; gap:0; }
+  .cbs-dots i{ flex:1; max-width:34px; height:2px; background:#E7DECB; }
+  .cbs-dot{ all:unset; width:28px; height:28px; border-radius:50%; text-align:center; line-height:28px; font-size:12.5px; font-weight:700; background:#FFFDF8; border:1.5px solid #E7DECB; color:#A89A80; cursor:pointer; flex:none; }
+  .cbs-dot:disabled{ cursor:default; }
+  .cbs-dot.done{ background:#165028; border-color:#165028; color:#DCA73D; }
+  .cbs-dot.on{ background:#DCA73D; border-color:#DCA73D; color:#1A0F08; box-shadow:0 0 0 4px rgba(220,167,61,.25); }
+  .cbs-title{ text-align:center; margin-top:8px; font-size:13px; color:#7A6F5E; } .cbs-title b{ color:#0B2A15; font-size:15px; }
+  #custBook.cb-mode-form .cb-wrap > .cb-card:not(.cb-step3), #custBook.cb-mode-form .cb-gonext, #custBook.cb-mode-form .cb-cover{ display:none; }
+  #custBook:not(.cb-mode-form) .cb-step3{ display:none; }
+  #custBook:not(.cb-mode-form).is-wide .cb-wrap{ max-width:520px; }
+  .cb-gonext{ margin:-2px 0 14px; } .cb-gonext .cb-submit{ display:block; width:100%; box-sizing:border-box; }
+  .cb-pay-wrap > *, #custBook .cb-step3 .cb-form{ min-width:0; }
+  #custBook .cb-step3 .cb-form{ width:100%; }
+  .cbw-viewport{ overflow:hidden; width:100%; transition:height .35s ease; }
+  .cbw-track{ display:flex; align-items:flex-start; transition:transform .45s cubic-bezier(.22,.8,.3,1); }
+  .cbw-slide{ flex:0 0 100%; min-width:0; display:flex; flex-direction:column; gap:12px; padding:2px 2px 6px; box-sizing:border-box; }
+  .cbw-h{ font-family:'FC Jong Jaroen','Sarabun',sans-serif; font-size:21px; color:#165028; margin-bottom:2px; }
+  .cbw-nav{ display:flex; gap:10px; align-items:center; margin-top:8px; }
+  .cbw-back{ all:unset; cursor:pointer; padding:13px 16px; border-radius:999px; border:1px solid #C9BFAE; color:#3A3226; font-weight:600; font-size:15px; }
+  .cbw-next{ all:unset; cursor:pointer; flex:1; text-align:center; padding:14px; border-radius:999px; background:#165028; color:#EFE8D6; font-weight:700; font-size:16px; }
+  .cbw-nav .cb-submit{ flex:1; }
+  #custBook .cb-step3 .cb-form{ gap:0; }
   .cb-submit{ opacity:.75; } .cb-submit.is-ready{ opacity:1; box-shadow:0 10px 24px -10px rgba(220,167,61,.9); }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
@@ -12913,6 +12937,133 @@ function cbPassBind(form, root){
   const slipLab = form.querySelector('.cb-file'); if(slipLab){ slipLab.addEventListener('mouseenter', ()=> place('slip')); slipLab.addEventListener('click', ()=> place('slip')); }
   update();
 }
+// ---- step-by-step slides for the booking form ----
+const CB_SLIDES = [
+  { t:'ข้อมูลส่วนตัว',        keys:['heard','name','nameEn','gender','age'] },
+  { t:'อาชีพและการติดต่อ',     keys:['occupation','income','lineId','phone','travelFrom','qty','cbExtra'] },
+  { t:'พื้นฐานกาแฟ',          keys:['background','equipment','machine','milk'] },
+  { t:'เป้าหมายการเรียน',      keys:['goals','focus'] },
+  { t:'ชำระเงินและยืนยัน',     keys:['slip','ackLang','consent','note','sum','submit'] },
+];
+function cbSnapForm(form){
+  const v = {};
+  form.querySelectorAll('input, select, textarea').forEach(el=>{
+    if(!el.name || el.type === 'file') return;
+    if(el.type === 'radio' || el.type === 'checkbox'){ if(el.checked) (v[el.name] = v[el.name] || []).push(el.value); }
+    else v[el.name] = el.value;
+  });
+  return { v, step: form.__step || 0, file: (form.querySelector('input[name=slip]')||{}).files };
+}
+function cbRestoreForm(form, snap){
+  const qty = form.querySelector('select[name=qty]');
+  if(qty && snap.v.qty){ qty.value = snap.v.qty; qty.dispatchEvent(new Event('change', {bubbles:true})); }
+  form.querySelectorAll('input, select, textarea').forEach(el=>{
+    if(!el.name || el.type === 'file' || !(el.name in snap.v)) return;
+    if(el.type === 'radio' || el.type === 'checkbox') el.checked = snap.v[el.name].includes(el.value);
+    else el.value = snap.v[el.name];
+  });
+  try{ if(snap.file && snap.file.length){ const dt = new DataTransfer(); [...snap.file].forEach(f=> dt.items.add(f)); form.querySelector('input[name=slip]').files = dt.files; } }catch(e){}
+  form.__restoreStep = snap.step;
+  form.dispatchEvent(new Event('input', {bubbles:true}));
+}
+function cbWizard(root, st, form){
+  const wrap = root.querySelector('.cb-wrap');
+  const onForm = !!form && st.step >= 1;
+  root.classList.toggle('cb-mode-form', onForm);
+  // stepper (shown on both the date page and the form slides)
+  const steps = ['วันเรียน'].concat(CB_SLIDES.map(x=> x.t));
+  const bar = document.createElement('div'); bar.className = 'cb-stepper'; bar.id = 'cbStepper';
+  const firstCard = wrap.querySelector('.cb-card'); if(!firstCard) return;
+  firstCard.before(bar);
+  const paint = i=>{
+    bar.innerHTML = `<div class="cbs-dots">${steps.map((t,k)=>`<button type="button" class="cbs-dot ${k<i?'done':''} ${k===i?'on':''}" data-step="${k}" ${k>i && !(form && k<= (form.__maxStep||1)) ? 'disabled' : ''} aria-label="${t}">${k<i?'✓':k+1}</button>`).join('<i></i>')}</div>
+      <div class="cbs-title">ขั้นตอน ${i+1}/${steps.length} · <b>${steps[i]}</b></div>`;
+    bar.querySelectorAll('[data-step]').forEach(b=> b.onclick = ()=>{ const k = +b.dataset.step; if(k === 0){ st.step = 0; cbWizard.reflow(root, st, form); } else if(form){ st.step = 1; cbWizard.reflow(root, st, form); form.__goSlide(k-1); } });
+  };
+  const toForm = root.querySelector('#cbToForm');
+  if(toForm) toForm.onclick = ()=>{ st.step = 1; cbWizard.reflow(root, st, form); form.__goSlide(form.__step || 0); window.scrollTo({top:0, behavior:'smooth'}); };
+  if(!form){ paint(0); return; }
+  // group the form's children into slides
+  if(!form.__slidesBuilt){
+    const kids = [...form.children];
+    const keyOf = el=>{
+      if(el.dataset && el.dataset.q) return el.dataset.q === 'heard' ? 'heard' : el.dataset.q;
+      if(el.id === 'cbExtra') return 'cbExtra';
+      if(el.classList.contains('cb-sum')) return 'sum';
+      if(el.classList.contains('cb-submit') || el.classList.contains('cb-note')) return 'submit';
+      const inp = el.querySelector && el.querySelector('input[name],select[name],textarea[name]');
+      return inp ? inp.name : null;
+    };
+    const track = document.createElement('div'); track.className = 'cbw-track';
+    const slides = CB_SLIDES.map((sd, i)=>{ const d = document.createElement('div'); d.className = 'cbw-slide'; d.dataset.slide = i; d.innerHTML = `<div class="cbw-h">${sd.t}</div>`; track.appendChild(d); return d; });
+    let cur = 0;
+    kids.forEach(el=>{
+      const k = keyOf(el);
+      const gi = k ? CB_SLIDES.findIndex(sd=> sd.keys.includes(k) || sd.keys.includes(k.replace(/^p\d+_/, ''))) : -1;
+      if(gi > cur) cur = gi;
+      slides[cur].appendChild(el);
+    });
+    slides.forEach((sl, i)=>{
+      const nav = document.createElement('div'); nav.className = 'cbw-nav';
+      nav.innerHTML = `<button type="button" class="cbw-back">‹ ${i===0?'เปลี่ยนวัน':'ย้อนกลับ'}</button>${i < slides.length-1 ? `<button type="button" class="cbw-next">ถัดไป ›</button>` : ''}`;
+      if(i === slides.length-1){ const sb = sl.querySelector('.cb-submit'); if(sb){ nav.appendChild(sb); } }
+      sl.appendChild(nav);
+    });
+    const vp = document.createElement('div'); vp.className = 'cbw-viewport'; vp.appendChild(track);
+    form.appendChild(vp);
+    form.__slidesBuilt = true;
+    form.__slides = slides;
+    form.__maxStep = 1;
+    const fit = ()=>{ const sl = slides[form.__step||0]; if(sl) vp.style.height = sl.offsetHeight + 'px'; };
+    form.__fit = fit;
+    form.__slideOf = el=>{ const sl = el.closest('.cbw-slide'); return sl ? +sl.dataset.slide : 0; };
+    const missIn = sl=>{
+      let miss = null;
+      sl.querySelectorAll('.cb-miss').forEach(e=> e.classList.remove('cb-miss'));
+      sl.querySelectorAll('input[required]').forEach(inp=>{ if(!inp.value.trim()){ const l = inp.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
+      sl.querySelectorAll('.cb-q[data-req]').forEach(q=>{ if(!q.querySelector('input:checked')){ q.classList.add('cb-miss'); miss = miss || q; } });
+      const ph = sl.querySelector('input[name=phone]'); if(!miss && ph && rsNormPhone(ph.value).length < 9){ miss = ph.closest('label'); miss.classList.add('cb-miss'); }
+      return miss;
+    };
+    form.__goSlide = i=>{
+      i = Math.max(0, Math.min(slides.length-1, i));
+      form.__step = i; form.__maxStep = Math.max(form.__maxStep||1, i+1);
+      track.style.transform = `translateX(${-i*100}%)`;
+      slides.forEach((sl,k)=> sl.setAttribute('aria-hidden', k!==i));
+      paint(i+1); fit();
+      const top = root.querySelector('#cbStepper'); if(top && top.getBoundingClientRect().top < 0) top.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    slides.forEach((sl, i)=>{
+      sl.querySelector('.cbw-back').onclick = ()=>{ if(i === 0){ st.step = 0; cbWizard.reflow(root, st, form); window.scrollTo({top:0, behavior:'smooth'}); } else form.__goSlide(i-1); };
+      const nx = sl.querySelector('.cbw-next');
+      if(nx) nx.onclick = ()=>{ const m = missIn(sl); if(m){ fit(); m.scrollIntoView({behavior:'smooth', block:'center'}); return; } form.__goSlide(i+1); };
+    });
+    // swipe left/right
+    let sx = null, sy = null;
+    vp.addEventListener('touchstart', e=>{ sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+    vp.addEventListener('touchend', e=>{
+      if(sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+      if(Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+      const i = form.__step || 0;
+      if(dx < 0){ const nx = slides[i].querySelector('.cbw-next'); if(nx) nx.click(); } else if(i > 0) form.__goSlide(i-1);
+    }, {passive:true});
+    form.addEventListener('input', ()=> requestAnimationFrame(fit));
+    form.addEventListener('change', ()=> requestAnimationFrame(fit));
+    window.addEventListener('resize', fit);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  }
+  if(form.__restoreStep){ form.__step = form.__restoreStep; form.__maxStep = Math.max(form.__maxStep||1, form.__step+1); }
+  cbWizard.reflow(root, st, form);
+  form.__goSlide(form.__step || 0);
+  if(!onForm) paint(0);
+}
+cbWizard.reflow = (root, st, form)=>{
+  const onForm = !!form && st.step >= 1;
+  root.classList.toggle('cb-mode-form', onForm);
+  if(onForm && form.__goSlide){ form.__goSlide(form.__step || 0); }
+  else { const bar = root.querySelector('#cbStepper'); if(bar){ const dots = bar.querySelectorAll('.cbs-dot'); dots.forEach((d,k)=>{ d.classList.toggle('on', k===0); d.classList.remove('done'); }); const t = bar.querySelector('.cbs-title'); if(t) t.innerHTML = `ขั้นตอน 1/${dots.length} · <b>วันเรียน</b>`; } }
+  if(form && form.__fit) requestAnimationFrame(form.__fit);
+};
 function cbExtraPersonHTML(n){
   return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
     <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
@@ -12937,7 +13088,7 @@ async function startCustomerBooking(param){
   try{ await Promise.all([loadSharedBookings(), loadSharedBusy()]); }
   catch(e){ bootOff(); root.innerHTML = `<div class="cb-wrap"><div class="cb-card"><h2>โหลดตารางไม่สำเร็จ</h2><p>กรุณาลองเปิดลิงค์ใหม่อีกครั้ง</p></div></div>`; return; }
   const bookable = cbOpenCourses();
-  const st = { cid: (param && param !== 'all' && bookable.some(c=> c.id === param)) ? param : '', date:'', time:'', ym:null, done:null };
+  const st = { step:0, cid: (param && param !== 'all' && bookable.some(c=> c.id === param)) ? param : '', date:'', time:'', ym:null, done:null };
   // pictures load in the background; the calendar shows first
   loadCbImages(['bg','cover','qr','qrNote'].concat(state.courses.map(c=> 'course_'+c.id))).then(()=>{ const f = document.querySelector('#cbForm'); if(!f || !f.dataset.touched) render(); }).catch(()=>{});
   const now = new Date(); now.setDate(now.getDate()+CB_LEAD_DAYS);
@@ -12985,19 +13136,20 @@ async function startCustomerBooking(param){
       <div class="cb-card">
         ${cbImg['course_'+st.cid] ? `<img class="cb-course-img" src="${cbImg['course_'+st.cid]}" alt="">` : ''}
         <div class="cb-course-line"><span>คอร์สที่เลือก</span><b>${cbEsc(cbShortName(c))}</b>${!bookable.some(x=> x.id === param)?`<button type="button" class="cb-link" id="cbChange">เปลี่ยนคอร์ส</button>`:''}</div>
-        <h2>1. เลือกวันเรียน</h2>
+        <h2>เลือกวันเรียน</h2>
         <div class="cb-cal-nav"><button type="button" id="cbPrev" ${curYM<=minYM?'disabled':''}>‹</button><b>${monthNames[m]} ${y+543}</b><button type="button" id="cbNext" ${curYM>=maxYM?'disabled':''}>›</button></div>
         <div class="cb-dow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(x=>`<span>${x}</span>`).join('')}</div>
         <div class="cb-grid">${cells}</div>
         ${anyOpen ? '' : `<p class="cb-note">เดือนนี้ไม่มีวันว่างแล้ว ลองกด › ดูเดือนถัดไป</p>`}
         <div class="cb-legend"><span class="lg-open"></span>ว่าง เลือกได้ <span class="lg-full"></span>มีผู้จองแล้ว/เต็ม <span class="lg-off"></span>ปิด</div>
       </div>
-      ${st.date ? `<div class="cb-card">
-        <h2>2. ${rounds ? 'เลือกรอบ' : 'ยืนยันวัน'}</h2>
+      ${st.date ? `<div class="cb-card cb-datecard">
+        <h2>${rounds ? 'เลือกรอบเวลา' : 'วันที่เลือก'}</h2>
         <div class="cb-picked">📅 ${dateTh}</div>
         ${rounds ? `<div class="cb-rounds">${rounds.map(r=>`<button type="button" class="cb-round ${st.time===r.time?'is-sel':''}" ${r.left>0?`data-t="${r.time}"`:'disabled'}>${r.time}–${addMinutesToTime(r.time, courseDurationMin(st.cid)||90)} น.<small>${r.left>0?`เหลือ ${r.left} ที่`:'เต็ม'}</small></button>`).join('')}</div>` : ''}
       </div>` : ''}
-      ${ready ? `<div class="cb-card cb-step3"><h2>3. ข้อมูลผู้เรียน</h2>
+      ${ready ? `<div class="cb-gonext"><button type="button" class="cb-submit is-ready" id="cbToForm">ถัดไป · กรอกข้อมูลผู้เรียน ›</button></div>` : ''}
+      ${ready ? `<div class="cb-card cb-step3">
         <div class="cb-pay-wrap"><aside class="cb-pass-col">${cbPassHTML(c, st)}</aside>
         <form id="cbForm" class="cb-form" autocomplete="on" novalidate>
           ${cbRadio('heard','ช่องทางที่รู้จักเรา',['Facebook','Instagram','Tiktok','Youtube'],true)}
@@ -13032,10 +13184,11 @@ async function startCustomerBooking(param){
     root.querySelector('#cbPrev').onclick = ()=>{ const t = new Date(y, m-1, 1); st.ym = {y:t.getFullYear(), m:t.getMonth()}; render(); };
     root.querySelector('#cbNext').onclick = ()=>{ const t = new Date(y, m+1, 1); st.ym = {y:t.getFullYear(), m:t.getMonth()}; render(); };
     root.querySelectorAll('.cb-day[data-d]').forEach(b=> b.onclick = ()=>{ st.date = b.dataset.d; st.time = ''; const a = cbAvailability(st.cid, st.date); if(a.rounds){ const o = a.rounds.filter(r=> r.left>0); if(o.length===1) st.time = o[0].time; } render(); setTimeout(()=>{ const t = root.querySelectorAll('.cb-card')[1]; if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); });
-    root.querySelectorAll('.cb-round[data-t]').forEach(b=> b.onclick = ()=>{ st.time = b.dataset.t; render(); setTimeout(()=>{ const f = root.querySelector('#cbForm'); if(f) f.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); });
+    root.querySelectorAll('.cb-round[data-t]').forEach(b=> b.onclick = ()=>{ st.time = b.dataset.t; render(); });
     const form = root.querySelector('#cbForm');
     root.classList.toggle('is-wide', !!form);
     if(form) cbPassBind(form, root);
+    cbWizard(root, st, form);
     if(form){
       const sf = form.querySelector('input[name=slip]'); if(sf) sf.onchange = ()=>{ const f = sf.files[0]; root.querySelector('#cbSlipName').textContent = f ? '✅ ' + f.name : '📎 แนบรูปสลิป'; };
       form.querySelectorAll('.cb-other input[type=text]').forEach(t=> t.oninput = ()=>{ const r = t.closest('.cb-other').querySelector('input[type=radio],input[type=checkbox]'); if(t.value.trim()) r.checked = true; });
@@ -13063,7 +13216,7 @@ async function startCustomerBooking(param){
       form.querySelectorAll('input[required]').forEach(inp=>{ if(!inp.value.trim()){ const l = inp.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
       form.querySelectorAll('.cb-q[data-req]').forEach(q=>{ const n = q.dataset.q; const v = cbFormValue(form, n, true); if(!v.length){ q.classList.add('cb-miss'); miss = miss || q; } });
       if(!miss && rsNormPhone(phone).length < 9){ miss = form.querySelector('input[name=phone]').closest('label'); miss.classList.add('cb-miss'); }
-      if(miss){ miss.scrollIntoView({behavior:'smooth', block:'center'}); alert('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบ'); return; }
+      if(miss){ if(form.__goSlide) form.__goSlide(form.__slideOf(miss)); miss.scrollIntoView({behavior:'smooth', block:'center'}); alert('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบ'); return; }
       const extra = {
         heardFrom: cbFormValue(form,'heard'), gender: cbFormValue(form,'gender'), occupation: cbFormValue(form,'occupation'),
         income: cbFormValue(form,'income'), lineId: (fd.lineId||'').trim(), travelFrom: (fd.travelFrom||'').trim(),
@@ -13128,7 +13281,12 @@ async function startCustomerBooking(param){
     };
   };
   const _render = render;
-  render = ()=>{ _render(); applyBg(); };
+  render = ()=>{
+    const old = root.querySelector('#cbForm'); const snap = old ? cbSnapForm(old) : null;
+    _render();
+    const nf = root.querySelector('#cbForm'); if(snap && nf){ cbRestoreForm(nf, snap); if(nf.__goSlide && st.step >= 1) nf.__goSlide(snap.step); }
+    applyBg();
+  };
   render();
   bootOff();
 }
