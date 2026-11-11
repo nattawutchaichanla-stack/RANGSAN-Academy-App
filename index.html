@@ -2043,39 +2043,35 @@
   #custBook.is-wide .cb-wrap > .cb-card:not(.cb-step3), #custBook.is-wide .cb-wrap > .cb-cover, #custBook.is-wide .cb-wrap > header{ max-width:520px; margin-left:auto; margin-right:auto; }
   .cb-pay-wrap{ display:grid; grid-template-columns:1fr; gap:18px; }
   @media (min-width:880px){ .cb-pay-wrap{ grid-template-columns:400px 1fr; align-items:start; } .cb-pass-col{ position:sticky; top:16px; } }
-  .cb-pass{ position:relative; width:100%; max-width:400px; height:228px; margin:0 auto; transform-style:preserve-3d; transition:transform .8s; perspective:1000px; }
-  .cb-pass.flip{ transform:rotateY(180deg); }
-  .cbp-face{ position:absolute; inset:0; border-radius:20px; padding:18px 22px; color:#EFE8D6; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden;
-    background:linear-gradient(135deg, #165028 0%, #0B2A15 70%); box-shadow:0 26px 40px -16px rgba(11,42,21,.55); }
-  .cbp-face::before, .cbp-face::after{ content:''; position:absolute; border-radius:50%; filter:blur(12px); pointer-events:none; }
-  .cbp-face::before{ border:14px solid rgba(220,167,61,.55); width:260px; height:260px; left:-18%; top:-60px; }
-  .cbp-face::after{ border:14px solid rgba(239,232,214,.18); width:260px; height:260px; left:-170px; top:58%; }
-  .cbp-face > *{ position:relative; z-index:1; }
-  .cbp-back{ transform:rotateY(180deg); padding:20px 0 0; }
-  .cbp-head{ display:flex; align-items:center; justify-content:space-between; }
-  .cbp-logo{ width:118px !important; margin:0 !important; }
-  .cbp-tag{ font-size:10px; letter-spacing:.24em; color:#DCA73D; font-weight:700; }
-  .cbp-course{ margin-top:14px; font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-size:19px; line-height:1.25; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .cbp-when{ display:flex; align-items:center; gap:16px; margin-top:10px; }
-  .cbp-day{ display:flex; align-items:center; gap:6px; } .cbp-day b{ font-size:34px; line-height:1; color:#DCA73D; font-family:'Fraunces',serif; }
-  .cbp-day span{ font-size:10px; letter-spacing:.12em; line-height:1.25; color:rgba(239,232,214,.8); }
-  .cbp-time, .cbp-qty{ font-size:15px; font-weight:700; } .cbp-pass small, .cb-pass small{ display:block; font-size:9px; letter-spacing:.2em; color:rgba(239,232,214,.6); font-weight:600; }
-  .cbp-foot{ position:absolute !important; left:22px; right:22px; bottom:16px; display:flex; justify-content:space-between; gap:12px; align-items:flex-end; }
-  .cbp-holder{ min-width:0; flex:1; } .cbp-contact{ text-align:right; flex:none; }
-  #cbpName{ font-size:15px; font-weight:700; letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
-  #cbpPhone{ font-size:15px; font-weight:700; letter-spacing:.04em; color:#fff; }
-  .cb-pass .is-ph{ color:rgba(239,232,214,.45) !important; }
-  .cbp-th{ font-size:11px; color:rgba(239,232,214,.7); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:14px; }
-  .cbp-strip{ height:38px; background:#0a1f10; }
-  .cbp-back-body{ display:flex; gap:14px; align-items:center; padding:16px 22px; }
-  .cbp-back-body img{ width:104px; height:104px; object-fit:contain; background:#fff; border-radius:12px; padding:4px; flex:none; }
-  .cbp-noqr{ width:84px; height:84px; border-radius:12px; background:rgba(239,232,214,.1); display:flex; align-items:center; justify-content:center; font-size:34px; flex:none; }
-  #cbpSlip{ font-size:15px; font-weight:700; margin-top:2px; } .cbp-note{ font-size:11px; color:rgba(239,232,214,.75); margin-top:6px; line-height:1.45; }
-  .cbp-hl{ position:absolute; z-index:3; border:1.5px solid #fff; border-radius:12px; box-shadow:0 0 8px rgba(255,255,255,.8); pointer-events:none; opacity:0; transition:all .3s ease; }
-  .cbp-hl.on{ opacity:1; } .cbp-hl.back{ transform:rotateY(180deg); }
+  .cb-pass{ position:relative; display:flex; width:100%; max-width:400px; margin:0 auto; border-radius:18px; overflow:visible;
+    filter:drop-shadow(0 14px 22px rgba(11,42,21,.18)); }
+  .cbp-main{ position:relative; flex:1; min-width:0; background:#FFFDF8; border:1px solid #E7DECB; border-right:none; border-radius:18px 0 0 18px; padding:16px 16px 14px 18px;
+    background-image:radial-gradient(circle at 100% 0, transparent 10px, #FFFDF8 10.5px), radial-gradient(circle at 100% 100%, transparent 10px, #FFFDF8 10.5px);
+    background-size:100% 51%; background-position:top, bottom; background-repeat:no-repeat; }
+  .cbp-stub{ position:relative; flex:none; width:96px; background:#165028; color:#EFE8D6; border-radius:0 18px 18px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; padding:12px 6px;
+    background-image:radial-gradient(circle at 0 0, transparent 10px, #165028 10.5px), radial-gradient(circle at 0 100%, transparent 10px, #165028 10.5px);
+    background-size:100% 51%; background-position:top, bottom; background-repeat:no-repeat; }
+  .cbp-stub::before{ content:''; position:absolute; left:-1px; top:14px; bottom:14px; border-left:2px dashed #C9BFAE; }
+  .cbp-cup{ font-size:18px; margin-bottom:2px; }
+  .cbp-stub b{ font-family:'Fraunces',serif; font-size:38px; line-height:1; color:#DCA73D; }
+  .cbp-stub > span{ font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-size:17px; }
+  .cbp-seat{ margin-top:8px; font-size:12px; text-align:center; } .cbp-seat small{ display:block; font-size:10px; opacity:.7; } .cbp-seat span{ font-weight:800; font-size:15px; color:#DCA73D; }
+  .cbp-kicker{ font-size:10.5px; letter-spacing:.08em; color:#B07F1E; font-weight:700; }
+  .cbp-course{ margin-top:4px; font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-size:19px; line-height:1.25; color:#0B2A15; }
+  .cbp-row{ display:flex; flex-wrap:wrap; gap:2px 12px; margin-top:6px; font-size:12px; color:#3A3226; }
+  .cbp-line{ border-top:1px dashed #E7DECB; margin:10px 0 8px; }
+  .cbp-row2{ display:flex; gap:12px; } .cbp-holder{ flex:1; min-width:0; } .cbp-contact{ flex:none; max-width:46%; }
+  .cb-pass small{ display:block; font-size:10.5px; color:#7A6F5E; }
+  #cbpNameTh, #cbpPhone{ font-size:14.5px; font-weight:700; color:#0B2A15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cbp-sub{ font-size:11.5px; color:#7A6F5E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:15px; }
+  .cb-pass .is-ph{ color:#C9BFAE !important; font-weight:500 !important; }
+  .cbp-stamp{ display:inline-block; margin-top:8px; padding:3px 10px; border:2px solid #C9BFAE; border-radius:8px; font-size:11.5px; font-weight:800; color:#A89A80; transform:rotate(-3deg); }
+  .cbp-stamp.is-paid{ border-color:#2E7D4F; color:#2E7D4F; }
+  .cbp-hl{ position:absolute; z-index:3; border:2px solid #DCA73D; border-radius:10px; background:rgba(220,167,61,.08); pointer-events:none; opacity:0; transition:all .3s ease; }
+  .cbp-hl.on{ opacity:1; }
   .cbp-steps{ display:flex; align-items:center; gap:10px; max-width:400px; margin:10px auto 0; font-size:12px; color:#7A6F5E; }
   .cbp-bar{ flex:1; height:6px; border-radius:6px; background:#E7DECB; overflow:hidden; } .cbp-bar i{ display:block; height:100%; background:#DCA73D; border-radius:6px; transition:width .3s; }
-  @media (max-width:420px){ .cb-pass{ height:204px; } .cbp-face{ padding:14px 16px; } .cbp-foot{ left:16px; right:16px; bottom:12px; } .cbp-day b{ font-size:28px; } .cbp-course{ font-size:17px; margin-top:10px; } }
+  @media (max-width:420px){ .cbp-stub{ width:82px; } .cbp-stub b{ font-size:32px; } .cbp-course{ font-size:17px; } }
   /* inputs: taller, clearer focus (from the component) */
   #custBook .cb-form input:not([type=radio]):not([type=checkbox]):not([type=file]), #custBook .cb-form select{ height:52px; padding:0 16px; border-radius:12px; border:1px solid #C9BFAE; transition:border-color .2s, box-shadow .2s; }
   #custBook .cb-form textarea{ border-radius:12px; border:1px solid #C9BFAE; padding:12px 16px; }
@@ -12830,25 +12826,27 @@ async function loadCbImages(keys){
 // ---- live "booking pass" preview beside the form (idea from the credit-card form component) ----
 function cbPassHTML(c, st){
   const d = new Date(st.date+'T00:00:00');
-  const mon = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()];
-  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
-  const time = st.time ? `${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)}` : '10:00–17:00';
+  const dTh = d.toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const mon = d.toLocaleDateString('th-TH',{month:'short'});
+  const time = st.time ? `${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)} น.` : '10:00–17:00 น.';
   return `<div class="cb-pass" id="cbPass">
     <div class="cbp-hl" id="cbpHl"></div>
-    <section class="cbp-face cbp-front">
-      <div class="cbp-head"><div class="rs-logo cbp-logo" role="img" aria-label="RANGSAN"></div><div class="cbp-tag">BOOKING PASS</div></div>
+    <div class="cbp-main">
+      <div class="cbp-kicker">RANGSAN ACADEMY · ใบยืนยันการจองเรียน</div>
       <div class="cbp-course" data-hl="course">${cbEsc(cbShortName(c))}</div>
-      <div class="cbp-when" data-hl="date"><div class="cbp-day"><b>${d.getDate()}</b><span>${mon}<br>${dow}</span></div><div class="cbp-time"><small>TIME</small>${time}</div><div class="cbp-qty"><small>SEATS</small><span id="cbpQty">1</span></div></div>
-      <div class="cbp-foot">
-        <div class="cbp-holder" data-hl="name"><small>STUDENT</small><div id="cbpName" class="is-ph">YOUR NAME</div><div id="cbpNameTh" class="cbp-th"></div></div>
-        <div class="cbp-contact" data-hl="phone"><small>CONTACT</small><div id="cbpPhone" class="is-ph">0XX-XXX-XXXX</div><div id="cbpLine" class="cbp-th"></div></div>
+      <div class="cbp-row" data-hl="date"><span>📅 ${dTh}</span><span>⏰ ${time}</span></div>
+      <div class="cbp-line"></div>
+      <div class="cbp-row2">
+        <div class="cbp-holder" data-hl="name"><small>ผู้เรียน</small><div id="cbpNameTh" class="is-ph">ชื่อ - นามสกุล</div><div id="cbpName" class="cbp-sub"></div></div>
+        <div class="cbp-contact" data-hl="phone"><small>ติดต่อ</small><div id="cbpPhone" class="is-ph">เบอร์โทร</div><div id="cbpLine" class="cbp-sub"></div></div>
       </div>
-    </section>
-    <section class="cbp-face cbp-back">
-      <div class="cbp-strip"></div>
-      <div class="cbp-back-body" data-hl="slip">${cbImg.qr ? `<img src="${cbImg.qr}" alt="QR">` : '<div class="cbp-noqr">💳</div>'}
-        <div><small>PAYMENT</small><div id="cbpSlip">ยังไม่แนบสลิป</div>${cbImg.qrNote ? `<div class="cbp-note">${cbEsc(cbImg.qrNote).replace(/\n/g,'<br>')}</div>` : ''}</div></div>
-    </section>
+      <div class="cbp-stamp" id="cbpStamp" data-hl="slip">รอแนบสลิป</div>
+    </div>
+    <div class="cbp-stub">
+      <div class="cbp-cup">☕</div>
+      <b>${d.getDate()}</b><span>${mon}</span>
+      <div class="cbp-seat"><small>ผู้เรียน</small><span id="cbpQty">1</span> คน</div>
+    </div>
   </div>
   <div class="cbp-steps" id="cbpSteps"></div>`;
 }
@@ -12863,26 +12861,26 @@ function cbPassBind(form, root){
     if(n === 'qty') return 'date';
     return null;
   };
+  let curKey = null;
   const place = key=>{
-    pass.classList.toggle('flip', key === 'slip');
-    const t = key && pass.querySelector(`${key==='slip'?'.cbp-back':'.cbp-front'} [data-hl="${key}"]`);
+    curKey = key;
+    const t = key && pass.querySelector(`[data-hl="${key}"]`);
     if(!t){ hl.className = 'cbp-hl'; return; }
     const pr = pass.getBoundingClientRect(), tr = t.getBoundingClientRect();
-    const flipX = key === 'slip';
-    const left = flipX ? (pr.right - tr.right) : (tr.left - pr.left);
-    hl.style.cssText = `left:${left-6}px; top:${tr.top-pr.top-5}px; width:${tr.width+12}px; height:${tr.height+10}px;`;
-    hl.className = 'cbp-hl on' + (flipX ? ' back' : '');
+    hl.style.cssText = `left:${tr.left-pr.left-6}px; top:${tr.top-pr.top-4}px; width:${tr.width+12}px; height:${tr.height+8}px;`;
+    hl.className = 'cbp-hl on';
   };
-  const fmtPhone = v=>{ const d = String(v||'').replace(/\D/g,'').slice(0,10); if(!d) return ''; const p = d.length>6 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}` : d.length>3 ? `${d.slice(0,3)}-${d.slice(3)}` : d; return d.length>6 ? `${d.slice(0,3)}-•••-${d.slice(6)}` : p; };
+  const fmtPhone = v=>{ const d = String(v||'').replace(/\D/g,'').slice(0,10); if(!d) return ''; return d.length>6 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}` : d.length>3 ? `${d.slice(0,3)}-${d.slice(3)}` : d; };
   const update = ()=>{
     const fd = new FormData(form);
-    const en = String(fd.get('nameEn')||'').trim().toUpperCase(), th = String(fd.get('name')||'').trim();
-    const nm = pass.querySelector('#cbpName'); nm.textContent = en || th || 'YOUR NAME'; nm.classList.toggle('is-ph', !(en||th));
-    pass.querySelector('#cbpNameTh').textContent = en && th ? th : '';
-    const ph = fmtPhone(fd.get('phone')); const pe = pass.querySelector('#cbpPhone'); pe.textContent = ph || '0XX-XXX-XXXX'; pe.classList.toggle('is-ph', !ph);
-    const ln = String(fd.get('lineId')||'').trim(); pass.querySelector('#cbpLine').textContent = ln ? `LINE · ${ln}` : '';
+    const en = String(fd.get('nameEn')||'').trim(), th = String(fd.get('name')||'').trim();
+    const nt = pass.querySelector('#cbpNameTh'); nt.textContent = th || en || 'ชื่อ - นามสกุล'; nt.classList.toggle('is-ph', !(th||en));
+    pass.querySelector('#cbpName').textContent = th && en ? en : '';
+    const ph = fmtPhone(fd.get('phone')); const pe = pass.querySelector('#cbpPhone'); pe.textContent = ph || 'เบอร์โทร'; pe.classList.toggle('is-ph', !ph);
+    const ln = String(fd.get('lineId')||'').trim(); pass.querySelector('#cbpLine').textContent = ln ? `LINE: ${ln}` : '';
     pass.querySelector('#cbpQty').textContent = fd.get('qty') || '1';
-    const sf = form.querySelector('input[name=slip]'); pass.querySelector('#cbpSlip').textContent = sf && sf.files[0] ? '✓ แนบสลิปแล้ว' : 'ยังไม่แนบสลิป';
+    const sf = form.querySelector('input[name=slip]'); const stp = pass.querySelector('#cbpStamp'); const paid = !!(sf && sf.files[0]);
+    stp.textContent = paid ? 'แนบสลิปแล้ว ✓' : 'รอแนบสลิป'; stp.classList.toggle('is-paid', paid);
     // progress over required questions
     const req = [...form.querySelectorAll('input[required]')].map(i=> !!i.value.trim()).concat([...form.querySelectorAll('.cb-q[data-req]')].map(q=> !!q.querySelector('input:checked')));
     const done = req.filter(Boolean).length;
@@ -12890,7 +12888,9 @@ function cbPassBind(form, root){
     st.innerHTML = `<div class="cbp-bar"><i style="width:${Math.round(done/Math.max(1,req.length)*100)}%"></i></div><span>กรอกแล้ว ${done}/${req.length} ข้อ</span>`;
     const sb = form.querySelector('.cb-submit'); if(sb){ sb.classList.toggle('is-ready', done === req.length); sb.textContent = done === req.length ? 'ยืนยันการจอง' : `ยืนยันการจอง (เหลือ ${req.length-done} ข้อ)`; }
   };
-  form.addEventListener('input', update); form.addEventListener('change', update);
+  form.addEventListener('input', ()=>{ update(); requestAnimationFrame(()=> place(curKey)); }); form.addEventListener('change', ()=>{ update(); requestAnimationFrame(()=> place(curKey)); });
+  window.addEventListener('resize', ()=> place(curKey));
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=> place(curKey));
   form.addEventListener('focusin', e=> place(target(e.target)));
   form.addEventListener('focusout', ()=> setTimeout(()=>{ if(!form.contains(document.activeElement)) place(null); }, 0));
   const slipLab = form.querySelector('.cb-file'); if(slipLab){ slipLab.addEventListener('mouseenter', ()=> place('slip')); slipLab.addEventListener('click', ()=> place('slip')); }
