@@ -1908,6 +1908,7 @@
   .mp-row input{ flex:1; min-width:0; }
   .mp-profit{ font-size:13.5px; color:#EFE8D6; text-align:right; }
 
+  @media (max-width:480px){ .bk-mode-btn{ font-size:11.5px !important; padding:8px 4px !important; } }
   .bk-mode{ display:flex; gap:6px; background:rgba(239,232,214,.1); padding:4px; border-radius:999px; margin:6px 0 10px; }
   .bk-mode-btn{ all:unset; flex:1; text-align:center; cursor:pointer; padding:8px 10px; border-radius:999px; font-size:13px; font-weight:700; color:rgba(239,232,214,.75); font-family:inherit; }
   .bk-mode-btn.on{ background:#EFE8D6; color:#0B2A15; }
@@ -1916,7 +1917,93 @@
   .cal-busy{ position:absolute; left:4px; right:4px; bottom:4px; font-size:10px; font-weight:700; line-height:1.25; color:#7A2E1F; background:rgba(246,225,219,.95);
     border-radius:6px; padding:2px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
   .cal-cell.cal-busy-day{ background:repeating-linear-gradient(135deg, rgba(179,38,30,.06) 0 6px, transparent 6px 12px); }
+
+  /* ---------- customer self-booking page ---------- */
+  body.cust-mode{ background:#EFE8D6 !important; overflow:auto !important; }
+  body.cust-mode > *:not(#custBook):not(script):not(style){ display:none !important; }
+  body.cust-mode::before, body.cust-mode::after{ display:none !important; }
+  #custBook{ min-height:100vh; background:#EFE8D6; font-family:'IBM Plex Sans Thai', sans-serif; color:#0B2A15; }
+  .cb-wrap{ max-width:520px; margin:0 auto; padding:0 16px 40px; }
+  .cb-loading{ padding:80px 0; text-align:center; color:#7A6F5E; }
+  .cb-head{ background:#0B2A15; color:#EFE8D6; margin:0 -16px 16px; padding:28px 20px 22px; text-align:center; border-radius:0 0 26px 26px; }
+  .cb-brand{ font-family:'RS Script', 'Fraunces', serif; font-size:46px; line-height:1; color:#DCA73D; }
+  .cb-sub{ margin-top:6px; font-size:12px; letter-spacing:.18em; color:rgba(239,232,214,.8); }
+  .cb-card{ background:#FFFDF8; border:1px solid #E7DECB; border-radius:20px; padding:18px 16px; margin-bottom:14px; box-shadow:0 2px 10px rgba(11,42,21,.05); }
+  .cb-card h2{ font-family:'Noto Serif Thai', serif; font-size:18px; margin:0 0 12px; color:#0B2A15; }
+  .cb-courses{ display:flex; flex-direction:column; gap:10px; }
+  .cb-course{ all:unset; cursor:pointer; display:flex; flex-direction:column; gap:3px; padding:14px; border-radius:14px; border:1px solid #E7DECB; background:#fff; }
+  .cb-course b{ font-size:15px; } .cb-course span{ font-size:12.5px; color:#7A6F5E; }
+  .cb-course:active{ border-color:#DCA73D; background:#FBF4E4; }
+  .cb-course-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; padding:10px 12px; border-radius:12px; background:#F4EEDF; margin-bottom:14px; font-size:13px; }
+  .cb-course-line span{ color:#7A6F5E; } .cb-course-line b{ color:#165028; }
+  .cb-link{ all:unset; cursor:pointer; color:#B07F1E; font-weight:700; font-size:12.5px; margin-left:auto; }
+  .cb-cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .cb-cal-nav b{ font-size:15px; }
+  .cb-cal-nav button{ all:unset; cursor:pointer; width:36px; height:36px; border-radius:50%; text-align:center; line-height:36px; font-size:20px; background:#F4EEDF; }
+  .cb-cal-nav button:disabled{ opacity:.3; cursor:default; }
+  .cb-dow, .cb-grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; }
+  .cb-dow span{ text-align:center; font-size:11.5px; color:#7A6F5E; padding:4px 0; }
+  .cb-day{ all:unset; box-sizing:border-box; aspect-ratio:1/1.08; border-radius:11px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; font-size:15px; font-weight:600; }
+  .cb-day small{ font-size:9.5px; font-weight:600; }
+  .cb-day.is-open{ cursor:pointer; background:#E3F0E5; color:#165028; border:1px solid #BFDCC6; }
+  .cb-day.is-open small{ color:#2E7D4F; }
+  .cb-day.is-off{ color:#C9BFAE; }
+  .cb-day.is-full{ background:#F2ECE0; color:#A89A80; text-decoration:line-through; }
+  .cb-day.is-full small{ text-decoration:none; color:#B8452F; }
+  .cb-day.is-sel{ background:#0B2A15 !important; color:#DCA73D !important; border-color:#0B2A15; }
+  .cb-day.is-sel small{ color:#EFE8D6; }
+  .cb-legend{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin-top:12px; font-size:11.5px; color:#7A6F5E; }
+  .cb-legend span{ width:12px; height:12px; border-radius:4px; display:inline-block; margin-left:6px; }
+  .lg-open{ background:#E3F0E5; border:1px solid #BFDCC6; } .lg-full{ background:#F2ECE0; } .lg-off{ background:#fff; border:1px solid #E7DECB; }
+  .cb-picked{ font-weight:700; color:#165028; margin-bottom:10px; }
+  .cb-rounds{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .cb-round{ all:unset; cursor:pointer; text-align:center; padding:12px 8px; border-radius:14px; border:1px solid #E7DECB; font-weight:700; display:flex; flex-direction:column; gap:2px; }
+  .cb-round small{ font-weight:500; font-size:11.5px; color:#2E7D4F; }
+  .cb-round.is-sel{ background:#0B2A15; color:#DCA73D; border-color:#0B2A15; } .cb-round.is-sel small{ color:#EFE8D6; }
+  .cb-round:disabled{ opacity:.4; cursor:default; }
+  .cb-form{ display:flex; flex-direction:column; gap:12px; }
+  .cb-form label{ display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:600; color:#3A3226; }
+  .cb-form label small{ font-weight:400; color:#7A6F5E; }
+  .cb-form input, .cb-form select, .cb-form textarea{ font:inherit; font-size:16px; padding:11px 12px; border-radius:12px; border:1px solid #E7DECB; background:#fff; color:#0B2A15; }
+  .cb-form input:focus, .cb-form textarea:focus, .cb-form select:focus{ outline:2px solid #DCA73D; border-color:#DCA73D; }
+  .cb-sum{ padding:12px 14px; border-radius:12px; background:#F4EEDF; font-size:14px; line-height:1.7; font-weight:600; color:#165028; }
+  .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
+  .cb-submit:disabled{ opacity:.6; }
+  .cb-note{ font-size:12px; color:#7A6F5E; text-align:center; margin:4px 0 0; }
+  .cb-done{ text-align:center; }
+  .cb-ok{ width:64px; height:64px; margin:6px auto 10px; border-radius:50%; background:#165028; color:#DCA73D; font-size:34px; line-height:64px; }
+  .cl-ov{ position:fixed; inset:0; z-index:2000; background:rgba(11,42,21,.55); display:none; align-items:center; justify-content:center; padding:16px; }
+  .cl-box{ position:relative; width:min(520px,100%); max-height:86vh; overflow:auto; background:#0B2A15; color:#EFE8D6; border-radius:22px; padding:20px 16px; }
+  .cl-box h3{ margin:0 0 6px; font-size:17px; } .cl-hint{ font-size:12.5px; color:rgba(239,232,214,.7); margin:0 0 12px; line-height:1.5; }
+  .cl-x{ all:unset; cursor:pointer; position:absolute; top:12px; right:14px; width:32px; height:32px; text-align:center; line-height:32px; border-radius:50%; border:1px solid rgba(239,232,214,.3); }
+  .cl-row{ padding:10px 0; border-top:1px solid rgba(239,232,214,.12); }
+  .cl-name{ font-size:13.5px; font-weight:600; margin-bottom:6px; }
+  .cl-acts{ display:flex; gap:6px; flex-wrap:wrap; }
+  .cl-acts .btn{ background:#DCA73D; color:#1A0F08; text-decoration:none; } .cl-acts .btn.ghost{ background:transparent; color:#EFE8D6; border-color:rgba(239,232,214,.3); }
+  .bk-src-link{ display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; background:#E5EFE7; color:#165028; margin-left:4px; vertical-align:middle; }
   .busy-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:4px; }
+  .cal-hol-mark{ position:absolute; top:4px; right:4px; width:18px; height:18px; border-radius:50%; background:#DCA73D; color:#fff; font-size:10px; line-height:18px; text-align:center; z-index:4; box-shadow:0 0 0 2px #fff; pointer-events:none; }
+  .cal-hol-mark.is-th{ width:8px; height:8px; top:7px; right:7px; background:#C8553D; box-shadow:0 0 0 2px #fff; }
+  .cal-cell.cal-thhol .cal-daynum{ color:#C8553D; }
+  #calHolList{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin:10px 2px 4px; font-size:12px; color:#7A6F5E; }
+  #calHolList .chl-h{ font-weight:700; color:#0B2A15; width:100%; font-size:12.5px; }
+  #calHolList span{ display:inline-flex; gap:4px; align-items:center; }
+  #calHolList span::before{ content:''; width:7px; height:7px; border-radius:50%; background:#C8553D; flex:none; }
+  #calHolList span.own::before{ display:none; }
+  #calHolList b{ color:#C8553D; }
+  .cal-cell.cal-holiday .cal-daynum{ text-decoration:underline; text-decoration-color:#DCA73D; text-decoration-thickness:2px; text-underline-offset:3px; }
+  .cal-hol{ position:absolute; inset:24px 3px 4px 3px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; text-align:center; overflow:hidden; }
+  .cal-hol-ico{ font-size:20px; line-height:1; }
+  .cal-hol-t{ font-size:11px; font-weight:800; color:#8A6416; letter-spacing:.02em; }
+  .cal-hol-n{ font-size:9.5px; font-weight:600; color:#7A6F5E; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cal-hol-tag{ position:absolute; left:4px; right:4px; top:3px; margin-left:18px; font-size:9.5px; font-weight:700; color:#8A6416; background:rgba(246,235,211,.95); border-radius:6px; padding:1px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
+  .hol-row{ background:#FBF1DA !important; border-color:#E8D3A6 !important; }
+  .hol-row .busy-title{ color:#5A4210; }
+  .hol-row .busy-meta{ color:#8A6416; }
+  .hol-ico{ flex:none; width:40px; height:40px; border-radius:50%; background:#DCA73D; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .hol-quick{ display:flex; flex-wrap:wrap; gap:6px; }
+  .hol-chip{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px; color:#EFE8D6; border:1px solid rgba(239,232,214,.3); }
+  .hol-chip:active{ background:rgba(220,167,61,.25); }
   .busy-decoy{ font-size:11.5px; font-weight:600; color:#8A6416; margin-top:3px; }
   .busy-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:700; font-size:13px;
     border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.18); position:relative; filter:grayscale(.35); }
@@ -3655,10 +3742,22 @@ var qrcode = function() {
     <div class="bk-mode" role="tablist">
       <button type="button" class="bk-mode-btn on" data-mode="class">📚 จองคิวสอน</button>
       <button type="button" class="bk-mode-btn" data-mode="busy">🚫 ไม่ว่าง / มีกิจกรรม</button>
+      <button type="button" class="bk-mode-btn" data-mode="holiday">🏖 วันหยุดบริษัท</button>
     </div>
     <p class="hint" id="bkModalHint">เลือกวันที่ คอร์ส และชื่อของคุณ เพื่อลงคิวสอนล่วงหน้า</p>
     <div style="display:flex; flex-direction:column; gap:10px;">
       <input type="date" id="newBookingDate" class="pill">
+      <div id="bkHolidayFields" style="display:none; flex-direction:column; gap:10px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="font-size:12.5px; color:#EFE8D6; flex:none;">ถึงวันที่</span>
+          <input type="date" id="newHolidayEnd" class="pill" style="flex:1; min-width:0;">
+        </div>
+        <div style="font-size:12px; color:rgba(239,232,214,.7); padding:0 4px; margin-top:-4px;">หยุดวันเดียวไม่ต้องเลือก "ถึงวันที่"</div>
+        <input type="text" id="newHolidayTitle" class="pill" placeholder="ชื่อวันหยุด เช่น หยุดปีใหม่, หยุดสงกรานต์, ปิดปรับปรุงร้าน" autocomplete="off">
+        <div class="hol-quick" id="holQuick"></div>
+        <label class="bk-allday"><input type="checkbox" id="newHolidayNotifyLine" checked> 📣 แจ้งเข้ากลุ่ม LINE</label>
+        <button class="btn-arrow" id="addHolidayBtn" style="justify-content:center;">บันทึกวันหยุดบริษัท<span class="circ">🏖</span></button>
+      </div>
       <div id="bkBusyFields" style="display:none; flex-direction:column; gap:10px;">
         <select id="newBusyWho" class="pill"></select>
         <input type="text" id="newBusyTitle" class="pill" placeholder="กิจกรรม เช่น ออกบูธงาน SCG, ลาพักร้อน, อบรมทีม" autocomplete="off">
@@ -7790,10 +7889,11 @@ async function buildMonthInfographic(y, m){
     const classes = classesByDate[dateStr] || [];
     const isMon = col === 1, past = dateStr < todayStr;
     const teamBusy = (sharedBusy||[]).some(b=> b.date === dateStr && b.who === BUSY_ALL);
+    const isHol = (sharedBusy||[]).some(b=> b.date === dateStr && b.kind === 'holiday');
     const hasClass = classes.length > 0;
     ctx.save(); if(past) ctx.globalAlpha = .45;
     rrect(ctx, x, yy, cellW, cellH, 18);
-    ctx.fillStyle = hasClass ? '#0B2A15' : (isMon || teamBusy ? '#E6DECD' : '#FFFDF8'); ctx.fill();
+    ctx.fillStyle = hasClass ? '#0B2A15' : (isHol ? '#F6EBD3' : (isMon || teamBusy ? '#E6DECD' : '#FFFDF8')); ctx.fill();
     if(!hasClass){ ctx.strokeStyle = '#E2D7C2'; ctx.lineWidth = 1.5; ctx.stroke(); }
     ctx.textAlign = 'left'; ctx.fillStyle = hasClass ? '#DCA73D' : (isMon ? '#A89A80' : '#0B2A15');
     ctx.font = '700 28px Fraunces, serif'; ctx.fillText(String(day), x+14, yy+38);
@@ -7808,6 +7908,8 @@ async function buildMonthInfographic(y, m){
       ctx.fillStyle = '#DCA73D'; ctx.font = '600 16px "IBM Plex Sans Thai", sans-serif';
       const t = first.startTime ? `${first.startTime} น.` : (state.schedule[first.courseId]?.[0]?.[0] ? `${state.schedule[first.courseId][0][0]} น.` : '');
       if(t) ctx.fillText(t, x+14, yy+cellH-16);
+    } else if(isHol){
+      ctx.textAlign = 'center'; ctx.fillStyle = '#8A6416'; ctx.font = '700 18px "IBM Plex Sans Thai"'; ctx.fillText('วันหยุด', x+cellW/2, yy+cellH/2+20);
     } else if(isMon){
       ctx.textAlign = 'center'; ctx.fillStyle = '#A89A80'; ctx.font = '600 18px "IBM Plex Sans Thai"'; ctx.fillText('ปิด', x+cellW/2, yy+cellH/2+20);
     } else if(teamBusy){
@@ -7822,7 +7924,7 @@ async function buildMonthInfographic(y, m){
   // legend
   ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.font = '600 20px "IBM Plex Sans Thai", sans-serif';
   let lx = PAD;
-  [['#0B2A15','มีคลาสเรียน'],['#E3F0E5','ว่าง จองได้'],['#E6DECD','ปิด / ไม่ว่าง']].forEach(([c,t])=>{
+  [['#0B2A15','มีคลาสเรียน'],['#E3F0E5','ว่าง จองได้'],['#E6DECD','ปิด / ไม่ว่าง']].concat((sharedBusy||[]).some(b=> b.kind === 'holiday' && b.date.startsWith(prefix)) ? [['#F6EBD3','วันหยุด']] : []).forEach(([c,t])=>{
     rrect(ctx, lx, top+14, 30, 30, 8); ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = '#D6CAB2'; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = '#3A3026'; ctx.fillText(t, lx+40, top+30); lx += 40 + ctx.measureText(t).width + 40;
   });
@@ -7991,6 +8093,46 @@ function busyAvatarHTML(x, size){
   if(x.who !== BUSY_ALL) return one(x.who);
   const team = (state && state.instructors) || [];
   return `<span class="busy-av-stack">${team.slice(0,4).map((n,i)=> one(n, `margin-left:${i? -Math.round(size*.38) : 0}px; z-index:${10-i};`)).join('')}</span>`;
+}
+// วันหยุดนักขัตฤกษ์/วันหยุดราชการ (ตามประกาศ — ปรับเพิ่มได้ที่นี่) · ใช้เป็นมาร์คเตือนในปฏิทินเท่านั้น ไม่ปิดรับจอง
+const TH_HOLIDAYS = {
+  '2026-01-01':'วันขึ้นปีใหม่','2026-01-02':'วันหยุดพิเศษ (ปีใหม่)','2026-03-03':'วันมาฆบูชา','2026-04-06':'วันจักรี',
+  '2026-04-13':'วันสงกรานต์','2026-04-14':'วันสงกรานต์','2026-04-15':'วันสงกรานต์','2026-05-01':'วันแรงงาน',
+  '2026-05-04':'วันฉัตรมงคล','2026-05-13':'วันพืชมงคล','2026-05-31':'วันวิสาขบูชา','2026-06-01':'ชดเชยวันวิสาขบูชา',
+  '2026-06-03':'วันเฉลิมฯ พระราชินี','2026-07-28':'วันเฉลิมฯ ร.10','2026-07-29':'วันอาสาฬหบูชา','2026-07-30':'วันเข้าพรรษา',
+  '2026-08-12':'วันแม่แห่งชาติ','2026-10-13':'วันนวมินทรมหาราช','2026-10-23':'วันปิยมหาราช','2026-12-05':'วันพ่อแห่งชาติ',
+  '2026-12-07':'ชดเชยวันพ่อแห่งชาติ','2026-12-10':'วันรัฐธรรมนูญ','2026-12-31':'วันสิ้นปี',
+  '2027-01-01':'วันขึ้นปีใหม่','2027-02-21':'วันมาฆบูชา','2027-02-22':'ชดเชยวันมาฆบูชา','2027-04-06':'วันจักรี',
+  '2027-04-13':'วันสงกรานต์','2027-04-14':'วันสงกรานต์','2027-04-15':'วันสงกรานต์','2027-05-01':'วันแรงงาน',
+  '2027-05-03':'ชดเชยวันแรงงาน','2027-05-04':'วันฉัตรมงคล','2027-05-20':'วันวิสาขบูชา','2027-06-03':'วันเฉลิมฯ พระราชินี',
+  '2027-07-18':'วันอาสาฬหบูชา','2027-07-19':'วันเข้าพรรษา / ชดเชย','2027-07-28':'วันเฉลิมฯ ร.10','2027-08-12':'วันแม่แห่งชาติ',
+  '2027-10-13':'วันนวมินทรมหาราช','2027-10-23':'วันปิยมหาราช','2027-10-25':'ชดเชยวันปิยมหาราช','2027-12-05':'วันพ่อแห่งชาติ',
+  '2027-12-06':'ชดเชยวันพ่อแห่งชาติ','2027-12-10':'วันรัฐธรรมนูญ','2027-12-31':'วันสิ้นปี'
+};
+function holidayOn(dateStr){ return (sharedBusy||[]).find(x=> x.date === dateStr && x.kind === 'holiday') || null; }
+function thDateRange(a, b){
+  const o = {day:'numeric', month:'short'};
+  const da = new Date(a+'T00:00:00'), db = new Date(b+'T00:00:00');
+  if(a === b) return da.toLocaleDateString('th-TH', {weekday:'short', ...o});
+  return `${da.toLocaleDateString('th-TH', o)} – ${db.toLocaleDateString('th-TH', o)}`;
+}
+async function announceHolidayToLine(h, kind){
+  const y = new Date(h.end+'T00:00:00').getFullYear() + 543;
+  const lines = [
+    kind === 'cancel' ? '❌ RANGSAN Academy — ยกเลิกวันหยุดบริษัท' : '🏖 RANGSAN Academy — ประกาศวันหยุดบริษัท',
+    '',
+    `📌 ${h.title}`,
+    `🗓️ ${thDateRange(h.start, h.end)} ${y}${h.n > 1 ? ` (${h.n} วัน)` : ''}`,
+    kind === 'cancel' ? '✅ กลับมาเปิดรับสอนตามปกติ' : '👥 ทั้งทีมหยุด · ปิดรับสอน',
+  ];
+  if(kind !== 'cancel' && h.clash) lines.push(`⚠️ ช่วงนี้มีคิวสอนอยู่ ${h.clash} คิว — โปรดเลื่อน/แจ้งลูกค้า`);
+  lines.push('', `บันทึกโดย ${currentUser || '-'}`);
+  const msg = lines.join('\n');
+  const r = await postLineGroup(msg);
+  if(r.ok){ flashSaved('ส่งเข้ากลุ่ม LINE แล้ว ✓'); return true; }
+  if(r.noRelay){ sendTextToLine(msg); return true; }
+  alert('ส่งเข้ากลุ่ม LINE ไม่สำเร็จ: ' + r.error);
+  return false;
 }
 function busyLabel(x){ return `${x.title || 'มีกิจกรรม'}${x.from ? ` (${x.from}–${x.to||''})` : ''}`; }
 async function loadSharedBookings(){
@@ -8598,6 +8740,7 @@ function hideLoginScreen(){
   setTimeout(()=>{ backfillAgesFromForm(); }, 4000);
   startFormLiveSync();
   setTimeout(remindCallsDue, 7000);
+  setTimeout(watchLinkBookings, 9000); setInterval(watchLinkBookings, 60000);
 }
 
 // ---------- reminder: classes that already ended but were never confirmed as taught ----------
@@ -9012,6 +9155,7 @@ function renderLogTab(){
           ` : ''}
           <button class="btn small ghost" id="syncFromFormBtn" title="ดึงคิวจากฟอร์มลงทะเบียน">📋⟳</button>
           <button class="btn small ghost" id="refreshBookings" title="รีเฟรชตารางล่าสุด">⟳</button>
+          <button class="btn small ghost" id="custLinkBtn" title="ลิงค์ให้ลูกค้าจองเอง">🔗</button>
           <button class="add-fab" id="openBookingModalBtn" title="จองคิวสอน">+</button>
         </div>
       </div>
@@ -9222,13 +9366,43 @@ function renderLogTab(){
     return INSTRUCTOR_COLORS_CAL[idx>=0 ? idx%INSTRUCTOR_COLORS_CAL.length : 0];
   };
   try{ renderRegFeed(); }catch(e){}
+  const bindHolDel = (box)=>{
+    box.querySelectorAll('.busy-del[data-hol-group]').forEach(btn=>{
+      btn.onclick = async ()=>{
+        const k = btn.dataset.holGroup;
+        const arr = sharedBusy.filter(z=> z.kind === 'holiday' && (z.groupId || z.id) === k).sort((a,b)=> a.date.localeCompare(b.date));
+        if(!arr.length || !confirm(`ลบวันหยุด "${arr[0].title}" (${thDateRange(arr[0].date, arr[arr.length-1].date)}) ?`)) return;
+        sharedBusy = sharedBusy.filter(z=> !(z.kind === 'holiday' && (z.groupId || z.id) === k));
+        await saveSharedBusy();
+        renderBusyList(); renderCalendar();
+        if(confirm('แจ้งการยกเลิกวันหยุดเข้ากลุ่ม LINE ด้วยไหม?')) announceHolidayToLine({ title: arr[0].title, start: arr[0].date, end: arr[arr.length-1].date, n: arr.length }, 'cancel');
+      };
+    });
+  };
   const renderBusyList = ()=>{
     const box = document.getElementById('busyListSection');
     if(!box) return;
     const todayStr = new Date().toISOString().slice(0,10);
-    const up = sharedBusy.filter(x=> x.date >= todayStr).sort((a,b)=> a.date.localeCompare(b.date));
-    if(!up.length){ box.innerHTML = ''; return; }
-    box.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 10px;">
+    const upAll = sharedBusy.filter(x=> x.date >= todayStr).sort((a,b)=> a.date.localeCompare(b.date));
+    const up = upAll.filter(x=> x.kind !== 'holiday');
+    const hg = {};
+    upAll.filter(x=> x.kind === 'holiday').forEach(x=>{ const k = x.groupId || x.id; (hg[k] = hg[k] || []).push(x); });
+    const hols = Object.entries(hg).map(([k, arr])=> ({ k, title: arr[0].title, start: arr[0].date, end: arr[arr.length-1].date, n: arr.length, createdBy: arr[0].createdBy }));
+    if(!up.length && !hols.length){ box.innerHTML = ''; return; }
+    const holHTML = hols.length ? `<h3 style="margin:0 0 10px; font-size:14px; color:var(--ink);">🏖 วันหยุดบริษัท</h3>
+      <div class="busy-list" style="margin-bottom:14px;">${hols.map(h=>{
+        const canDel = currentUser === ADMIN_NAME || currentUser === h.createdBy;
+        return `<div class="busy-row hol-row">
+          <div class="hol-ico">🏖</div>
+          <div class="busy-main"><div class="busy-title">${h.title}</div>
+            <div class="busy-meta">🗓️ ${thDateRange(h.start, h.end)}${h.n>1?` · ${h.n} วัน`:''} · ปิดรับสอนทั้งทีม</div></div>
+          ${canDel ? `<button type="button" class="busy-del" data-hol-group="${h.k}" aria-label="ลบ">✕</button>` : ''}
+        </div>`; }).join('')}</div>` : '';
+    if(!up.length){
+      box.innerHTML = holHTML + `<div style="margin:0 0 14px; border-top:1px dashed var(--line);"></div>`;
+      bindHolDel(box); return;
+    }
+    box.innerHTML = holHTML + `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 10px;">
         <h3 style="margin:0; font-size:14px; color:var(--ink);">🚫 วันไม่ว่าง / กิจกรรม</h3>
         <button type="button" class="btn small ghost" id="busyToLineBtn">📣 ส่งเข้ากลุ่ม LINE</button>
       </div>
@@ -9256,7 +9430,8 @@ function renderLogTab(){
       if(!r.ok) alert('ส่งไม่สำเร็จ: ' + r.error);
       setTimeout(()=>{ toLine.textContent = old; }, 2500);
     };
-    box.querySelectorAll('.busy-del').forEach(btn=>{
+    bindHolDel(box);
+    box.querySelectorAll('.busy-del[data-busy-id]').forEach(btn=>{
       btn.onclick = async ()=>{
         const x = sharedBusy.find(z=> z.id === btn.dataset.busyId);
         if(!x || !confirm(`ลบ "${x.title || 'มีกิจกรรม'}" วันที่ ${x.date} ?`)) return;
@@ -9377,9 +9552,13 @@ function renderLogTab(){
       }
       const calDow = new Date(y, m, day).getDay();
       const calExtra = `${calDow===1?'cal-closed':''} ${dateStr < todayStr?'cal-past':''} ${items.length?'cal-booked':''}`;
-      const busyHere = busyOn(dateStr);
+      const holHere = holidayOn(dateStr);
+      const busyHere = busyOn(dateStr).filter(x=> x.kind !== 'holiday');
+      const thHol = TH_HOLIDAYS[dateStr];
+      const holChip = holHere ? `<span class="cal-hol-mark" title="วันหยุดบริษัท: ${(holHere.title||'').replace(/"/g,'&quot;')}">🏖</span>`
+        : thHol ? `<span class="cal-hol-mark is-th" title="${thHol}"></span>` : '';
       const busyChip = busyHere.length ? `<div class="cal-busy" title="${busyHere.map(x=> (x.who===BUSY_ALL?'ทั้งทีม':x.who)+': '+busyLabel(x)).join('\n').replace(/"/g,'&quot;')}">${items.length ? busyHere.map(x=> busyAvatarHTML(x, 14)).join('') : ''}<span class="cal-busy-txt">🚫 ${busyHere.length===1 ? (busyHere[0].title||'ไม่ว่าง') : busyHere.length+' กิจกรรม'}</span></div>` : '';
-      if(busyHere.length && !items.length){
+      if(busyHere.length && !items.length && !holHere){
         // no classes that day — the busy person's photo takes the cell, greyed, so it's obvious who is away
         const x = busyHere[0];
         const photo = x.who !== BUSY_ALL ? instructorPhotos[x.who] : '';
@@ -9390,9 +9569,19 @@ function renderLogTab(){
         hasPhotoClass = 'has-photo';
       }
       const busyCls = busyHere.some(x=> x.who===BUSY_ALL) && !items.length ? 'cal-busy-day' : '';
-      html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra} ${busyCls}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}${busyChip}</div>`;
+      const holCls = holHere ? 'cal-holiday' : (thHol ? 'cal-thhol' : '');
+      html += `<div class="cal-cell ${isToday?'today':''} ${hasPhotoClass} ${calExtra} ${busyCls} ${holCls}" data-cell-date="${dateStr}"><div class="cal-daynum">${day}</div>${chip}${passBadge}${moreBadge}${busyChip}${holChip}</div>`;
     }
     document.getElementById('calGrid').innerHTML = html;
+    try{
+      const pre = `${y}-${String(m+1).padStart(2,'0')}-`;
+      const hl = Object.entries(TH_HOLIDAYS).filter(([d])=> d.startsWith(pre)).map(([d,n])=>`<span><b>${Number(d.slice(8))}</b> ${n}</span>`);
+      const own = [...new Set((sharedBusy||[]).filter(x=> x.kind==='holiday' && x.date.startsWith(pre)).map(x=> x.title))].map(n=>`<span class="own">🏖 ${n}</span>`);
+      let box = document.getElementById('calHolList');
+      if(!box){ box = document.createElement('div'); box.id = 'calHolList'; document.getElementById('calGrid').after(box); }
+      box.innerHTML = (hl.length || own.length) ? `<div class="chl-h">วันหยุดเดือนนี้</div>${hl.join('')}${own.join('')}` : '';
+      box.style.display = (hl.length || own.length) ? '' : 'none';
+    }catch(e){}
     document.querySelectorAll('#calGrid .cal-chip[data-instructor]').forEach(chip=>{
       chip.style.cursor = 'pointer';
       chip.onclick = (e)=>{
@@ -9556,7 +9745,7 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
-          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.customerName ? (b.customerNameEn
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.source==='link' ? '<span class="bk-src-link">📲 จองผ่านลิงค์</span>' : ''}${b.customerName ? (b.customerNameEn
               ? ` <button type="button" class="en-name" data-en-name="${b._idx}" title="แก้ชื่อภาษาอังกฤษ">${b.customerNameEn} ✎</button>`
               : ` <button type="button" class="en-name is-auto" data-en-name="${b._idx}" title="ระบบสะกดให้ — แตะเพื่อยืนยันหรือแก้">${thaiRomanize(b.customerName)} ✎</button>`) : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
@@ -9778,14 +9967,47 @@ function renderLogTab(){
   ['newBookingCustName','newBookingCustPhone','newBookingDate'].forEach(id=>{ document.getElementById(id).oninput = refreshNewBookingVip; });
   document.getElementById('newBookingTime').oninput = syncBookingTimeUI;
   const setBookingMode = (mode)=>{
-    const busy = mode === 'busy';
+    const busy = mode === 'busy', hol = mode === 'holiday';
     document.querySelectorAll('.bk-mode-btn').forEach(b=> b.classList.toggle('on', b.dataset.mode === mode));
-    document.getElementById('bkClassFields').style.display = busy ? 'none' : 'flex';
+    document.getElementById('bkClassFields').style.display = (busy || hol) ? 'none' : 'flex';
     document.getElementById('bkBusyFields').style.display = busy ? 'flex' : 'none';
-    document.getElementById('bkModalTitle').textContent = busy ? '🚫 ไม่ว่าง / มีกิจกรรม' : '+ จองคิวสอน';
-    document.getElementById('bkModalHint').textContent = busy
+    document.getElementById('bkHolidayFields').style.display = hol ? 'flex' : 'none';
+    document.getElementById('bkModalTitle').textContent = hol ? '🏖 วันหยุดบริษัท' : (busy ? '🚫 ไม่ว่าง / มีกิจกรรม' : '+ จองคิวสอน');
+    document.getElementById('bkModalHint').textContent = hol
+      ? 'เลือกวันเริ่มหยุด (ช่องวันที่ด้านบน) และวันสุดท้าย วันหยุดจะขึ้นในปฏิทินของทุกคน ปิดรับสอน และไม่ถูกนับเป็นวันว่างให้ลูกค้า'
+      : busy
       ? 'บันทึกวันที่อาจารย์ไม่ว่าง หรือทั้งทีมมีกิจกรรม วันนั้นจะขึ้นในปฏิทินและไม่ถูกนับเป็นวันว่างให้ลูกค้า'
       : 'เลือกวันที่ คอร์ส และชื่อของคุณ เพื่อลงคิวสอนล่วงหน้า';
+    if(hol){
+      const q = document.getElementById('holQuick');
+      q.innerHTML = ['หยุดปีใหม่','หยุดสงกรานต์','หยุดยาว','ปิดปรับปรุงร้าน','วันหยุดนักขัตฤกษ์'].map(t=>`<button type="button" class="hol-chip">${t}</button>`).join('');
+      q.querySelectorAll('.hol-chip').forEach(b=> b.onclick = ()=>{ document.getElementById('newHolidayTitle').value = b.textContent; });
+    }
+  };
+  document.getElementById('addHolidayBtn').onclick = async ()=>{
+    const btn = document.getElementById('addHolidayBtn');
+    if(btn.dataset.busy) return;
+    const start = document.getElementById('newBookingDate').value;
+    if(!start){ alert('กรุณาเลือกวันเริ่มหยุด'); return; }
+    let end = document.getElementById('newHolidayEnd').value || start;
+    if(end < start){ alert('"ถึงวันที่" ต้องไม่ก่อนวันเริ่มหยุด'); return; }
+    const title = document.getElementById('newHolidayTitle').value.trim() || 'วันหยุดบริษัท';
+    const dates = []; const d = new Date(start+'T00:00:00'), e = new Date(end+'T00:00:00');
+    while(d <= e && dates.length < 62){ dates.push(rsLocalYMD(d)); d.setDate(d.getDate()+1); }
+    if(dates.length >= 62 && rsLocalYMD(d) <= end){ alert('ช่วงวันหยุดยาวเกินไป (สูงสุด 62 วัน)'); return; }
+    const already = new Set(sharedBusy.filter(x=> x.kind === 'holiday').map(x=> x.date));
+    const newDates = dates.filter(x=> !already.has(x));
+    if(!newDates.length){ alert('วันที่เลือกเป็นวันหยุดบริษัทอยู่แล้ว'); return; }
+    const clash = sharedBookings.filter(b=> newDates.includes(b.date) && !b.taught);
+    if(clash.length && !confirm(`ช่วงนี้มีคิวสอนอยู่แล้ว ${clash.length} คิว — ยังต้องการบันทึกเป็นวันหยุดหรือไม่?\n(คิวเดิมยังอยู่ ต้องเลื่อนหรือยกเลิกเอง)`)) return;
+    btn.dataset.busy = '1';
+    const groupId = 'hol_' + Date.now().toString(36);
+    newDates.forEach((dt,i)=> sharedBusy.push({ id: groupId+'_'+i, groupId, kind:'holiday', date: dt, who: BUSY_ALL, title, createdBy: currentUser || '' }));
+    await saveSharedBusy();
+    delete btn.dataset.busy;
+    renderCalendar();
+    closeModal('bookingModalOverlay');
+    if(document.getElementById('newHolidayNotifyLine').checked) announceHolidayToLine({ title, start: newDates[0], end: newDates[newDates.length-1], n: newDates.length, clash: clash.length }, 'new');
   };
   document.querySelectorAll('.bk-mode-btn').forEach(b=>{ b.onclick = ()=> setBookingMode(b.dataset.mode); });
   document.getElementById('newBusyWho').onchange = (e)=>{ const v = e.target.value; const di = document.getElementById('newBusyDecoyInstr'); if(v && v !== BUSY_ALL && [...di.options].some(o=> o.value === v)) di.value = v; };
@@ -9819,6 +10041,9 @@ function renderLogTab(){
     setBookingMode('class');
     document.getElementById('newBusyWho').innerHTML = `<option value="${BUSY_ALL}">👥 ทั้งทีม (ปิดรับสอนวันนี้)</option>` + state.instructors.map(n=>`<option value="${n}" ${n===currentUser?'selected':''}>${n}</option>`).join('');
     document.getElementById('newBusyTitle').value = '';
+    document.getElementById('newHolidayTitle').value = '';
+    document.getElementById('newHolidayEnd').value = '';
+    document.getElementById('newHolidayNotifyLine').checked = true;
     document.getElementById('newBusyAllDay').checked = true;
     document.getElementById('newBusyNotifyLine').checked = true;
     document.getElementById('newBusyDecoy').checked = false;
@@ -9876,6 +10101,7 @@ function renderLogTab(){
     renderCalendar();
     closeModal('bookingModalOverlay');
   };
+  { const cl = document.getElementById('custLinkBtn'); if(cl) cl.onclick = openCustomerLinkModal; }
   document.getElementById('refreshBookings').onclick = async ()=>{
     await loadSharedBookings();
     renderBookingCards();
@@ -12167,7 +12393,198 @@ function setupVideoPausing(){
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) document.querySelectorAll('video').forEach(v=> v.pause()); });
 }
 
+// ===================== ลิงค์ให้ลูกค้าจองเอง (?book=c1 หรือ ?book=all) =====================
+const CB_LEAD_DAYS = 1;          // จองล่วงหน้าอย่างน้อย 1 วัน (วันนี้จองไม่ได้)
+const CB_RANGE_DAYS = 90;        // เปิดให้เลือกล่วงหน้า 90 วัน
+const CB_TIMED = { c6: ['10:00','14:00'] };
+function cbIsWorkshop(cid){ return isPerPersonCourse(cid); }
+function cbSeats(cid){ const c = courseById(cid); return Math.max(1, Number(c && c.students) || 1); }
+// availability of one course on one date → { ok, reason, rounds:[{time, left}] , left }
+function cbAvailability(cid, dateStr){
+  const today = rsLocalYMD();
+  const minD = new Date(today+'T00:00:00'); minD.setDate(minD.getDate()+CB_LEAD_DAYS);
+  const maxD = new Date(today+'T00:00:00'); maxD.setDate(maxD.getDate()+CB_RANGE_DAYS);
+  const d = new Date(dateStr+'T00:00:00');
+  if(d < minD || d > maxD) return { ok:false, reason:'past' };
+  if(d.getDay() === 1) return { ok:false, reason:'closed' };
+  if((sharedBusy||[]).some(x=> x.date === dateStr && (x.who === BUSY_ALL || x.decoy))) return { ok:false, reason:'closed' };
+  const day = (sharedBookings||[]).filter(b=> b.date === dateStr);
+  if(!cbIsWorkshop(cid)){
+    return day.length ? { ok:false, reason:'full' } : { ok:true, left: cbSeats(cid) };
+  }
+  if(day.some(b=> b.courseId !== cid)) return { ok:false, reason:'full' };
+  const cap = cbSeats(cid);
+  const times = CB_TIMED[cid];
+  if(times){
+    const rounds = times.map(t=> ({ time:t, left: cap - day.filter(b=> (b.startTime||'') === t).length }));
+    const open = rounds.filter(r=> r.left > 0);
+    return open.length ? { ok:true, rounds, left: Math.max(...open.map(r=> r.left)) } : { ok:false, reason:'full' };
+  }
+  const left = cap - day.length;
+  return left > 0 ? { ok:true, left } : { ok:false, reason:'full' };
+}
+function customerBookingUrl(cid){ return location.origin + location.pathname + '?book=' + encodeURIComponent(cid || 'all'); }
+const cbEsc = s=> String(s==null?'':s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cbShortName = c=> c.name.replace(/^คอร์ส\s*\d+:\s*/,'');
+async function startCustomerBooking(param){
+  document.body.classList.add('cust-mode');
+  const root = document.createElement('div'); root.id = 'custBook'; document.body.appendChild(root);
+  root.innerHTML = `<div class="cb-wrap"><div class="cb-loading">กำลังโหลดตารางเรียน...</div></div>`;
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE)); mergeMissingCourses(state);
+  try{ await Promise.all([loadSharedBookings(), loadSharedBusy(), loadSharedLineRelayUrl().catch(()=>{})]); }
+  catch(e){ root.innerHTML = `<div class="cb-wrap"><div class="cb-card"><h2>โหลดตารางไม่สำเร็จ</h2><p>กรุณาลองเปิดลิงค์ใหม่อีกครั้ง</p></div></div>`; return; }
+  const bookable = state.courses.filter(c=> c.id !== 'c7' || true);
+  const st = { cid: (param && param !== 'all' && courseById(param)) ? param : '', date:'', time:'', ym:null, done:null };
+  const now = new Date(); now.setDate(now.getDate()+CB_LEAD_DAYS);
+  st.ym = { y: now.getFullYear(), m: now.getMonth() };
+  const head = ()=> `<header class="cb-head"><div class="cb-brand">Rangsan</div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>`;
+  const render = ()=>{
+    if(st.done){ root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; return; }
+    if(!st.cid){
+      root.innerHTML = `<div class="cb-wrap">${head()}<div class="cb-card"><h2>เลือกคอร์สที่ต้องการเรียน</h2>
+        <div class="cb-courses">${bookable.map(c=>`<button type="button" class="cb-course" data-cid="${c.id}"><b>${cbEsc(cbShortName(c))}</b><span>${cbIsWorkshop(c.id)?`เวิร์คช็อป · ${(DEFAULT_PER_PERSON_PRICE[c.id]||c.price).toLocaleString()} บาท/คน`:(c.price?`${c.price.toLocaleString()} บาท`:'สอบถามราคา')}</span></button>`).join('')}</div></div></div>`;
+      root.querySelectorAll('.cb-course').forEach(b=> b.onclick = ()=>{ st.cid = b.dataset.cid; st.date=''; st.time=''; render(); });
+      return;
+    }
+    const c = courseById(st.cid);
+    const { y, m } = st.ym;
+    const first = new Date(y, m, 1), dim = new Date(y, m+1, 0).getDate();
+    const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    let cells = '';
+    for(let i=0;i<first.getDay();i++) cells += '<div></div>';
+    let anyOpen = false;
+    for(let d=1; d<=dim; d++){
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const a = cbAvailability(st.cid, ds);
+      if(a.ok) anyOpen = true;
+      const lab = a.ok ? (cbIsWorkshop(st.cid) ? `เหลือ ${a.left}` : 'ว่าง') : (a.reason==='full' ? 'เต็ม' : '');
+      cells += `<button type="button" class="cb-day ${a.ok?'is-open':'is-off'} ${a.reason==='full'?'is-full':''} ${st.date===ds?'is-sel':''}" ${a.ok?`data-d="${ds}"`:'disabled'}><span>${d}</span>${lab?`<small>${lab}</small>`:''}</button>`;
+    }
+    const minYM = (()=>{ const t = new Date(); t.setDate(t.getDate()+CB_LEAD_DAYS); return t.getFullYear()*12+t.getMonth(); })();
+    const maxYM = (()=>{ const t = new Date(); t.setDate(t.getDate()+CB_RANGE_DAYS); return t.getFullYear()*12+t.getMonth(); })();
+    const curYM = y*12+m;
+    const av = st.date ? cbAvailability(st.cid, st.date) : null;
+    const rounds = av && av.rounds ? av.rounds : null;
+    if(st.date && (!av || !av.ok)) st.date = '';
+    const maxQty = av && av.ok ? (rounds ? ((rounds.find(r=> r.time===st.time)||{}).left || 0) : (cbIsWorkshop(st.cid) ? av.left : cbSeats(st.cid))) : 1;
+    const ready = st.date && (!rounds || (st.time && maxQty > 0));
+    const dateTh = st.date ? new Date(st.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
+    root.innerHTML = `<div class="cb-wrap">${head()}
+      <div class="cb-card">
+        <div class="cb-course-line"><span>คอร์สที่เลือก</span><b>${cbEsc(cbShortName(c))}</b>${param==='all'||!param?`<button type="button" class="cb-link" id="cbChange">เปลี่ยนคอร์ส</button>`:''}</div>
+        <h2>1. เลือกวันเรียน</h2>
+        <div class="cb-cal-nav"><button type="button" id="cbPrev" ${curYM<=minYM?'disabled':''}>‹</button><b>${monthNames[m]} ${y+543}</b><button type="button" id="cbNext" ${curYM>=maxYM?'disabled':''}>›</button></div>
+        <div class="cb-dow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(x=>`<span>${x}</span>`).join('')}</div>
+        <div class="cb-grid">${cells}</div>
+        ${anyOpen ? '' : `<p class="cb-note">เดือนนี้ไม่มีวันว่างแล้ว ลองกด › ดูเดือนถัดไป</p>`}
+        <div class="cb-legend"><span class="lg-open"></span>ว่าง เลือกได้ <span class="lg-full"></span>มีผู้จองแล้ว/เต็ม <span class="lg-off"></span>ปิด</div>
+      </div>
+      ${st.date ? `<div class="cb-card">
+        <h2>2. ${rounds ? 'เลือกรอบ' : 'ยืนยันวัน'}</h2>
+        <div class="cb-picked">📅 ${dateTh}</div>
+        ${rounds ? `<div class="cb-rounds">${rounds.map(r=>`<button type="button" class="cb-round ${st.time===r.time?'is-sel':''}" ${r.left>0?`data-t="${r.time}"`:'disabled'}>${r.time}–${addMinutesToTime(r.time, courseDurationMin(st.cid)||90)} น.<small>${r.left>0?`เหลือ ${r.left} ที่`:'เต็ม'}</small></button>`).join('')}</div>` : ''}
+      </div>` : ''}
+      ${ready ? `<div class="cb-card"><h2>3. ข้อมูลผู้เรียน</h2>
+        <form id="cbForm" class="cb-form" autocomplete="on">
+          <label>ชื่อ-นามสกุล (ภาษาไทย) *<input name="name" required maxlength="80" autocomplete="name"></label>
+          <label>ชื่อ-นามสกุล (ภาษาอังกฤษ) <small>สำหรับใบประกาศ</small><input name="nameEn" maxlength="80" placeholder="เช่น Somchai Jaidee"></label>
+          <label>เบอร์โทรศัพท์ *<input name="phone" required inputmode="tel" maxlength="20" autocomplete="tel"></label>
+          <label>อายุ<input name="age" inputmode="numeric" maxlength="3"></label>
+          ${maxQty > 1 ? `<label>จำนวนผู้เรียน<select name="qty">${[...Array(maxQty)].map((_,i)=>`<option value="${i+1}">${i+1} คน</option>`).join('')}</select></label>` : ''}
+          ${st.cid==='c7' ? `<label>รุ่นเครื่องชงกาแฟที่ใช้<input name="machine" maxlength="80"></label>` : ''}
+          <label>แพ้อาหาร / นม / อื่นๆ<input name="allergy" maxlength="120" placeholder="ถ้าไม่มีเว้นว่างได้"></label>
+          <label>หมายเหตุถึงอาจารย์<textarea name="note" rows="2" maxlength="300"></textarea></label>
+          <div class="cb-sum">📅 ${dateTh}${st.time?` · ${st.time} น.`:''}<br>📚 ${cbEsc(cbShortName(c))}</div>
+          <button type="submit" class="cb-submit">ยืนยันการจอง</button>
+          <p class="cb-note">ทีมงานจะโทรยืนยันกับคุณก่อนวันเรียน 1 วัน</p>
+        </form></div>` : ''}
+    </div>`;
+    const ch = root.querySelector('#cbChange'); if(ch) ch.onclick = ()=>{ st.cid=''; st.date=''; st.time=''; render(); };
+    root.querySelector('#cbPrev').onclick = ()=>{ const t = new Date(y, m-1, 1); st.ym = {y:t.getFullYear(), m:t.getMonth()}; render(); };
+    root.querySelector('#cbNext').onclick = ()=>{ const t = new Date(y, m+1, 1); st.ym = {y:t.getFullYear(), m:t.getMonth()}; render(); };
+    root.querySelectorAll('.cb-day[data-d]').forEach(b=> b.onclick = ()=>{ st.date = b.dataset.d; st.time = ''; const a = cbAvailability(st.cid, st.date); if(a.rounds){ const o = a.rounds.filter(r=> r.left>0); if(o.length===1) st.time = o[0].time; } render(); setTimeout(()=>{ const t = root.querySelectorAll('.cb-card')[1]; if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); });
+    root.querySelectorAll('.cb-round[data-t]').forEach(b=> b.onclick = ()=>{ st.time = b.dataset.t; render(); setTimeout(()=>{ const f = root.querySelector('#cbForm'); if(f) f.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); });
+    const form = root.querySelector('#cbForm');
+    if(form) form.onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = Object.fromEntries(new FormData(form).entries());
+      const name = (fd.name||'').trim(), phone = (fd.phone||'').trim();
+      if(!name || rsNormPhone(phone).length < 9){ alert('กรุณากรอกชื่อและเบอร์โทรให้ถูกต้อง'); return; }
+      const btn = form.querySelector('.cb-submit'); btn.disabled = true; btn.textContent = 'กำลังจอง...';
+      try{
+        await loadSharedBookings(); await loadSharedBusy(); // ตรวจซ้ำกับข้อมูลล่าสุด กันจองชนกัน
+        const a = cbAvailability(st.cid, st.date);
+        const left = !a.ok ? 0 : (a.rounds ? ((a.rounds.find(r=> r.time===st.time)||{}).left||0) : (cbIsWorkshop(st.cid) ? a.left : 1));
+        const qty = Math.max(1, Math.min(Number(fd.qty)||1, cbIsWorkshop(st.cid) ? left : 99));
+        if(left <= 0 || (cbIsWorkshop(st.cid) && qty > left)){
+          alert('ขออภัย วัน/รอบนี้เพิ่งมีผู้จองเต็มไปแล้ว กรุณาเลือกวันใหม่'); st.date=''; st.time=''; render(); return;
+        }
+        const linkId = 'lk_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+        const base = { date: st.date, courseId: st.cid, instructor:'ยังไม่ระบุ', source:'link', linkId, createdAt: new Date().toISOString(),
+          note: [(fd.note||'').trim(), (!cbIsWorkshop(st.cid) && qty>1) ? `มาเรียน ${qty} คน` : ''].filter(Boolean).join(' · '),
+          allergy: (fd.allergy||'').trim(), machineModel: (fd.machine||'').trim() };
+        if(st.time) base.startTime = st.time;
+        const n = cbIsWorkshop(st.cid) ? qty : 1;
+        for(let i=0;i<n;i++){
+          const b = { ...base, customerPhone: phone };
+          b.customerName = i===0 ? name : `${name} (ผู้ร่วมเรียน ${i+1})`;
+          if(i===0 && (fd.nameEn||'').trim()) b.customerNameEn = fd.nameEn.trim();
+          if(i===0 && /^\d{1,3}$/.test((fd.age||'').trim())) b.age = fd.age.trim();
+          sharedBookings.push(b);
+        }
+        await backupBeforeSave('shared_teaching_bookings');
+        await window.storage.set('shared_teaching_bookings', JSON.stringify(sharedBookings), true);
+        const dTh = new Date(st.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+        try{ await postLineGroup(['📲 RANGSAN Academy — ลูกค้าจองผ่านลิงค์', '', `👤 ${name}${n>1?` (+${n-1} คน)`:''}`, `📞 ${phone}`, `📚 ${cbShortName(c)}`, `🗓️ ${dTh}${st.time?` · ${st.time} น.`:''}`, base.allergy?`⚠️ แพ้: ${base.allergy}`:'' ].filter(Boolean).join('\n')); }catch(e){}
+        st.done = `<div class="cb-card cb-done"><div class="cb-ok">✓</div><h2>จองเรียบร้อยแล้ว</h2>
+          <p><b>${cbEsc(name)}</b>${n>1?` และผู้ร่วมเรียนอีก ${n-1} คน`:''}</p>
+          <div class="cb-sum">📚 ${cbEsc(cbShortName(c))}<br>📅 ${dTh}${st.time?`<br>⏰ ${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)} น.`:''}</div>
+          <p class="cb-note">แคปหน้าจอนี้เก็บไว้ได้เลย ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน</p></div>`;
+        render();
+      }catch(err){
+        console.error('customer booking failed', err);
+        alert('จองไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หรือติดต่อทีมงาน');
+        btn.disabled = false; btn.textContent = 'ยืนยันการจอง';
+      }
+    };
+  };
+  render();
+}
+// staff: links to send customers
+function openCustomerLinkModal(){
+  let ov = document.getElementById('custLinkOverlay');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'custLinkOverlay'; ov.className = 'cl-ov'; document.body.appendChild(ov); }
+  const rows = [{ id:'all', name:'ทุกคอร์ส (ลูกค้าเลือกคอร์สเอง)' }].concat(state.courses.map(c=> ({ id:c.id, name:c.name })));
+  ov.innerHTML = `<div class="cl-box"><button type="button" class="cl-x" aria-label="ปิด">✕</button>
+    <h3>🔗 ลิงค์ให้ลูกค้าจองเอง</h3>
+    <p class="cl-hint">ส่งลิงค์ให้ลูกค้า ลูกค้าเลือกได้เฉพาะวันที่ยังว่าง วันที่มีคนจองแล้วกดไม่ได้ เวิร์คช็อปรับจนที่นั่งเต็ม การจองจะเข้าแอพทันที</p>
+    ${rows.map(r=>`<div class="cl-row"><div class="cl-name">${cbEsc(r.name)}</div>
+      <div class="cl-acts"><button type="button" class="btn small" data-copy="${r.id}">คัดลอก</button><button type="button" class="btn small ghost" data-line="${r.id}">LINE</button><a class="btn small ghost" href="${customerBookingUrl(r.id)}" target="_blank" rel="noopener">เปิดดู</a></div></div>`).join('')}
+  </div>`;
+  ov.style.display = 'flex';
+  ov.onclick = (e)=>{ if(e.target === ov) ov.style.display = 'none'; };
+  ov.querySelector('.cl-x').onclick = ()=>{ ov.style.display = 'none'; };
+  ov.querySelectorAll('[data-copy]').forEach(b=> b.onclick = async ()=>{ const u = customerBookingUrl(b.dataset.copy); try{ await navigator.clipboard.writeText(u); b.textContent = 'คัดลอกแล้ว ✓'; }catch(e){ prompt('คัดลอกลิงค์นี้', u); } setTimeout(()=> b.textContent = 'คัดลอก', 2000); });
+  ov.querySelectorAll('[data-line]').forEach(b=> b.onclick = ()=>{ const c = courseById(b.dataset.line); sendTextToLine(`จองคอร์สเรียน RANGSAN Academy${c?` — ${cbShortName(c)}`:''}\nเลือกวันว่างและกรอกข้อมูลได้ที่ลิงค์นี้เลยครับ 👇\n${customerBookingUrl(b.dataset.line)}`); });
+}
+// staff: toast when a customer books through the link
+async function watchLinkBookings(){
+  if(document.hidden || !currentUser || criticalOpInProgress) return;
+  let seen = []; try{ seen = JSON.parse(localStorage.getItem('rangsan_link_seen')||'[]'); }catch(e){}
+  const first = !localStorage.getItem('rangsan_link_seen');
+  try{ await loadSharedBookings(); }catch(e){ return; }
+  const link = sharedBookings.filter(b=> b.source === 'link' && b.linkId);
+  const ids = [...new Set(link.map(b=> b.linkId))];
+  const fresh = first ? [] : ids.filter(id=> !seen.includes(id));
+  try{ localStorage.setItem('rangsan_link_seen', JSON.stringify(ids.slice(-300))); }catch(e){}
+  if(!fresh.length) return;
+  const items = fresh.map(id=> link.find(b=> b.linkId === id));
+  rsToast(`📲 <b>ลูกค้าจองผ่านลิงค์ ${items.length} รายการ</b><br>${items.slice(0,4).map(b=> `${cbEsc(b.customerName)} · ${new Date(b.date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'})}`).join('<br>')}`, 9000);
+  if(document.getElementById('bookingCardGrid')) whenScrollIdle(()=>{ try{ renderLogTab(); }catch(e){} });
+}
+
 (async function init(){
+  { const bp = new URLSearchParams(location.search).get('book'); if(bp !== null){ const sp = document.getElementById('splashScreen'); if(sp) sp.remove(); startCustomerBooking(bp); return; } }
   // set up the splash screen dismissal FIRST and independently of everything else below —
   // otherwise if the app takes an unusual path early on (e.g. the first-run setup prompt),
   // the splash overlay (z-index 300) would stay stuck on top of any dialog underneath it (z-index 150),
