@@ -2080,7 +2080,8 @@
   /* inputs: taller, clearer focus (from the component) */
   #custBook .cb-form input:not([type=radio]):not([type=checkbox]):not([type=file]), #custBook .cb-form select{ height:52px; padding:0 16px; border-radius:12px; border:1px solid #C9BFAE; transition:border-color .2s, box-shadow .2s; }
   #custBook .cb-form textarea{ border-radius:12px; border:1px solid #C9BFAE; padding:12px 16px; }
-  #custBook .cb-form input:focus, #custBook .cb-form select:focus, #custBook .cb-form textarea:focus{ outline:none; border-color:#165028; box-shadow:0 0 0 4px rgba(220,167,61,.28); }
+  #custBook .cb-form input[type=radio]:focus, #custBook .cb-form input[type=checkbox]:focus{ box-shadow:none !important; outline:2px solid rgba(220,167,61,.6); outline-offset:2px; }
+  #custBook .cb-form input:not([type=radio]):not([type=checkbox]):focus, #custBook .cb-form select:focus, #custBook .cb-form textarea:focus{ outline:none; border-color:#165028; box-shadow:0 0 0 4px rgba(220,167,61,.28); }
   #custBook .cb-form .cb-other input[type=text]{ height:38px; }
   /* readable line length: shorter rows, options in columns on wide screens */
   .cbp-kicker span{ display:block; font-size:11px; letter-spacing:0; color:#7A6F5E; font-weight:600; margin-top:1px; }
@@ -2239,6 +2240,41 @@
   .dup-banner .btn{ background:#B8452F; color:#fff; flex:none; }
   .dup-note{ font-weight:600; flex:none; }
   .dup-tag{ display:inline-block; font-size:10.5px; font-weight:700; color:#fff; background:#B8452F; border-radius:999px; padding:1px 7px; vertical-align:middle; }
+  /* ---------- readability pass: bigger small print, stronger contrast ---------- */
+  #custBook{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  #custBook .cb-qh, #custBook .cb-note, #custBook .cl-hint{ font-size:14.5px !important; color:#4F4639 !important; font-weight:500; line-height:1.7 !important; }
+  #custBook .cb-ql{ font-size:16.5px !important; color:#1F1A12; line-height:1.5; }
+  #custBook .cb-form label{ font-size:16px !important; color:#1F1A12; }
+  #custBook .cb-form label small{ font-size:13.5px; color:#5E5446; font-weight:500; }
+  #custBook .cb-form .cb-opt{ font-size:16px !important; color:#1F1A12; font-weight:500 !important; }
+  #custBook .cb-form input:not([type=radio]):not([type=checkbox]), #custBook .cb-form select, #custBook .cb-form textarea{ font-size:17px !important; color:#0B2A15; }
+  #custBook .cb-form ::placeholder{ color:#9C907B; opacity:1; }
+  #custBook .cbw-h{ font-size:24px; }
+  #custBook .cbs-title{ font-size:14.5px; color:#4F4639; } #custBook .cbs-title b{ font-size:16.5px; }
+  #custBook .cbs-dot{ width:32px; height:32px; line-height:32px; font-size:14px; }
+  /* calendar */
+  #custBook .cb-dow span{ font-size:13px; color:#4F4639; font-weight:600; }
+  #custBook .cb-day{ font-size:16.5px; }
+  #custBook .cb-day small{ font-size:11px; font-weight:700; }
+  #custBook .cb-day.is-off{ color:#B3A792; }
+  #custBook .cb-legend{ font-size:13px; color:#4F4639; gap:6px 8px; }
+  #custBook .cb-course-line{ font-size:14.5px; } #custBook .cb-course-line span{ color:#4F4639; }
+  #custBook .cb-picked{ font-size:16.5px; }
+  #custBook .cb-round small{ font-size:13px; }
+  #custBook .cb-course span{ font-size:14px; color:#4F4639; }
+  /* ticket */
+  #custBook .cbp-kicker{ font-size:12px; } #custBook .cbp-kicker span{ font-size:13px; color:#4F4639; }
+  #custBook .cbp-course{ font-size:21px; }
+  #custBook .cbp-row{ font-size:14px; color:#1F1A12; gap:3px 14px; }
+  #custBook .cb-pass small{ font-size:12.5px; color:#5E5446; font-weight:600; }
+  #custBook #cbpNameTh, #custBook #cbpPhone{ font-size:16.5px; }
+  #custBook .cbp-sub{ font-size:13.5px; color:#4F4639; }
+  #custBook .cbp-stamp{ font-size:13.5px; }
+  #custBook .cbp-seat{ font-size:13.5px; } #custBook .cbp-seat small{ font-size:12px; opacity:.85; color:#EFE8D6; }
+  #custBook .cbp-steps{ font-size:13.5px; color:#4F4639; }
+  #custBook .cb-sum{ font-size:15.5px; line-height:1.75; }
+  #custBook .cbw-back{ font-size:16px; } #custBook .cbw-next{ font-size:17px; }
+  @media (max-width:420px){ #custBook .cbp-course{ font-size:19px; } #custBook .cb-day{ font-size:15.5px; } #custBook .cb-day small{ font-size:10.5px; } }
 </style>
 <script>
 /* QR Code Generator for JavaScript — Copyright (c) 2009 Kazuhiko Arase — MIT License
