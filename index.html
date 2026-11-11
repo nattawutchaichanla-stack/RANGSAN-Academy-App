@@ -4358,21 +4358,22 @@ function renderRegistrationList(listBoxId){
   if(regCourseFilter !== 'ทั้งหมด'){
     rows = rows.filter(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim() === regCourseFilter);
   }
-  // sort by the day they'll actually attend class (soonest first), not by when they submitted the form
-  rows = rows.map(r=>{ const bk0 = regBookingForRow(r); return { r, iso: (bk0 && bk0.date) || (dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null) }; });
+  // only classes not confirmed as taught yet, newest registration first (Google Form appends rows in order)
+  const allIdx = new Map(dataRows.map((r,i)=> [r, i]));
+  rows = rows.filter(r=>{ const bk0 = regBookingForRow(r); return !(bk0 && bk0.taught); });
+  const pendingTotal = rows.length;
   rows.sort((a,b)=>{
-    if(a.iso && b.iso) return a.iso.localeCompare(b.iso);
-    if(a.iso) return -1;  // rows with a parseable class date come first
-    if(b.iso) return 1;
-    return 0;
+    const ta = timeIdx>=0 ? parseFormTimestamp(a[timeIdx]) : null, tb = timeIdx>=0 ? parseFormTimestamp(b[timeIdx]) : null;
+    if(ta && tb && ta.getTime() !== tb.getTime()) return tb - ta;
+    return allIdx.get(b) - allIdx.get(a);
   });
-  rows = rows.slice(0,50).map(x=> x.r); // 50 soonest upcoming classes
+  rows = rows.slice(0,50);
   if(!rows.length){
-    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ไม่มีผู้ลงทะเบียนในคอร์สนี้</div>`;
+    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ไม่มีรายการที่ยังไม่ยืนยันสอน ✓</div>`;
     return;
   }
   box.innerHTML = `
-    <p class="hint" style="margin-bottom:8px;">${rows.length} รายการ เรียงตามวันที่จะมาเรียน</p>
+    <p class="hint" style="margin-bottom:8px;">ยังไม่ยืนยันสอน ${pendingTotal} รายการ${pendingTotal>rows.length?` (แสดง ${rows.length} ล่าสุด)`:''} · เรียงจากสมัครล่าสุด</p>
     ${rows.map(r=>{
       const name = nameIdx>=0 ? r[nameIdx] : '-';
       const phone = phoneIdx>=0 ? r[phoneIdx] : '';
