@@ -2138,6 +2138,7 @@
   #custBook .cb-step3 .cb-form{ gap:0; }
   #custBook .cb-travel{ display:grid; grid-template-columns:1fr; gap:12px; }
   @media (min-width:560px){ #custBook .cb-travel{ grid-template-columns:3fr 2fr; } }
+  .cb-live-notice{ margin:0 0 12px; padding:12px 14px; border-radius:14px; background:#F7E1DB; border:1px solid #EBC2B7; color:#8E3524; font-weight:700; font-size:15px; }
   .cb-submit{ opacity:.75; } .cb-submit.is-ready{ opacity:1; box-shadow:0 10px 24px -10px rgba(220,167,61,.9); }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
@@ -7380,8 +7381,7 @@ function computeOpenDaysForMonth(year, month, todayStr){ // month 0-11
     const dow = new Date(year, month, day).getDay(); // 0=Sun..6=Sat
     if(dow === 1) continue; // Monday — never teaches
     if(bookedDates.has(dateStr)) continue; // already has at least one booking
-    if(sharedBusy.some(x=> x.date === dateStr && x.who === BUSY_ALL)) continue; // whole team away (event / booth / closed)
-    if(sharedBusy.some(x=> x.date === dateStr && x.decoy)) continue;          // shown to customers as already booked
+    if(sharedBusy.some(x=> x.date === dateStr)) continue; // any activity / busy / holiday / decoy — same rule as the booking link
     openDays.push({ day, dow });
   }
   return openDays;
@@ -12920,7 +12920,8 @@ function cbAvailability(cid, dateStr){
   const d = new Date(dateStr+'T00:00:00');
   if(d < minD || d > maxD) return { ok:false, reason:'past' };
   if(d.getDay() === 1) return { ok:false, reason:'closed' };
-  if((sharedBusy||[]).some(x=> x.date === dateStr && (x.who === BUSY_ALL || x.decoy))) return { ok:false, reason:'closed' };
+  // any activity / busy / holiday / decoy entered in the app closes the day for the link (the app is the source of truth)
+  if((sharedBusy||[]).some(x=> x.date === dateStr)) return { ok:false, reason:'closed' };
   const day = (sharedBookings||[]).filter(b=> b.date === dateStr);
   if(!cbIsWorkshop(cid)){
     return day.length ? { ok:false, reason:'full' } : { ok:true, left: cbSeats(cid) };
@@ -13156,6 +13157,13 @@ cbWizard.reflow = (root, st, form)=>{
   if(form && form.__fit) requestAnimationFrame(form.__fit);
 };
 const CB_PROVINCES = 'กรุงเทพมหานคร,นนทบุรี,ปทุมธานี,สมุทรปราการ,สมุทรสาคร,นครปฐม,กระบี่,กาญจนบุรี,กาฬสินธุ์,กำแพงเพชร,ขอนแก่น,จันทบุรี,ฉะเชิงเทรา,ชลบุรี,ชัยนาท,ชัยภูมิ,ชุมพร,เชียงราย,เชียงใหม่,ตรัง,ตราด,ตาก,นครนายก,นครพนม,นครราชสีมา,นครศรีธรรมราช,นครสวรรค์,นราธิวาส,น่าน,บึงกาฬ,บุรีรัมย์,ประจวบคีรีขันธ์,ปราจีนบุรี,ปัตตานี,พระนครศรีอยุธยา,พะเยา,พังงา,พัทลุง,พิจิตร,พิษณุโลก,เพชรบุรี,เพชรบูรณ์,แพร่,ภูเก็ต,มหาสารคาม,มุกดาหาร,แม่ฮ่องสอน,ยโสธร,ยะลา,ร้อยเอ็ด,ระนอง,ระยอง,ราชบุรี,ลพบุรี,ลำปาง,ลำพูน,เลย,ศรีสะเกษ,สกลนคร,สงขลา,สตูล,สมุทรสงคราม,สระแก้ว,สระบุรี,สิงห์บุรี,สุโขทัย,สุพรรณบุรี,สุราษฎร์ธานี,สุรินทร์,หนองคาย,หนองบัวลำภู,อ่างทอง,อำนาจเจริญ,อุดรธานี,อุตรดิตถ์,อุทัยธานี,อุบลราชธานี'.split(',');
+function cbLiveNotice(root, msg){
+  const n = document.createElement('div'); n.className = 'cb-live-notice'; n.textContent = '⚠️ ' + msg;
+  const w = root.querySelector('.cb-wrap'); const first = w && w.querySelector('.cb-stepper, .cb-card');
+  if(first) first.before(n); else root.prepend(n);
+  window.scrollTo({top:0, behavior:'smooth'});
+  setTimeout(()=> n.remove(), 12000);
+}
 function cbExtraPersonHTML(n){
   return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
     <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
@@ -13373,6 +13381,24 @@ async function startCustomerBooking(param){
       }
     };
   };
+  // live: re-read the app's bookings + activities every 20s (and when the page comes back), so the link follows the app
+  let liveSig = '';
+  const sig = ()=> JSON.stringify([(sharedBookings||[]).map(b=> [b.date, b.courseId, b.startTime||''].join('|')).sort(), (sharedBusy||[]).map(x=> x.date).sort()]);
+  const liveCheck = async ()=>{
+    if(document.hidden || st.done) return;
+    const f = root.querySelector('#cbForm'); if(f && f.querySelector('.cb-submit[disabled]')) return; // submitting
+    try{ await Promise.all([loadSharedBookings(), loadSharedBusy()]); }catch(e){ return; }
+    const now = sig(); if(now === liveSig) return; liveSig = now;
+    if(st.date){
+      const a = cbAvailability(st.cid, st.date);
+      const lost = !a.ok || (a.rounds && st.time && !((a.rounds.find(r=> r.time === st.time)||{}).left > 0));
+      if(lost){ const d0 = st.date; st.date = ''; st.time = ''; st.step = 0; render(); cbLiveNotice(root, `วันที่ ${rsThDate(d0)} เพิ่งถูกปิด/มีผู้จองแล้ว กรุณาเลือกวันใหม่`); return; }
+    }
+    if(!st.step || st.step < 1) render(); // on the calendar: redraw quietly; on the form: keep the customer's typing
+  };
+  setTimeout(()=>{ liveSig = sig(); }, 0);
+  setInterval(liveCheck, 20000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) liveCheck(); });
   const _render = render;
   render = ()=>{
     const old = root.querySelector('#cbForm'); const snap = old ? cbSnapForm(old) : null;
