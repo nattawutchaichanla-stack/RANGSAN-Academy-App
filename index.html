@@ -12500,6 +12500,8 @@ function setupVideoPausing(){
 }
 
 // ===================== ลิงค์ให้ลูกค้าจองเอง (?book=c1 หรือ ?book=all) =====================
+const CB_HIDDEN_COURSES = ['c6'];   // ไม่เปิดให้จองผ่านลิงค์ (Brew Your Type)
+const cbOpenCourses = ()=> state.courses.filter(c=> !CB_HIDDEN_COURSES.includes(c.id));
 const CB_LEAD_DAYS = 1;          // จองล่วงหน้าอย่างน้อย 1 วัน (วันนี้จองไม่ได้)
 const CB_RANGE_DAYS = 90;        // เปิดให้เลือกล่วงหน้า 90 วัน
 const CB_TIMED = { c6: ['10:00','14:00'] };
@@ -12543,7 +12545,7 @@ function cbCheck(name, label, opts, req, other){
     ${other?`<label class="cb-opt cb-other"><input type="checkbox" name="${name}" value="__other"><span>อื่นๆ:</span><input type="text" name="${name}_other" maxlength="80"></label>`:''}</div></div>`;
 }
 const CB_IMG_SLOTS = ()=> [{k:'cover', label:'ภาพปกฟอร์ม', hint:'แสดงด้านบนสุด (แนวนอน)', max:1400}, {k:'qr', label:'QR / บัญชีโอนเงิน', hint:'แสดงตรงช่องแนบสลิป', max:1000}]
-  .concat(state.courses.map(c=> ({k:'course_'+c.id, label:cbShortName(c), hint:'รูปประกอบคอร์ส', max:1000})));
+  .concat(cbOpenCourses().map(c=> ({k:'course_'+c.id, label:cbShortName(c), hint:'รูปประกอบคอร์ส', max:1000})));
 const cbImg = {};
 async function loadCbImages(keys){
   await Promise.all(keys.map(async k=>{ if(k in cbImg) return; try{ const r = await window.storage.get('shared_cbimg_'+k, true); cbImg[k] = (r && r.value) || ''; }catch(e){ cbImg[k] = ''; } }));
@@ -12571,8 +12573,8 @@ async function startCustomerBooking(param){
   loadSharedLineRelayUrl().catch(()=>{}); // only needed when the form is sent
   try{ await Promise.all([loadSharedBookings(), loadSharedBusy()]); }
   catch(e){ bootOff(); root.innerHTML = `<div class="cb-wrap"><div class="cb-card"><h2>โหลดตารางไม่สำเร็จ</h2><p>กรุณาลองเปิดลิงค์ใหม่อีกครั้ง</p></div></div>`; return; }
-  const bookable = state.courses.filter(c=> c.id !== 'c7' || true);
-  const st = { cid: (param && param !== 'all' && courseById(param)) ? param : '', date:'', time:'', ym:null, done:null };
+  const bookable = cbOpenCourses();
+  const st = { cid: (param && param !== 'all' && bookable.some(c=> c.id === param)) ? param : '', date:'', time:'', ym:null, done:null };
   // pictures load in the background; the calendar shows first
   loadCbImages(['cover','qr','qrNote'].concat(state.courses.map(c=> 'course_'+c.id))).then(()=>{ const f = document.querySelector('#cbForm'); if(!f || !f.dataset.touched) render(); }).catch(()=>{});
   const now = new Date(); now.setDate(now.getDate()+CB_LEAD_DAYS);
@@ -12612,7 +12614,7 @@ async function startCustomerBooking(param){
     root.innerHTML = `<div class="cb-wrap">${head()}
       <div class="cb-card">
         ${cbImg['course_'+st.cid] ? `<img class="cb-course-img" src="${cbImg['course_'+st.cid]}" alt="">` : ''}
-        <div class="cb-course-line"><span>คอร์สที่เลือก</span><b>${cbEsc(cbShortName(c))}</b>${param==='all'||!param?`<button type="button" class="cb-link" id="cbChange">เปลี่ยนคอร์ส</button>`:''}</div>
+        <div class="cb-course-line"><span>คอร์สที่เลือก</span><b>${cbEsc(cbShortName(c))}</b>${!bookable.some(x=> x.id === param)?`<button type="button" class="cb-link" id="cbChange">เปลี่ยนคอร์ส</button>`:''}</div>
         <h2>1. เลือกวันเรียน</h2>
         <div class="cb-cal-nav"><button type="button" id="cbPrev" ${curYM<=minYM?'disabled':''}>‹</button><b>${monthNames[m]} ${y+543}</b><button type="button" id="cbNext" ${curYM>=maxYM?'disabled':''}>›</button></div>
         <div class="cb-dow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(x=>`<span>${x}</span>`).join('')}</div>
@@ -12774,7 +12776,7 @@ document.addEventListener('click', e=>{ const s = e.target.closest('.bk-slip-btn
 function openCustomerLinkModal(){
   let ov = document.getElementById('custLinkOverlay');
   if(!ov){ ov = document.createElement('div'); ov.id = 'custLinkOverlay'; ov.className = 'cl-ov'; document.body.appendChild(ov); }
-  const rows = [{ id:'all', name:'ทุกคอร์ส (ลูกค้าเลือกคอร์สเอง)' }].concat(state.courses.map(c=> ({ id:c.id, name:c.name })));
+  const rows = [{ id:'all', name:'ทุกคอร์ส (ลูกค้าเลือกคอร์สเอง)' }].concat(cbOpenCourses().map(c=> ({ id:c.id, name:c.name })));
   ov.innerHTML = `<div class="cl-box"><button type="button" class="cl-x" aria-label="ปิด">✕</button>
     <h3>🔗 ลิงค์ให้ลูกค้าจองเอง</h3>
     <p class="cl-hint">ส่งลิงค์ให้ลูกค้า ลูกค้าเลือกได้เฉพาะวันที่ยังว่าง วันที่มีคนจองแล้วกดไม่ได้ เวิร์คช็อปรับจนที่นั่งเต็ม การจองจะเข้าแอพทันที</p>
