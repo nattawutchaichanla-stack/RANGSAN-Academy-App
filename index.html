@@ -1991,6 +1991,19 @@
   .bk-form-det summary{ cursor:pointer; font-weight:600; color:#165028; }
   .bk-form-grid{ display:grid; gap:3px; margin-top:6px; padding:8px 10px; border-radius:10px; background:#F7F2E6; }
   .bk-form-grid div{ line-height:1.45; } .bk-form-grid span{ color:#7A6F5E; margin-right:6px; }
+  .cb-cover{ display:block; width:100%; border-radius:20px; margin:0 0 14px; object-fit:cover; max-height:260px; box-shadow:0 2px 10px rgba(11,42,21,.08); }
+  .cb-course.has-img{ padding:0 0 12px; overflow:hidden; }
+  .cb-course.has-img img{ width:100%; height:140px; object-fit:cover; margin-bottom:8px; }
+  .cb-course.has-img b, .cb-course.has-img span{ padding:0 14px; }
+  .cb-course-img{ display:block; width:100%; max-height:200px; object-fit:cover; border-radius:14px; margin-bottom:12px; }
+  .cb-qr{ display:block; width:min(260px, 100%); margin:6px auto 4px; border-radius:14px; border:1px solid #E7DECB; background:#fff; }
+  .cb-qrnote{ text-align:center; font-size:13.5px; font-weight:600; color:#165028; line-height:1.6; margin-bottom:6px; }
+  .ci-row{ display:flex; gap:12px; padding:10px 0; border-top:1px solid rgba(239,232,214,.12); }
+  .ci-prev{ flex:none; width:84px; height:64px; border-radius:10px; overflow:hidden; background:rgba(239,232,214,.08); display:flex; align-items:center; justify-content:center; font-size:11px; color:rgba(239,232,214,.5); }
+  .ci-prev img{ width:100%; height:100%; object-fit:cover; }
+  .ci-main{ flex:1; min-width:0; } .ci-hint{ font-size:11.5px; color:rgba(239,232,214,.6); margin:-4px 0 6px; }
+  .ci-note{ width:100%; box-sizing:border-box; margin-top:8px; border-radius:10px; border:1px solid rgba(239,232,214,.25); background:rgba(239,232,214,.06); color:#EFE8D6; padding:8px; font:inherit; font-size:13px; }
+  .ci-st{ font-size:11.5px; color:#DCA73D; margin-top:4px; }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
   .cb-note{ font-size:12px; color:#7A6F5E; text-align:center; margin:4px 0 0; }
@@ -12470,6 +12483,12 @@ function cbCheck(name, label, opts, req, other){
     <div class="cb-opts">${opts.map(o=>`<label class="cb-opt"><input type="checkbox" name="${name}" value="${cbEsc(o)}"><span>${cbEsc(o)}</span></label>`).join('')}
     ${other?`<label class="cb-opt cb-other"><input type="checkbox" name="${name}" value="__other"><span>อื่นๆ:</span><input type="text" name="${name}_other" maxlength="80"></label>`:''}</div></div>`;
 }
+const CB_IMG_SLOTS = ()=> [{k:'cover', label:'ภาพปกฟอร์ม', hint:'แสดงด้านบนสุด (แนวนอน)', max:1400}, {k:'qr', label:'QR / บัญชีโอนเงิน', hint:'แสดงตรงช่องแนบสลิป', max:1000}]
+  .concat(state.courses.map(c=> ({k:'course_'+c.id, label:cbShortName(c), hint:'รูปประกอบคอร์ส', max:1000})));
+const cbImg = {};
+async function loadCbImages(keys){
+  await Promise.all(keys.map(async k=>{ if(k in cbImg) return; try{ const r = await window.storage.get('shared_cbimg_'+k, true); cbImg[k] = (r && r.value) || ''; }catch(e){ cbImg[k] = ''; } }));
+}
 function cbExtraPersonHTML(n){
   return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
     <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
@@ -12494,14 +12513,15 @@ async function startCustomerBooking(param){
   catch(e){ root.innerHTML = `<div class="cb-wrap"><div class="cb-card"><h2>โหลดตารางไม่สำเร็จ</h2><p>กรุณาลองเปิดลิงค์ใหม่อีกครั้ง</p></div></div>`; return; }
   const bookable = state.courses.filter(c=> c.id !== 'c7' || true);
   const st = { cid: (param && param !== 'all' && courseById(param)) ? param : '', date:'', time:'', ym:null, done:null };
+  try{ await loadCbImages(['cover','qr','qrNote'].concat(state.courses.map(c=> 'course_'+c.id))); }catch(e){}
   const now = new Date(); now.setDate(now.getDate()+CB_LEAD_DAYS);
   st.ym = { y: now.getFullYear(), m: now.getMonth() };
-  const head = ()=> `<header class="cb-head"><div class="cb-brand">Rangsan</div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>`;
+  const head = ()=> `<header class="cb-head"><div class="cb-brand">Rangsan</div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>${cbImg.cover && !st.done ? `<img class="cb-cover" src="${cbImg.cover}" alt="">` : ''}`;
   const render = ()=>{
     if(st.done){ root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; return; }
     if(!st.cid){
       root.innerHTML = `<div class="cb-wrap">${head()}<div class="cb-card"><h2>เลือกคอร์สที่ต้องการเรียน</h2>
-        <div class="cb-courses">${bookable.map(c=>`<button type="button" class="cb-course" data-cid="${c.id}"><b>${cbEsc(cbShortName(c))}</b><span>${cbIsWorkshop(c.id)?`เวิร์คช็อป · ${(DEFAULT_PER_PERSON_PRICE[c.id]||c.price).toLocaleString()} บาท/คน`:(c.price?`${c.price.toLocaleString()} บาท`:'สอบถามราคา')}</span></button>`).join('')}</div></div></div>`;
+        <div class="cb-courses">${bookable.map(c=>`<button type="button" class="cb-course ${cbImg['course_'+c.id]?'has-img':''}" data-cid="${c.id}">${cbImg['course_'+c.id]?`<img src="${cbImg['course_'+c.id]}" alt="">`:''}<b>${cbEsc(cbShortName(c))}</b><span>${cbIsWorkshop(c.id)?`เวิร์คช็อป · ${(DEFAULT_PER_PERSON_PRICE[c.id]||c.price).toLocaleString()} บาท/คน`:(c.price?`${c.price.toLocaleString()} บาท`:'สอบถามราคา')}</span></button>`).join('')}</div></div></div>`;
       root.querySelectorAll('.cb-course').forEach(b=> b.onclick = ()=>{ st.cid = b.dataset.cid; st.date=''; st.time=''; render(); });
       return;
     }
@@ -12530,6 +12550,7 @@ async function startCustomerBooking(param){
     const dateTh = st.date ? new Date(st.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
     root.innerHTML = `<div class="cb-wrap">${head()}
       <div class="cb-card">
+        ${cbImg['course_'+st.cid] ? `<img class="cb-course-img" src="${cbImg['course_'+st.cid]}" alt="">` : ''}
         <div class="cb-course-line"><span>คอร์สที่เลือก</span><b>${cbEsc(cbShortName(c))}</b>${param==='all'||!param?`<button type="button" class="cb-link" id="cbChange">เปลี่ยนคอร์ส</button>`:''}</div>
         <h2>1. เลือกวันเรียน</h2>
         <div class="cb-cal-nav"><button type="button" id="cbPrev" ${curYM<=minYM?'disabled':''}>‹</button><b>${monthNames[m]} ${y+543}</b><button type="button" id="cbNext" ${curYM>=maxYM?'disabled':''}>›</button></div>
@@ -12563,6 +12584,7 @@ async function startCustomerBooking(param){
           ${cbCheck('goals','เป้าหมายการเรียนคอร์ส',['เปิดร้านกาแฟ','พัฒนาทักษะส่วนตัว','อบรมพนักงาน','ต่อยอดธุรกิจเดิม','สมัครงาน / ทำงานร้านกาแฟ'],true)}
           ${cbCheck('focus','หัวข้อที่อยากให้เน้นเป็นพิเศษ (เลือกได้มากกว่า 1 ข้อ)',['การบริหารร้าน / วางระบบหน้าร้าน','สูตรเครื่องดื่ม / การพัฒนาเมนู','การใช้อุปกรณ์ / เครื่องชง / เครื่องบด','การสตีมนม / เทลาเต้อาร์ต','การบริการลูกค้า / การแก้ปัญหาหน้างาน','การตลาด / การขาย / คอนเทนต์','การคำนวณต้นทุน / ตั้งราคา','การบด / แทมป์ / สกัดชอตเอสเปรสโซ','Workflow การทำงานหลังบาร์','การเปิดร้านจริง / การเตรียมระบบร้าน'],true,true)}
           <div class="cb-q"><div class="cb-ql">หลักฐานการชำระเงิน (สลิป)</div><div class="cb-qh">โปรดแนบสลิปเพื่อทำการจองคิว · ขอขอบพระคุณที่ไว้วางใจใช้บริการ 🙏</div>
+            ${cbImg.qr ? `<img class="cb-qr" src="${cbImg.qr}" alt="QR ชำระเงิน">` : ''}${cbImg.qrNote ? `<div class="cb-qrnote">${cbEsc(cbImg.qrNote).replace(/\n/g,'<br>')}</div>` : ''}
             <label class="cb-file"><input type="file" name="slip" accept="image/*"><span id="cbSlipName">📎 แนบรูปสลิป</span></label></div>
           ${cbIsWorkshop(st.cid) ? '' : cbRadio('ackLang','ประสงค์ออกใบ Acknowledgment เป็นภาษาไทย หรือ ภาษาอังกฤษ',['ภาษาไทย','ภาษาอังกฤษ'],false,false,'*หมายเหตุ : ใบ Acknowledgment ให้เฉพาะคอร์สเรียน Private เท่านั้น')}
           ${cbRadio('consent','การยินยอมให้ใช้ภาพถ่ายและวิดีโอ พร้อมรับสิทธิพิเศษ',['ยินยอม และรับสิทธิ์ส่วนลด 5%','ไม่ยินยอม'],true,false,'ระหว่างการเรียนหรือเข้าร่วมกิจกรรม ทาง RANGSAN มีการถ่ายภาพและบันทึกวิดีโอ เพื่อนำไปใช้ประชาสัมพันธ์ รีวิวหลักสูตร และเผยแพร่ผ่านช่องทางออนไลน์ของบริษัท ผู้ที่ยินยอมจะได้รับสิทธิ์ส่วนลดทันที 5% สำหรับการซื้อวัตถุดิบ RANGSAN เท่านั้น')}
@@ -12693,6 +12715,8 @@ function openCustomerLinkModal(){
   ov.innerHTML = `<div class="cl-box"><button type="button" class="cl-x" aria-label="ปิด">✕</button>
     <h3>🔗 ลิงค์ให้ลูกค้าจองเอง</h3>
     <p class="cl-hint">ส่งลิงค์ให้ลูกค้า ลูกค้าเลือกได้เฉพาะวันที่ยังว่าง วันที่มีคนจองแล้วกดไม่ได้ เวิร์คช็อปรับจนที่นั่งเต็ม การจองจะเข้าแอพทันที</p>
+    <div id="cbImgAdmin"><div class="cl-hint">กำลังโหลดภาพประกอบ...</div></div>
+    <h3 style="margin-top:18px;">ลิงค์แต่ละคอร์ส</h3>
     ${rows.map(r=>`<div class="cl-row"><div class="cl-name">${cbEsc(r.name)}</div>
       <div class="cl-acts"><button type="button" class="btn small" data-copy="${r.id}">คัดลอก</button><button type="button" class="btn small ghost" data-line="${r.id}">LINE</button><a class="btn small ghost" href="${customerBookingUrl(r.id)}" target="_blank" rel="noopener">เปิดดู</a></div></div>`).join('')}
   </div>`;
@@ -12700,7 +12724,27 @@ function openCustomerLinkModal(){
   ov.onclick = (e)=>{ if(e.target === ov) ov.style.display = 'none'; };
   ov.querySelector('.cl-x').onclick = ()=>{ ov.style.display = 'none'; };
   ov.querySelectorAll('[data-copy]').forEach(b=> b.onclick = async ()=>{ const u = customerBookingUrl(b.dataset.copy); try{ await navigator.clipboard.writeText(u); b.textContent = 'คัดลอกแล้ว ✓'; }catch(e){ prompt('คัดลอกลิงค์นี้', u); } setTimeout(()=> b.textContent = 'คัดลอก', 2000); });
+  renderCbImgAdmin();
   ov.querySelectorAll('[data-line]').forEach(b=> b.onclick = ()=>{ const c = courseById(b.dataset.line); sendTextToLine(`จองคอร์สเรียน RANGSAN Academy${c?` — ${cbShortName(c)}`:''}\nเลือกวันว่างและกรอกข้อมูลได้ที่ลิงค์นี้เลยครับ 👇\n${customerBookingUrl(b.dataset.line)}`); });
+}
+async function renderCbImgAdmin(){
+  const box = document.getElementById('cbImgAdmin'); if(!box) return;
+  const slots = CB_IMG_SLOTS();
+  await loadCbImages(slots.map(x=> x.k).concat(['qrNote']));
+  box.innerHTML = `<h3 style="margin:14px 0 4px;">🖼 ภาพประกอบในฟอร์ม</h3><p class="cl-hint">รูปที่ใส่จะขึ้นในหน้าฟอร์มของลูกค้าทันที ลบออกได้ตลอด</p>
+    ${slots.map(sl=>`<div class="ci-row"><div class="ci-prev">${cbImg[sl.k]?`<img src="${cbImg[sl.k]}" alt="">`:'<span>ไม่มีรูป</span>'}</div>
+      <div class="ci-main"><div class="cl-name">${cbEsc(sl.label)}</div><div class="ci-hint">${sl.hint}</div>
+        <div class="cl-acts"><label class="btn small">${cbImg[sl.k]?'เปลี่ยนรูป':'ใส่รูป'}<input type="file" accept="image/*" data-ci="${sl.k}" data-max="${sl.max}" hidden></label>${cbImg[sl.k]?`<button type="button" class="btn small ghost" data-ci-del="${sl.k}">ลบ</button>`:''}</div>
+        ${sl.k==='qr'?`<textarea class="ci-note" id="ciQrNote" rows="2" placeholder="ข้อความใต้ QR เช่น ธนาคาร / เลขบัญชี / ชื่อบัญชี">${cbEsc(cbImg.qrNote||'')}</textarea><button type="button" class="btn small ghost" id="ciQrNoteSave" style="margin-top:6px;">บันทึกข้อความ</button>`:''}
+        <div class="ci-st" data-ci-st="${sl.k}"></div></div></div>`).join('')}`;
+  box.querySelectorAll('input[data-ci]').forEach(inp=> inp.onchange = async ()=>{
+    const f = inp.files[0]; if(!f) return; const k = inp.dataset.ci; const st = box.querySelector(`[data-ci-st="${k}"]`);
+    st.textContent = 'กำลังอัปโหลด...';
+    try{ const img = await resizeImageFile(f, Number(inp.dataset.max)||1000, 0.85); await window.storage.set('shared_cbimg_'+k, img, true); cbImg[k] = img; renderCbImgAdmin(); flashSaved(); }
+    catch(e){ console.error(e); st.textContent = 'อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้ง'; }
+  });
+  box.querySelectorAll('[data-ci-del]').forEach(b=> b.onclick = async ()=>{ if(!confirm('ลบรูปนี้ออกจากฟอร์ม?')) return; const k = b.dataset.ciDel; await window.storage.set('shared_cbimg_'+k, '', true); cbImg[k] = ''; renderCbImgAdmin(); });
+  const ns = box.querySelector('#ciQrNoteSave'); if(ns) ns.onclick = async ()=>{ const v = box.querySelector('#ciQrNote').value.trim(); await window.storage.set('shared_cbimg_qrNote', v, true); cbImg.qrNote = v; flashSaved(); };
 }
 // staff: toast when a customer books through the link
 async function watchLinkBookings(){
