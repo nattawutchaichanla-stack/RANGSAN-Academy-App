@@ -2037,6 +2037,51 @@
   #cbBg::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(239,232,214,.55) 0%, rgba(239,232,214,.78) 100%); }
   #custBook.has-bg .cb-wrap{ position:relative; z-index:1; }
   #custBook.has-bg .cb-card{ background:rgba(255,253,248,.94); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+
+  /* ---------- booking pass + 2-column form (adapted from the credit-card form) ---------- */
+  #custBook.is-wide .cb-wrap{ max-width:1000px; }
+  #custBook.is-wide .cb-wrap > .cb-card:not(.cb-step3), #custBook.is-wide .cb-wrap > .cb-cover, #custBook.is-wide .cb-wrap > header{ max-width:520px; margin-left:auto; margin-right:auto; }
+  .cb-pay-wrap{ display:grid; grid-template-columns:1fr; gap:18px; }
+  @media (min-width:880px){ .cb-pay-wrap{ grid-template-columns:400px 1fr; align-items:start; } .cb-pass-col{ position:sticky; top:16px; } }
+  .cb-pass{ position:relative; width:100%; max-width:400px; height:228px; margin:0 auto; transform-style:preserve-3d; transition:transform .8s; perspective:1000px; }
+  .cb-pass.flip{ transform:rotateY(180deg); }
+  .cbp-face{ position:absolute; inset:0; border-radius:20px; padding:18px 22px; color:#EFE8D6; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    background:linear-gradient(135deg, #165028 0%, #0B2A15 70%); box-shadow:0 26px 40px -16px rgba(11,42,21,.55); }
+  .cbp-face::before, .cbp-face::after{ content:''; position:absolute; border-radius:50%; filter:blur(12px); pointer-events:none; }
+  .cbp-face::before{ border:14px solid rgba(220,167,61,.55); width:260px; height:260px; left:-18%; top:-60px; }
+  .cbp-face::after{ border:14px solid rgba(239,232,214,.18); width:260px; height:260px; left:-170px; top:58%; }
+  .cbp-face > *{ position:relative; z-index:1; }
+  .cbp-back{ transform:rotateY(180deg); padding:20px 0 0; }
+  .cbp-head{ display:flex; align-items:center; justify-content:space-between; }
+  .cbp-logo{ width:118px !important; margin:0 !important; }
+  .cbp-tag{ font-size:10px; letter-spacing:.24em; color:#DCA73D; font-weight:700; }
+  .cbp-course{ margin-top:14px; font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-size:19px; line-height:1.25; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cbp-when{ display:flex; align-items:center; gap:16px; margin-top:10px; }
+  .cbp-day{ display:flex; align-items:center; gap:6px; } .cbp-day b{ font-size:34px; line-height:1; color:#DCA73D; font-family:'Fraunces',serif; }
+  .cbp-day span{ font-size:10px; letter-spacing:.12em; line-height:1.25; color:rgba(239,232,214,.8); }
+  .cbp-time, .cbp-qty{ font-size:15px; font-weight:700; } .cbp-pass small, .cb-pass small{ display:block; font-size:9px; letter-spacing:.2em; color:rgba(239,232,214,.6); font-weight:600; }
+  .cbp-foot{ position:absolute !important; left:22px; right:22px; bottom:16px; display:flex; justify-content:space-between; gap:12px; align-items:flex-end; }
+  .cbp-holder{ min-width:0; flex:1; } .cbp-contact{ text-align:right; flex:none; }
+  #cbpName{ font-size:15px; font-weight:700; letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff; }
+  #cbpPhone{ font-size:15px; font-weight:700; letter-spacing:.04em; color:#fff; }
+  .cb-pass .is-ph{ color:rgba(239,232,214,.45) !important; }
+  .cbp-th{ font-size:11px; color:rgba(239,232,214,.7); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:14px; }
+  .cbp-strip{ height:38px; background:#0a1f10; }
+  .cbp-back-body{ display:flex; gap:14px; align-items:center; padding:16px 22px; }
+  .cbp-back-body img{ width:104px; height:104px; object-fit:contain; background:#fff; border-radius:12px; padding:4px; flex:none; }
+  .cbp-noqr{ width:84px; height:84px; border-radius:12px; background:rgba(239,232,214,.1); display:flex; align-items:center; justify-content:center; font-size:34px; flex:none; }
+  #cbpSlip{ font-size:15px; font-weight:700; margin-top:2px; } .cbp-note{ font-size:11px; color:rgba(239,232,214,.75); margin-top:6px; line-height:1.45; }
+  .cbp-hl{ position:absolute; z-index:3; border:1.5px solid #fff; border-radius:12px; box-shadow:0 0 8px rgba(255,255,255,.8); pointer-events:none; opacity:0; transition:all .3s ease; }
+  .cbp-hl.on{ opacity:1; } .cbp-hl.back{ transform:rotateY(180deg); }
+  .cbp-steps{ display:flex; align-items:center; gap:10px; max-width:400px; margin:10px auto 0; font-size:12px; color:#7A6F5E; }
+  .cbp-bar{ flex:1; height:6px; border-radius:6px; background:#E7DECB; overflow:hidden; } .cbp-bar i{ display:block; height:100%; background:#DCA73D; border-radius:6px; transition:width .3s; }
+  @media (max-width:420px){ .cb-pass{ height:204px; } .cbp-face{ padding:14px 16px; } .cbp-foot{ left:16px; right:16px; bottom:12px; } .cbp-day b{ font-size:28px; } .cbp-course{ font-size:17px; margin-top:10px; } }
+  /* inputs: taller, clearer focus (from the component) */
+  #custBook .cb-form input:not([type=radio]):not([type=checkbox]):not([type=file]), #custBook .cb-form select{ height:52px; padding:0 16px; border-radius:12px; border:1px solid #C9BFAE; transition:border-color .2s, box-shadow .2s; }
+  #custBook .cb-form textarea{ border-radius:12px; border:1px solid #C9BFAE; padding:12px 16px; }
+  #custBook .cb-form input:focus, #custBook .cb-form select:focus, #custBook .cb-form textarea:focus{ outline:none; border-color:#165028; box-shadow:0 0 0 4px rgba(220,167,61,.28); }
+  #custBook .cb-form .cb-other input[type=text]{ height:38px; }
+  .cb-submit{ opacity:.75; } .cb-submit.is-ready{ opacity:1; box-shadow:0 10px 24px -10px rgba(220,167,61,.9); }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
   .cb-note{ font-size:12px; color:#7A6F5E; text-align:center; margin:4px 0 0; }
@@ -12782,6 +12827,75 @@ const cbImg = {};
 async function loadCbImages(keys){
   await Promise.all(keys.map(async k=>{ if(k in cbImg) return; try{ const r = await window.storage.get('shared_cbimg_'+k, true); cbImg[k] = (r && r.value) || ''; }catch(e){ cbImg[k] = ''; } }));
 }
+// ---- live "booking pass" preview beside the form (idea from the credit-card form component) ----
+function cbPassHTML(c, st){
+  const d = new Date(st.date+'T00:00:00');
+  const mon = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()];
+  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+  const time = st.time ? `${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)}` : '10:00–17:00';
+  return `<div class="cb-pass" id="cbPass">
+    <div class="cbp-hl" id="cbpHl"></div>
+    <section class="cbp-face cbp-front">
+      <div class="cbp-head"><div class="rs-logo cbp-logo" role="img" aria-label="RANGSAN"></div><div class="cbp-tag">BOOKING PASS</div></div>
+      <div class="cbp-course" data-hl="course">${cbEsc(cbShortName(c))}</div>
+      <div class="cbp-when" data-hl="date"><div class="cbp-day"><b>${d.getDate()}</b><span>${mon}<br>${dow}</span></div><div class="cbp-time"><small>TIME</small>${time}</div><div class="cbp-qty"><small>SEATS</small><span id="cbpQty">1</span></div></div>
+      <div class="cbp-foot">
+        <div class="cbp-holder" data-hl="name"><small>STUDENT</small><div id="cbpName" class="is-ph">YOUR NAME</div><div id="cbpNameTh" class="cbp-th"></div></div>
+        <div class="cbp-contact" data-hl="phone"><small>CONTACT</small><div id="cbpPhone" class="is-ph">0XX-XXX-XXXX</div><div id="cbpLine" class="cbp-th"></div></div>
+      </div>
+    </section>
+    <section class="cbp-face cbp-back">
+      <div class="cbp-strip"></div>
+      <div class="cbp-back-body" data-hl="slip">${cbImg.qr ? `<img src="${cbImg.qr}" alt="QR">` : '<div class="cbp-noqr">💳</div>'}
+        <div><small>PAYMENT</small><div id="cbpSlip">ยังไม่แนบสลิป</div>${cbImg.qrNote ? `<div class="cbp-note">${cbEsc(cbImg.qrNote).replace(/\n/g,'<br>')}</div>` : ''}</div></div>
+    </section>
+  </div>
+  <div class="cbp-steps" id="cbpSteps"></div>`;
+}
+function cbPassBind(form, root){
+  const pass = root.querySelector('#cbPass'); if(!pass) return;
+  const hl = pass.querySelector('#cbpHl');
+  const target = el=>{
+    const n = (el && el.name) || '';
+    if(/^slip$/.test(n)) return 'slip';
+    if(/^(name|nameEn)$/.test(n)) return 'name';
+    if(/^(phone|lineId)$/.test(n)) return 'phone';
+    if(n === 'qty') return 'date';
+    return null;
+  };
+  const place = key=>{
+    pass.classList.toggle('flip', key === 'slip');
+    const t = key && pass.querySelector(`${key==='slip'?'.cbp-back':'.cbp-front'} [data-hl="${key}"]`);
+    if(!t){ hl.className = 'cbp-hl'; return; }
+    const pr = pass.getBoundingClientRect(), tr = t.getBoundingClientRect();
+    const flipX = key === 'slip';
+    const left = flipX ? (pr.right - tr.right) : (tr.left - pr.left);
+    hl.style.cssText = `left:${left-6}px; top:${tr.top-pr.top-5}px; width:${tr.width+12}px; height:${tr.height+10}px;`;
+    hl.className = 'cbp-hl on' + (flipX ? ' back' : '');
+  };
+  const fmtPhone = v=>{ const d = String(v||'').replace(/\D/g,'').slice(0,10); if(!d) return ''; const p = d.length>6 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}` : d.length>3 ? `${d.slice(0,3)}-${d.slice(3)}` : d; return d.length>6 ? `${d.slice(0,3)}-•••-${d.slice(6)}` : p; };
+  const update = ()=>{
+    const fd = new FormData(form);
+    const en = String(fd.get('nameEn')||'').trim().toUpperCase(), th = String(fd.get('name')||'').trim();
+    const nm = pass.querySelector('#cbpName'); nm.textContent = en || th || 'YOUR NAME'; nm.classList.toggle('is-ph', !(en||th));
+    pass.querySelector('#cbpNameTh').textContent = en && th ? th : '';
+    const ph = fmtPhone(fd.get('phone')); const pe = pass.querySelector('#cbpPhone'); pe.textContent = ph || '0XX-XXX-XXXX'; pe.classList.toggle('is-ph', !ph);
+    const ln = String(fd.get('lineId')||'').trim(); pass.querySelector('#cbpLine').textContent = ln ? `LINE · ${ln}` : '';
+    pass.querySelector('#cbpQty').textContent = fd.get('qty') || '1';
+    const sf = form.querySelector('input[name=slip]'); pass.querySelector('#cbpSlip').textContent = sf && sf.files[0] ? '✓ แนบสลิปแล้ว' : 'ยังไม่แนบสลิป';
+    // progress over required questions
+    const req = [...form.querySelectorAll('input[required]')].map(i=> !!i.value.trim()).concat([...form.querySelectorAll('.cb-q[data-req]')].map(q=> !!q.querySelector('input:checked')));
+    const done = req.filter(Boolean).length;
+    const st = root.querySelector('#cbpSteps');
+    st.innerHTML = `<div class="cbp-bar"><i style="width:${Math.round(done/Math.max(1,req.length)*100)}%"></i></div><span>กรอกแล้ว ${done}/${req.length} ข้อ</span>`;
+    const sb = form.querySelector('.cb-submit'); if(sb){ sb.classList.toggle('is-ready', done === req.length); sb.textContent = done === req.length ? 'ยืนยันการจอง' : `ยืนยันการจอง (เหลือ ${req.length-done} ข้อ)`; }
+  };
+  form.addEventListener('input', update); form.addEventListener('change', update);
+  form.addEventListener('focusin', e=> place(target(e.target)));
+  form.addEventListener('focusout', ()=> setTimeout(()=>{ if(!form.contains(document.activeElement)) place(null); }, 0));
+  const slipLab = form.querySelector('.cb-file'); if(slipLab){ slipLab.addEventListener('mouseenter', ()=> place('slip')); slipLab.addEventListener('click', ()=> place('slip')); }
+  update();
+}
 function cbExtraPersonHTML(n){
   return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
     <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
@@ -12866,7 +12980,8 @@ async function startCustomerBooking(param){
         <div class="cb-picked">📅 ${dateTh}</div>
         ${rounds ? `<div class="cb-rounds">${rounds.map(r=>`<button type="button" class="cb-round ${st.time===r.time?'is-sel':''}" ${r.left>0?`data-t="${r.time}"`:'disabled'}>${r.time}–${addMinutesToTime(r.time, courseDurationMin(st.cid)||90)} น.<small>${r.left>0?`เหลือ ${r.left} ที่`:'เต็ม'}</small></button>`).join('')}</div>` : ''}
       </div>` : ''}
-      ${ready ? `<div class="cb-card"><h2>3. ข้อมูลผู้เรียน</h2>
+      ${ready ? `<div class="cb-card cb-step3"><h2>3. ข้อมูลผู้เรียน</h2>
+        <div class="cb-pay-wrap"><aside class="cb-pass-col">${cbPassHTML(c, st)}</aside>
         <form id="cbForm" class="cb-form" autocomplete="on" novalidate>
           ${cbRadio('heard','ช่องทางที่รู้จักเรา',['Facebook','Instagram','Tiktok','Youtube'],true)}
           <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="name" required maxlength="80" autocomplete="name"></label>
@@ -12894,7 +13009,7 @@ async function startCustomerBooking(param){
           <div class="cb-sum">📅 ${dateTh}${st.time?` · ${st.time} น.`:''}<br>📚 ${cbEsc(cbShortName(c))}</div>
           <button type="submit" class="cb-submit">ยืนยันการจอง</button>
           <p class="cb-note">ทีมงานจะโทรยืนยันกับคุณก่อนวันเรียน 1 วัน</p>
-        </form></div>` : ''}
+        </form></div></div>` : ''}
     </div>`;
     const ch = root.querySelector('#cbChange'); if(ch) ch.onclick = ()=>{ st.cid=''; st.date=''; st.time=''; render(); };
     root.querySelector('#cbPrev').onclick = ()=>{ const t = new Date(y, m-1, 1); st.ym = {y:t.getFullYear(), m:t.getMonth()}; render(); };
@@ -12902,6 +13017,8 @@ async function startCustomerBooking(param){
     root.querySelectorAll('.cb-day[data-d]').forEach(b=> b.onclick = ()=>{ st.date = b.dataset.d; st.time = ''; const a = cbAvailability(st.cid, st.date); if(a.rounds){ const o = a.rounds.filter(r=> r.left>0); if(o.length===1) st.time = o[0].time; } render(); setTimeout(()=>{ const t = root.querySelectorAll('.cb-card')[1]; if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); });
     root.querySelectorAll('.cb-round[data-t]').forEach(b=> b.onclick = ()=>{ st.time = b.dataset.t; render(); setTimeout(()=>{ const f = root.querySelector('#cbForm'); if(f) f.scrollIntoView({behavior:'smooth', block:'start'}); }, 50); });
     const form = root.querySelector('#cbForm');
+    root.classList.toggle('is-wide', !!form);
+    if(form) cbPassBind(form, root);
     if(form){
       const sf = form.querySelector('input[name=slip]'); if(sf) sf.onchange = ()=>{ const f = sf.files[0]; root.querySelector('#cbSlipName').textContent = f ? '✅ ' + f.name : '📎 แนบรูปสลิป'; };
       form.querySelectorAll('.cb-other input[type=text]').forEach(t=> t.oninput = ()=>{ const r = t.closest('.cb-other').querySelector('input[type=radio],input[type=checkbox]'); if(t.value.trim()) r.checked = true; });
