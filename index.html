@@ -1883,6 +1883,21 @@
   .reg-actions{ margin-top:8px; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:6px 0; align-items:center; }
   .reg-mini.is-danger{ border-color:rgba(200,85,61,.55); color:#E58A73; }
   .reg-link{ all:unset; cursor:pointer; color:#DCA73D; text-decoration:underline; font-size:inherit; }
+  .cx-ov{ align-items:flex-start !important; padding-top:max(6vh, 20px) !important; }
+  .cx-who{ display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:12px; background:rgba(239,232,214,.07); margin:8px 0 6px; font-size:13.5px; color:rgba(239,232,214,.8); }
+  .cx-who b{ font-size:16px; color:#fff; }
+  .cx-reasons{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .cx-r{ all:unset; cursor:pointer; padding:9px 13px; border-radius:999px; border:1px solid rgba(239,232,214,.3); font-size:14px; color:#EFE8D6; -webkit-tap-highlight-color:transparent; }
+  .cx-r.on{ background:#DCA73D; border-color:#DCA73D; color:#1A0F08; font-weight:700; }
+  .cx-err{ color:#F2A08C; font-size:13.5px; min-height:0; margin-top:6px; }
+  .cx-acts{ display:flex; gap:10px; margin-top:14px; } .cx-acts.col{ flex-direction:column; }
+  .cx-ok, .cx-no{ all:unset; cursor:pointer; flex:1; text-align:center; padding:15px 14px; border-radius:14px; font-size:16px; font-weight:700; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .cx-ok{ background:#C8553D; color:#fff; } .cx-ok:disabled{ opacity:.75; cursor:default; }
+  .cx-done .cx-ok{ background:#DCA73D; color:#1A0F08; }
+  .cx-no{ border:1px solid rgba(239,232,214,.3); color:#EFE8D6; } .cx-no:disabled{ opacity:.6; }
+  .cx-spin{ display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:cxSpin .7s linear infinite; vertical-align:-2px; margin-right:6px; }
+  @keyframes cxSpin{ to{ transform:rotate(360deg); } }
+  .cx-done{ text-align:center; } .cx-ok-ico{ width:56px; height:56px; margin:4px auto 8px; border-radius:50%; background:#2E7D4F; color:#fff; font-size:30px; line-height:56px; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -4642,32 +4657,14 @@ async function regCancel(r, btn, boxId){
   const key = regKeyForRow(r);
   if(!key){ alert('จับคู่รายการนี้กับคอร์ส/วันที่ไม่ได้'); return; }
   const { nameIdx, courseIdx, dateIdx, phoneIdx } = regRowsCache;
-  const name = (r[nameIdx]||'').trim();
   const b = regBookingForRow(r);
-  if(b && b.taught){ alert('คลาสนี้ยืนยันสอนเสร็จแล้ว ยกเลิกไม่ได้'); return; }
-  const c = courseById(b ? b.courseId : matchCourseIdFromText(r[courseIdx]));
-  const iso = b ? b.date : parseThaiFormDate(r[dateIdx]);
-  const { ov, close } = rsSmallModal(`<h3>✕ ยกเลิกการจอง</h3>
-    <p class="cl-hint">${cbEsc(name)} · ${cbEsc(c ? c.name : '')} · ${rsThDate(iso)}</p>
-    <label class="rs-f">เหตุผล (ไม่บังคับ)<select id="regCxReason"><option>ลูกค้าขอยกเลิก</option><option>ไม่ได้ชำระเงิน</option><option>ติดต่อลูกค้าไม่ได้</option><option>กรอกฟอร์มซ้ำ</option><option>ทางร้านขอยกเลิก/ปิดคลาส</option><option>อื่นๆ</option></select></label>
-    <label class="rs-f">หมายเหตุ<input id="regCxNote" maxlength="120" placeholder="เช่น ขอคืนเงิน / เลื่อนไปปีหน้า"></label>
-    <p class="cl-hint" style="margin-top:10px;">คิวนี้จะถูกเอาออกจากปฏิทินและรายชื่อ ข้อมูลใน Google Form ยังอยู่ และระบบจะไม่ดึงกลับมาอีก (กู้คืนได้ภายหลัง)</p>
-    <div class="cl-acts" style="margin-top:12px;"><button type="button" class="btn small" id="regCxOk" style="background:#C8553D;color:#fff;">ยืนยันยกเลิก</button><button type="button" class="btn small ghost" id="regCxNo">ไม่ยกเลิก</button></div>`);
-  ov.querySelector('#regCxNo').onclick = close;
-  ov.querySelector('#regCxOk').onclick = async ()=>{
-    await loadSharedCancelled();
-    const entry = { key, name, courseId: c ? c.id : '', date: iso, phone: phoneIdx>=0 ? (r[phoneIdx]||'') : '', reason: ov.querySelector('#regCxReason').value,
-      note: ov.querySelector('#regCxNote').value.trim(), by: currentUser || '', at: new Date().toISOString() };
-    if(b) entry.booking = b;
-    sharedCancelled = sharedCancelled.filter(x=> x.key !== key).concat([entry]);
-    await saveSharedCancelled();
-    if(b){ sharedBookings = sharedBookings.filter(x=> x !== b); await saveSharedBookings(); }
-    close();
-    flashSaved('ยกเลิกการจองแล้ว ✓');
-    renderRegistrationList(boxId);
-    try{ renderLogTab(); }catch(e){}
-    if(confirm('ส่งข้อความแจ้งยกเลิกให้ลูกค้าคนนี้เลยไหม?')) regNotifyCancel(entry, r);
-  };
+  const courseId = b ? b.courseId : matchCourseIdFromText(r[courseIdx]);
+  cancelFlow({
+    key, booking: b,
+    name: (r[nameIdx]||'').trim(), courseId, date: b ? b.date : parseThaiFormDate(r[dateIdx]),
+    phone: phoneIdx>=0 ? (r[phoneIdx]||'') : '', source: 'google_form',
+    after: ()=>{ renderRegistrationList(boxId); try{ renderLogTab(); }catch(e){} }
+  });
 }
 function regNotifyCancel(entry, r){
   const c = courseById(entry.courseId);
@@ -4686,31 +4683,85 @@ function regNotifyCancel(entry, r){
 }
 // cancel one booking from the app (customer-link form, Google Form or manual) — reason, notify, restorable
 function cancelBookingDialog(b, after){
-  if(b.taught){ alert('คลาสนี้ยืนยันสอนเสร็จแล้ว ยกเลิกไม่ได้'); return; }
-  const c = courseById(b.courseId);
-  const src = b.source === 'link' ? '📲 จองผ่านลิงค์ในแอพ' : (b.source === 'google_form' ? '📝 Google Form' : '✍️ ลงคิวเอง');
-  const { ov, close } = rsSmallModal(`<h3>✕ ยกเลิกการจอง</h3>
-    <p class="cl-hint">${cbEsc(b.customerName || 'ไม่ระบุชื่อ')} · ${cbEsc(c ? c.name : '')} · ${rsThDate(b.date)}${b.startTime?` ${b.startTime}`:''}<br>${src}</p>
-    <label class="rs-f">เหตุผล<select id="regCxReason"><option>ลูกค้าขอยกเลิก</option><option>ไม่ได้ชำระเงิน</option><option>ติดต่อลูกค้าไม่ได้</option><option>จองซ้ำ</option><option>ทางร้านขอยกเลิก/ปิดคลาส</option><option>ลงคิวผิด</option><option>อื่นๆ</option></select></label>
-    <label class="rs-f">หมายเหตุ<input id="regCxNote" maxlength="120" placeholder="เช่น ขอคืนเงิน / เลื่อนไปเดือนหน้า"></label>
-    <p class="cl-hint" style="margin-top:10px;">คิวจะถูกเอาออกจากปฏิทิน${b.source==='link'?' และวันนั้นจะกลับมาว่างให้ลูกค้าคนอื่นจองผ่านลิงค์ได้':''} · กู้คืนได้ที่ "ดูที่ยกเลิก"</p>
-    <div class="cl-acts" style="margin-top:12px;"><button type="button" class="btn small" id="regCxOk" style="background:#C8553D;color:#fff;">ยืนยันยกเลิก</button><button type="button" class="btn small ghost" id="regCxNo">ไม่ยกเลิก</button></div>`);
-  ov.querySelector('#regCxNo').onclick = close;
-  ov.querySelector('#regCxOk').onclick = async ()=>{
-    await loadSharedCancelled();
-    const key = b.syncKey || `bk_${b.linkId || ''}_${b.date}_${b.courseId}_${(b.customerName||'').trim()}_${Date.now().toString(36)}`;
-    const entry = { key, name: b.customerName || '', courseId: b.courseId, date: b.date, phone: b.customerPhone || '', source: b.source || 'manual',
-      reason: ov.querySelector('#regCxReason').value, note: ov.querySelector('#regCxNote').value.trim(), by: currentUser || '', at: new Date().toISOString(), booking: b };
-    sharedCancelled = sharedCancelled.filter(x=> x.key !== key).concat([entry]);
-    await saveSharedCancelled();
-    await loadSharedBookings();
-    const i = sharedBookings.findIndex(x=> (b.syncKey && x.syncKey === b.syncKey) || (x.date === b.date && x.courseId === b.courseId && (x.customerName||'') === (b.customerName||'') && (x.linkId||'') === (b.linkId||'') && (x.createdAt||'') === (b.createdAt||'')));
-    if(i >= 0){ sharedBookings.splice(i, 1); await saveSharedBookings(); }
-    close();
-    flashSaved('ยกเลิกการจองแล้ว ✓');
-    if(after) after();
-    if(b.customerName && confirm('ส่งข้อความแจ้งยกเลิกให้ลูกค้าคนนี้เลยไหม?')) regNotifyCancel(entry);
+  cancelFlow({
+    key: b.syncKey || `bk_${b.linkId || ''}_${b.date}_${b.courseId}_${(b.customerName||'').trim()}_${(b.createdAt||'')}`,
+    booking: b, name: b.customerName || '', courseId: b.courseId, date: b.date, startTime: b.startTime,
+    phone: b.customerPhone || '', source: b.source || 'manual', after
+  });
+}
+// one cancel flow for every place: reason → save (no double taps, verified) → done screen with undo / notify
+let cancelBusy = false;
+function cancelFlow(o){
+  if(o.booking && o.booking.taught){ alert('คลาสนี้ยืนยันสอนเสร็จแล้ว ยกเลิกไม่ได้'); return; }
+  const c = courseById(o.courseId);
+  const src = o.source === 'link' ? '📲 จองผ่านลิงค์ในแอพ' : (o.source === 'google_form' ? '📝 Google Form' : '✍️ ลงคิวเอง');
+  const reasons = ['ลูกค้าขอยกเลิก','ไม่ได้ชำระเงิน','ติดต่อลูกค้าไม่ได้','จองซ้ำ','ทางร้านขอยกเลิก/ปิดคลาส','ลงคิวผิด','อื่นๆ'];
+  const { ov, close } = rsSmallModal(`<div class="cx-body">
+    <h3>✕ ยกเลิกการจอง</h3>
+    <div class="cx-who"><b>${cbEsc(o.name || 'ไม่ระบุชื่อ')}</b><span>${cbEsc(c ? c.name : '')}</span><span>🗓️ ${rsThDate(o.date)}${o.startTime?` · ${o.startTime}`:''} · ${src}</span></div>
+    <div class="rs-f">เหตุผล</div>
+    <div class="cx-reasons">${reasons.map((t,i)=>`<button type="button" class="cx-r ${i===0?'on':''}" data-r="${t}">${t}</button>`).join('')}</div>
+    <label class="rs-f">หมายเหตุ (ไม่บังคับ)<input id="cxNote" maxlength="120" placeholder="เช่น ขอคืนเงิน / เลื่อนไปเดือนหน้า" enterkeyhint="done"></label>
+    <p class="cl-hint" style="margin-top:10px;">คิวจะถูกเอาออกจากปฏิทิน${o.source==='link'?' และวันนั้นกลับมาว่างให้ลูกค้าคนอื่นจองได้':''} · กู้คืนได้ภายหลัง</p>
+    <div class="cx-err" id="cxErr"></div>
+    <div class="cx-acts"><button type="button" class="cx-no" id="cxNo">ไม่ยกเลิก</button><button type="button" class="cx-ok" id="cxOk">ยืนยันยกเลิก</button></div>
+  </div>`);
+  ov.classList.add('cx-ov');
+  let reason = reasons[0];
+  ov.querySelectorAll('.cx-r').forEach(b=> b.onclick = ()=>{ reason = b.dataset.r; ov.querySelectorAll('.cx-r').forEach(x=> x.classList.toggle('on', x === b)); });
+  const note = ov.querySelector('#cxNote');
+  note.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); note.blur(); } });
+  ov.querySelector('#cxNo').onclick = close;
+  const okBtn = ov.querySelector('#cxOk'), err = ov.querySelector('#cxErr');
+  // pointerup so the first tap counts even while the iPad keyboard is closing
+  const run = async (e)=>{
+    if(e) e.preventDefault();
+    if(cancelBusy) return;
+    cancelBusy = true; okBtn.disabled = true; okBtn.innerHTML = '<span class="cx-spin"></span> กำลังยกเลิก...'; err.textContent = '';
+    note.blur();
+    const entry = { key: o.key, name: o.name, courseId: o.courseId, date: o.date, phone: o.phone, source: o.source,
+      reason, note: note.value.trim(), by: currentUser || '', at: new Date().toISOString(), booking: o.booking || null };
+    try{
+      await loadSharedCancelled();
+      await loadSharedBookings();
+      const b = o.booking;
+      const idx = sharedBookings.findIndex(x=> (b && b.syncKey && x.syncKey === b.syncKey) ||
+        (b && !b.syncKey && x.date === b.date && x.courseId === b.courseId && (x.customerName||'') === (b.customerName||'') && (x.linkId||'') === (b.linkId||'') && (x.createdAt||'') === (b.createdAt||'')));
+      if(idx >= 0) entry.booking = sharedBookings[idx];
+      sharedCancelled = sharedCancelled.filter(x=> x.key !== o.key).concat([entry]);
+      await saveSharedCancelled();
+      if(idx >= 0){ sharedBookings.splice(idx, 1); await saveSharedBookings(); }
+      // verify it really stuck
+      await loadSharedBookings();
+      const still = idx >= 0 && sharedBookings.some(x=> (b.syncKey && x.syncKey === b.syncKey) || (!b.syncKey && x.date === b.date && x.courseId === b.courseId && (x.customerName||'') === (b.customerName||'') && (x.createdAt||'') === (b.createdAt||'')));
+      if(still) throw new Error('booking still present after save');
+    }catch(ex){
+      console.error('cancel failed', ex);
+      cancelBusy = false; okBtn.disabled = false; okBtn.textContent = 'ลองอีกครั้ง';
+      err.textContent = '⚠️ ยกเลิกไม่สำเร็จ — เช็คอินเทอร์เน็ตแล้วกดอีกครั้ง';
+      return;
+    }
+    cancelBusy = false;
+    if(o.after) try{ o.after(); }catch(e){}
+    // done screen: undo + notify the customer, no browser pop-ups
+    ov.querySelector('.cx-body').innerHTML = `<div class="cx-done"><div class="cx-ok-ico">✓</div><h3>ยกเลิกเรียบร้อย</h3>
+      <p class="cl-hint">${cbEsc(o.name || '')} · ${rsThDate(o.date)} · ${cbEsc(reason)}</p>
+      <div class="cx-acts col">${o.name ? `<button type="button" class="cx-ok" id="cxNotify">📩 แจ้งลูกค้า</button>` : ''}
+      <button type="button" class="cx-no" id="cxUndo">↩ เลิกทำ (กู้คืน)</button><button type="button" class="cx-no" id="cxClose">เสร็จ</button></div></div>`;
+    ov.querySelector('#cxClose').onclick = close;
+    const nt = ov.querySelector('#cxNotify'); if(nt) nt.onclick = ()=> regNotifyCancel(entry);
+    ov.querySelector('#cxUndo').onclick = async (ev)=>{
+      const bt = ev.currentTarget; bt.disabled = true; bt.textContent = 'กำลังกู้คืน...';
+      try{
+        await loadSharedCancelled(); await loadSharedBookings();
+        sharedCancelled = sharedCancelled.filter(x=> x.key !== o.key); await saveSharedCancelled();
+        if(entry.booking && !sharedBookings.some(x=> x === entry.booking || (entry.booking.syncKey && x.syncKey === entry.booking.syncKey))){ sharedBookings.push(entry.booking); await saveSharedBookings(); }
+        close(); flashSaved('กู้คืนแล้ว ✓'); if(o.after) try{ o.after(); }catch(e){}
+      }catch(ex){ bt.disabled = false; bt.textContent = '↩ เลิกทำ (กู้คืน)'; alert('กู้คืนไม่สำเร็จ ลองอีกครั้ง'); }
+    };
   };
+  okBtn.addEventListener('pointerup', run);
+  okBtn.addEventListener('click', e=>{ e.preventDefault(); if(!cancelBusy && !okBtn.disabled) run(e); });
 }
 async function openCancelledList(boxId){
   await loadSharedCancelled();
