@@ -1879,6 +1879,8 @@
   .eval-box .reg-name{ color:#EFE8D6; }
   .eval-box .reg-course{ color:#C9A97A; }
   .reg-actions{ margin-top:8px; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:6px 0; align-items:center; }
+  .reg-mini.is-danger{ border-color:rgba(200,85,61,.55); color:#E58A73; }
+  .reg-link{ all:unset; cursor:pointer; color:#DCA73D; text-decoration:underline; font-size:inherit; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -4360,7 +4362,7 @@ function renderRegistrationList(listBoxId){
   }
   // only classes not confirmed as taught yet, newest registration first (Google Form appends rows in order)
   const allIdx = new Map(dataRows.map((r,i)=> [r, i]));
-  rows = rows.filter(r=>{ const bk0 = regBookingForRow(r); return !(bk0 && bk0.taught); });
+  rows = rows.filter(r=>{ const bk0 = regBookingForRow(r); return !(bk0 && bk0.taught) && !isCancelledKey(regKeyForRow(r)); });
   const pendingTotal = rows.length;
   rows.sort((a,b)=>{
     const ta = timeIdx>=0 ? parseFormTimestamp(a[timeIdx]) : null, tb = timeIdx>=0 ? parseFormTimestamp(b[timeIdx]) : null;
@@ -4373,7 +4375,7 @@ function renderRegistrationList(listBoxId){
     return;
   }
   box.innerHTML = `
-    <p class="hint" style="margin-bottom:8px;">ยังไม่ยืนยันสอน ${pendingTotal} รายการ${pendingTotal>rows.length?` (แสดง ${rows.length} ล่าสุด)`:''} · เรียงจากสมัครล่าสุด</p>
+    <p class="hint" style="margin-bottom:8px;">ยังไม่ยืนยันสอน ${pendingTotal} รายการ${pendingTotal>rows.length?` (แสดง ${rows.length} ล่าสุด)`:''} · เรียงจากสมัครล่าสุด${sharedCancelled.length?` · <button type="button" class="reg-link" data-reg-cancelled>ดูที่ยกเลิก (${sharedCancelled.length})</button>`:''}</p>
     ${rows.map(r=>{
       const name = nameIdx>=0 ? r[nameIdx] : '-';
       const phone = phoneIdx>=0 ? r[phoneIdx] : '';
@@ -4399,13 +4401,15 @@ function renderRegistrationList(listBoxId){
         <div style="font-size:11px; color:#948a78; margin-top:2px;">
           ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} · สมัครเมื่อ ${submitted||'-'}
         </div>
-        <div class="reg-actions"><button type="button" class="reg-mini" data-reg-edit="${rowIdx}">✏️ แก้วันเรียน</button><button type="button" class="reg-mini" data-reg-notify="${rowIdx}">📩 แจ้งลูกค้า</button>${status}</div>
+        <div class="reg-actions"><button type="button" class="reg-mini is-danger" data-reg-cancel="${rowIdx}">✕ ยกเลิก</button><button type="button" class="reg-mini" data-reg-edit="${rowIdx}">✏️ แก้วันเรียน</button><button type="button" class="reg-mini" data-reg-notify="${rowIdx}">📩 แจ้งลูกค้า</button>${status}</div>
       </div>`;
     }).join('')}
   `;
   box.querySelectorAll('.reg-confirm-btn').forEach(btn=>{
     btn.onclick = ()=> confirmTaughtFromRegistration(regRowsCache.dataRows[+btn.dataset.row], btn, box.id);
   });
+  box.querySelectorAll('[data-reg-cancel]').forEach(btn=> btn.onclick = ()=> regCancel(regRowsCache.dataRows[+btn.dataset.regCancel], btn, box.id));
+  const cl = box.querySelector('[data-reg-cancelled]'); if(cl) cl.onclick = ()=> openCancelledList(box.id);
   box.querySelectorAll('[data-reg-edit]').forEach(btn=> btn.onclick = ()=> regEditDate(regRowsCache.dataRows[+btn.dataset.regEdit], btn, box.id));
   box.querySelectorAll('[data-reg-notify]').forEach(btn=> btn.onclick = ()=> regNotifyCustomer(regRowsCache.dataRows[+btn.dataset.regNotify], btn));
 }
@@ -4512,6 +4516,68 @@ async function regNotifyCustomer(r, btn, bk){
   const sm = ov.querySelector('#regMsgSms'); if(sm) sm.onclick = ()=>{ location.href = `sms:${phone}${/iPad|iPhone|Mac/.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(txt())}`; markNotified(b); };
   ov.querySelector('#regMsgCopy').onclick = async (e)=>{ try{ await navigator.clipboard.writeText(txt()); e.target.textContent = 'คัดลอกแล้ว ✓'; markNotified(b); }catch(err){ alert('คัดลอกไม่สำเร็จ ลองกดค้างที่ข้อความแล้วคัดลอกเอง'); } };
 }
+async function regCancel(r, btn, boxId){
+  const key = regKeyForRow(r);
+  if(!key){ alert('จับคู่รายการนี้กับคอร์ส/วันที่ไม่ได้'); return; }
+  const { nameIdx, courseIdx, dateIdx, phoneIdx } = regRowsCache;
+  const name = (r[nameIdx]||'').trim();
+  const b = regBookingForRow(r);
+  if(b && b.taught){ alert('คลาสนี้ยืนยันสอนเสร็จแล้ว ยกเลิกไม่ได้'); return; }
+  const c = courseById(b ? b.courseId : matchCourseIdFromText(r[courseIdx]));
+  const iso = b ? b.date : parseThaiFormDate(r[dateIdx]);
+  const { ov, close } = rsSmallModal(`<h3>✕ ยกเลิกการจอง</h3>
+    <p class="cl-hint">${cbEsc(name)} · ${cbEsc(c ? c.name : '')} · ${rsThDate(iso)}</p>
+    <label class="rs-f">เหตุผล (ไม่บังคับ)<select id="regCxReason"><option>ลูกค้าขอยกเลิก</option><option>ไม่ได้ชำระเงิน</option><option>ติดต่อลูกค้าไม่ได้</option><option>กรอกฟอร์มซ้ำ</option><option>ทางร้านขอยกเลิก/ปิดคลาส</option><option>อื่นๆ</option></select></label>
+    <label class="rs-f">หมายเหตุ<input id="regCxNote" maxlength="120" placeholder="เช่น ขอคืนเงิน / เลื่อนไปปีหน้า"></label>
+    <p class="cl-hint" style="margin-top:10px;">คิวนี้จะถูกเอาออกจากปฏิทินและรายชื่อ ข้อมูลใน Google Form ยังอยู่ และระบบจะไม่ดึงกลับมาอีก (กู้คืนได้ภายหลัง)</p>
+    <div class="cl-acts" style="margin-top:12px;"><button type="button" class="btn small" id="regCxOk" style="background:#C8553D;color:#fff;">ยืนยันยกเลิก</button><button type="button" class="btn small ghost" id="regCxNo">ไม่ยกเลิก</button></div>`);
+  ov.querySelector('#regCxNo').onclick = close;
+  ov.querySelector('#regCxOk').onclick = async ()=>{
+    await loadSharedCancelled();
+    const entry = { key, name, courseId: c ? c.id : '', date: iso, phone: phoneIdx>=0 ? (r[phoneIdx]||'') : '', reason: ov.querySelector('#regCxReason').value,
+      note: ov.querySelector('#regCxNote').value.trim(), by: currentUser || '', at: new Date().toISOString() };
+    if(b) entry.booking = b;
+    sharedCancelled = sharedCancelled.filter(x=> x.key !== key).concat([entry]);
+    await saveSharedCancelled();
+    if(b){ sharedBookings = sharedBookings.filter(x=> x !== b); await saveSharedBookings(); }
+    close();
+    flashSaved('ยกเลิกการจองแล้ว ✓');
+    renderRegistrationList(boxId);
+    try{ renderLogTab(); }catch(e){}
+    if(confirm('ส่งข้อความแจ้งยกเลิกให้ลูกค้าคนนี้เลยไหม?')) regNotifyCancel(entry, r);
+  };
+}
+function regNotifyCancel(entry, r){
+  const c = courseById(entry.courseId);
+  const dTh = entry.date ? new Date(entry.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
+  const msg = [`สวัสดีครับ คุณ${entry.name} 🙏`, 'RANGSAN Academy ขอแจ้งยกเลิกการจองคอร์สเรียนครับ', '',
+    `📚 ${c ? c.name.replace(/^คอร์ส\s*\d+:\s*/,'') : ''}`, `🗓️ ${dTh}`, '',
+    'หากต้องการจองวันเรียนใหม่ หรือสอบถามเพิ่มเติม ติดต่อได้ที่ 061 732 1346 ครับ ☕'].join('\n');
+  const phone = String(entry.phone||'').replace(/[^\d+]/g,'');
+  const { ov } = rsSmallModal(`<h3>📩 แจ้งยกเลิกลูกค้า</h3><p class="cl-hint">ส่งถึง ${cbEsc(entry.name)} คนเดียว</p>
+    <textarea id="regMsg" class="ci-note" rows="8">${cbEsc(msg)}</textarea>
+    <div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="regMsgLine">ส่งทาง LINE</button>${phone?`<button type="button" class="btn small ghost" id="regMsgSms">ส่ง SMS</button>`:''}<button type="button" class="btn small ghost" id="regMsgCopy">คัดลอก</button></div>`);
+  const txt = ()=> ov.querySelector('#regMsg').value;
+  ov.querySelector('#regMsgLine').onclick = ()=> sendTextToLine(txt());
+  const sm = ov.querySelector('#regMsgSms'); if(sm) sm.onclick = ()=>{ location.href = `sms:${phone}${/iPad|iPhone|Mac/.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(txt())}`; };
+  ov.querySelector('#regMsgCopy').onclick = async (e)=>{ try{ await navigator.clipboard.writeText(txt()); e.target.textContent = 'คัดลอกแล้ว ✓'; }catch(err){} };
+}
+async function openCancelledList(boxId){
+  await loadSharedCancelled();
+  const list = sharedCancelled.slice().sort((a,b)=> (b.at||'').localeCompare(a.at||''));
+  const { ov, close } = rsSmallModal(`<h3>รายการที่ยกเลิก (${list.length})</h3>
+    <div style="max-height:60vh; overflow:auto; margin-top:8px;">${list.map((x,i)=>{ const c = courseById(x.courseId); return `<div class="cl-row">
+      <div class="cl-name">${cbEsc(x.name)} · ${rsThDate(x.date)}</div>
+      <div class="ci-hint" style="margin:2px 0 6px;">${cbEsc(c ? c.name : '')} · ${cbEsc(x.reason||'')}${x.note?` · ${cbEsc(x.note)}`:''} · โดย ${cbEsc(x.by||'-')} ${x.at?new Date(x.at).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):''}</div>
+      <button type="button" class="btn small ghost" data-restore="${cbEsc(x.key)}">↩ กู้คืน</button></div>`; }).join('') || '<p class="cl-hint">ไม่มีรายการ</p>'}</div>`);
+  ov.querySelectorAll('[data-restore]').forEach(btn=> btn.onclick = async ()=>{
+    const k = btn.dataset.restore; const x = sharedCancelled.find(z=> z.key === k);
+    if(!x || !confirm(`กู้คืนการจองของ ${x.name}?`)) return;
+    sharedCancelled = sharedCancelled.filter(z=> z.key !== k); await saveSharedCancelled();
+    if(x.booking && !sharedBookings.some(z=> z.syncKey === k)){ sharedBookings.push(x.booking); await saveSharedBookings(); }
+    close(); flashSaved('กู้คืนแล้ว ✓'); renderRegistrationList(boxId); try{ renderLogTab(); }catch(e){}
+  });
+}
 function markNotified(b){ b.notifiedAt = new Date().toISOString(); b.notifiedBy = currentUser || ''; saveSharedBookings(); }
 
 // ---------- returning customers ("ลูกค้าพิเศษ") ----------
@@ -4544,6 +4610,19 @@ function vipBadgeHTML(hist){
 
 // ---------- confirm "taught" straight from the registration list ----------
 // each form row is matched to its booking by the same key the form-sync uses (name + class date + course)
+// cancelled form registrations — kept by key so the form sync never brings them back
+let sharedCancelled = [];
+async function loadSharedCancelled(){ try{ const r = await window.storage.get('shared_cancelled_bookings', true); sharedCancelled = r && r.value ? JSON.parse(r.value) : []; }catch(e){} return sharedCancelled; }
+async function saveSharedCancelled(){ await window.storage.set('shared_cancelled_bookings', JSON.stringify(sharedCancelled), true); }
+const isCancelledKey = k=> !!k && sharedCancelled.some(x=> x.key === k);
+function regKeyForRow(r){
+  if(!regRowsCache || !r) return null;
+  const { courseIdx, nameIdx, dateIdx } = regRowsCache;
+  const name = nameIdx>=0 ? (r[nameIdx]||'').trim() : '';
+  const iso = dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null;
+  const courseId = matchCourseIdFromText(courseIdx>=0 ? r[courseIdx] : '');
+  return (name && iso && courseId) ? `form_${name}_${iso}_${courseId}` : null;
+}
 function regBookingForRow(r){
   if(!regRowsCache || !r) return null;
   const { courseIdx, nameIdx, dateIdx } = regRowsCache;
@@ -4912,6 +4991,7 @@ async function syncBookingsFromGoogleForm(){
 
       const syncKey = `form_${name.trim()}_${isoDate}_${courseId}`;
       liveKeys.add(syncKey);
+      if(isCancelledKey(syncKey)) return; // cancelled in the app — don't re-create it
       feedRows.push({ key:syncKey, name:name.trim(), phone, courseId, courseText, classDate:isoDate, submittedRaw: r[0]||'', submitted: parseFormTimestamp(r[0]) });
       if(existingKeys.has(syncKey)){
         // already synced before — backfill any newer fields (like occupation/income/allergy/province added
@@ -8361,6 +8441,7 @@ async function announceHolidayToLine(h, kind){
 function busyLabel(x){ return `${x.title || 'มีกิจกรรม'}${x.from ? ` (${x.from}–${x.to||''})` : ''}`; }
 async function loadSharedBookings(){
   loadSharedBusy(); // runs alongside — every place that reloads bookings also picks up busy days
+  loadSharedCancelled();
   try{
     const res = await window.storage.get('shared_teaching_bookings', true);
     if(res && res.value) sharedBookings = JSON.parse(res.value);
