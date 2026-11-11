@@ -1962,7 +1962,10 @@
   .cb-round.is-sel{ background:#0B2A15; color:#DCA73D; border-color:#0B2A15; } .cb-round.is-sel small{ color:#EFE8D6; }
   .cb-round:disabled{ opacity:.4; cursor:default; }
   .cb-form{ display:flex; flex-direction:column; gap:12px; }
-  .cb-form label{ display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:600; color:#3A3226; }
+  .cb-form label:not(.cb-opt):not(.cb-file) > input, .cb-form label:not(.cb-opt):not(.cb-file) > select, .cb-form label:not(.cb-opt):not(.cb-file) > textarea{ display:block; width:100%; box-sizing:border-box; margin-top:5px; }
+  .cb-form label:not(.cb-opt):not(.cb-file) > small{ display:block; }
+  .cb-form label.cb-opt, .cb-form label.cb-file{ display:flex; }
+  .cb-form label{ display:block; gap:5px; font-size:13px; font-weight:600; color:#3A3226; }
   .cb-form label small{ font-weight:400; color:#7A6F5E; }
   .cb-form input, .cb-form select, .cb-form textarea{ font:inherit; font-size:16px; padding:11px 12px; border-radius:12px; border:1px solid #E7DECB; background:#fff; color:#0B2A15; }
   .cb-form input:focus, .cb-form textarea:focus, .cb-form select:focus{ outline:2px solid #DCA73D; border-color:#DCA73D; }
@@ -1979,6 +1982,9 @@
   .cb-file{ flex-direction:row !important; }
   .cb-file input{ display:none; }
   .cb-file span{ display:inline-block; padding:10px 14px; border-radius:12px; border:1px dashed #C9BFAE; background:#fff; font-weight:600; color:#165028; cursor:pointer; }
+  .cb-person{ display:flex; flex-direction:column; gap:12px; padding:14px 12px; border-radius:16px; background:#F7F2E6; border:1px solid #E7DECB; margin-top:4px; }
+  .cb-person + .cb-person{ margin-top:12px; }
+  .cb-person-h{ font-weight:800; color:#165028; font-size:14px; }
   .cb-miss{ outline:2px solid #C8553D; outline-offset:3px; border-radius:12px; }
   .bk-slip-btn{ all:unset; cursor:pointer; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; background:#F6EBD3; color:#8A6416; margin-left:4px; vertical-align:middle; }
   .bk-form-det{ margin:6px 0 4px; font-size:12.5px; }
@@ -12464,6 +12470,16 @@ function cbCheck(name, label, opts, req, other){
     <div class="cb-opts">${opts.map(o=>`<label class="cb-opt"><input type="checkbox" name="${name}" value="${cbEsc(o)}"><span>${cbEsc(o)}</span></label>`).join('')}
     ${other?`<label class="cb-opt cb-other"><input type="checkbox" name="${name}" value="__other"><span>อื่นๆ:</span><input type="text" name="${name}_other" maxlength="80"></label>`:''}</div></div>`;
 }
+function cbExtraPersonHTML(n){
+  return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
+    <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
+    <label>ชื่อ - นามสกุล (ภาษาอังกฤษ) <i>*</i><input name="p${n}_nameEn" required maxlength="80" placeholder="เช่น Somying Jaidee"></label>
+    <label>เบอร์โทรติดต่อ <small>(ถ้าเบอร์เดียวกับคนแรก เว้นว่างได้)</small><input name="p${n}_phone" inputmode="tel" maxlength="20"></label>
+    ${cbRadio(`p${n}_gender`,'เพศ',['ชาย','หญิง','อื่น ๆ'],true)}
+    ${cbRadio(`p${n}_age`,'อายุ',['18 - 25 ปี','26 - 35 ปี','36 - 45 ปี','46 ปีขึ้นไป'],true)}
+    ${cbRadio(`p${n}_milk`,'แพ้นมวัว',['แพ้','ไม่แพ้'],true,true)}
+  </div>`;
+}
 function cbFormValue(form, name, multi){
   const fd = new FormData(form);
   const vals = fd.getAll(name).map(v=> v === '__other' ? (String(fd.get(name+'_other')||'').trim() ? 'อื่นๆ: '+String(fd.get(name+'_other')).trim() : '') : String(v)).filter(Boolean);
@@ -12539,7 +12555,7 @@ async function startCustomerBooking(param){
           <label>ช่องทางการติดต่อ LINE ID <i>*</i><input name="lineId" required maxlength="60" autocapitalize="off"></label>
           <label>เบอร์โทรติดต่อ <i>*</i><input name="phone" required inputmode="tel" maxlength="20" autocomplete="tel"></label>
           <label>เดินทางมาจาก อำเภอ / จังหวัด <i>*</i><input name="travelFrom" required maxlength="80"></label>
-          ${maxQty > 1 ? `<label>จำนวนผู้เรียน<select name="qty">${[...Array(maxQty)].map((_,i)=>`<option value="${i+1}">${i+1} คน</option>`).join('')}</select></label>` : ''}
+          ${maxQty > 1 ? `<label>จำนวนผู้เรียน <i>*</i><select name="qty">${[...Array(maxQty)].map((_,i)=>`<option value="${i+1}">${i+1} คน</option>`).join('')}</select></label><div id="cbExtra"></div>` : ''}
           ${cbRadio('background','ข้อมูลพื้นฐานก่อนเรียน',['ไม่มีพื้นฐาน','มีพื้นฐานเล็กน้อย','ระดับปานกลาง','มีประสบการณ์มาก','เคยทำงานร้านกาแฟ'],true)}
           ${cbRadio('equipment','อุปกรณ์ที่เคยใช้',['ไม่มี','เครื่องชง Semi-Automatic','เครื่องชง Manual','เครื่องชง Capsule','เครื่องชง Drip / Filter Coffee','เครื่องชง Moka Pot','เครื่องชง Cold Brew'],true,true)}
           ${st.cid==='c7' ? `<label>รุ่นเครื่องชงกาแฟที่ใช้<input name="machine" maxlength="80"></label>` : ''}
@@ -12566,6 +12582,17 @@ async function startCustomerBooking(param){
       const sf = form.querySelector('input[name=slip]'); if(sf) sf.onchange = ()=>{ const f = sf.files[0]; root.querySelector('#cbSlipName').textContent = f ? '✅ ' + f.name : '📎 แนบรูปสลิป'; };
       form.querySelectorAll('.cb-other input[type=text]').forEach(t=> t.oninput = ()=>{ const r = t.closest('.cb-other').querySelector('input[type=radio],input[type=checkbox]'); if(t.value.trim()) r.checked = true; });
       form.addEventListener('change', e=>{ const q = e.target.closest('.cb-q, label'); if(q) q.classList.remove('cb-miss'); });
+      const qs = form.querySelector('select[name=qty]'), ex = form.querySelector('#cbExtra');
+      if(qs && ex){
+        const syncExtra = ()=>{
+          const want = Number(qs.value) || 1;
+          let have = ex.querySelectorAll('.cb-person').length;
+          while(have > want - 1){ ex.lastElementChild.remove(); have--; }
+          while(have < want - 1){ ex.insertAdjacentHTML('beforeend', cbExtraPersonHTML(have + 2)); have++; }
+          ex.querySelectorAll('.cb-other input[type=text]').forEach(t=> t.oninput = ()=>{ const r = t.closest('.cb-other').querySelector('input[type=radio]'); if(t.value.trim()) r.checked = true; });
+        };
+        qs.onchange = syncExtra;
+      }
     }
     if(form) form.onsubmit = async (e)=>{
       e.preventDefault();
@@ -12592,33 +12619,45 @@ async function startCustomerBooking(param){
         await loadSharedBookings(); await loadSharedBusy(); // ตรวจซ้ำกับข้อมูลล่าสุด กันจองชนกัน
         const a = cbAvailability(st.cid, st.date);
         const left = !a.ok ? 0 : (a.rounds ? ((a.rounds.find(r=> r.time===st.time)||{}).left||0) : (cbIsWorkshop(st.cid) ? a.left : 1));
-        const qty = Math.max(1, Math.min(Number(fd.qty)||1, cbIsWorkshop(st.cid) ? left : 99));
+        const qty = Math.max(1, Math.min(Number(fd.qty)||1, cbIsWorkshop(st.cid) ? left : cbSeats(st.cid)));
         if(left <= 0 || (cbIsWorkshop(st.cid) && qty > left)){
           alert('ขออภัย วัน/รอบนี้เพิ่งมีผู้จองเต็มไปแล้ว กรุณาเลือกวันใหม่'); st.date=''; st.time=''; render(); return;
         }
         const linkId = 'lk_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
         const base = { date: st.date, courseId: st.cid, instructor:'ยังไม่ระบุ', source:'link', linkId, createdAt: new Date().toISOString(),
-          note: [(fd.note||'').trim(), (!cbIsWorkshop(st.cid) && qty>1) ? `มาเรียน ${qty} คน` : ''].filter(Boolean).join(' · '),
+          note: [(fd.note||'').trim(), qty>1 ? `มาเรียนด้วยกัน ${qty} คน` : ''].filter(Boolean).join(' · '),
           allergy: milk === 'แพ้' ? 'แพ้นมวัว' : (milk.startsWith('อื่นๆ') ? milk.replace(/^อื่นๆ:\s*/,'') : ''), machineModel: (fd.machine||'').trim(), form: extra };
         if(slipFile){
           try{ const img = await resizeImageFile(slipFile, 1300, 0.8); await window.storage.set('shared_slip_' + linkId, img, true); base.slipKey = 'shared_slip_' + linkId; }
           catch(e){ console.error('slip upload failed', e); }
         }
         if(st.time) base.startTime = st.time;
-        const n = cbIsWorkshop(st.cid) ? qty : 1;
+        const n = qty;
         for(let i=0;i<n;i++){
           const b = { ...base, customerPhone: phone };
-          b.customerName = i===0 ? name : `${name} (ผู้ร่วมเรียน ${i+1})`;
-          if(i===0 && (fd.nameEn||'').trim()) b.customerNameEn = fd.nameEn.trim();
-          if(i===0){ const ag = cbFormValue(form,'age'); if(ag) b.age = ag; } else { delete b.form; delete b.slipKey; }
+          if(i===0){
+            b.customerName = name;
+            if((fd.nameEn||'').trim()) b.customerNameEn = fd.nameEn.trim();
+            const ag = cbFormValue(form,'age'); if(ag) b.age = ag;
+          } else {
+            const k = 'p'+(i+1)+'_';
+            b.customerName = String(fd[k+'name']||'').trim() || `${name} (ผู้ร่วมเรียน ${i+1})`;
+            if(String(fd[k+'nameEn']||'').trim()) b.customerNameEn = String(fd[k+'nameEn']).trim();
+            if(rsNormPhone(fd[k+'phone']||'')) b.customerPhone = String(fd[k+'phone']).trim();
+            const ag = cbFormValue(form, k+'age'); if(ag) b.age = ag;
+            const mk = cbFormValue(form, k+'milk');
+            b.allergy = mk === 'แพ้' ? 'แพ้นมวัว' : (mk.startsWith('อื่นๆ') ? mk.replace(/^อื่นๆ:\s*/,'') : '');
+            b.form = { gender: cbFormValue(form, k+'gender'), cameWith: name, lineId: extra.lineId ? `${extra.lineId} (ของ ${name})` : '' };
+            delete b.slipKey;
+          }
           sharedBookings.push(b);
         }
         await backupBeforeSave('shared_teaching_bookings');
         await window.storage.set('shared_teaching_bookings', JSON.stringify(sharedBookings), true);
         const dTh = new Date(st.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
-        try{ await postLineGroup(['📲 RANGSAN Academy — ลูกค้าจองผ่านลิงค์', '', `👤 ${name}${n>1?` (+${n-1} คน)`:''}`, `📞 ${phone}${extra.lineId?` · LINE: ${extra.lineId}`:''}`, `📚 ${cbShortName(c)}`, `🗓️ ${dTh}${st.time?` · ${st.time} น.`:''}`, base.allergy?`⚠️ แพ้: ${base.allergy}`:'' ].filter(Boolean).join('\n')); }catch(e){}
+        try{ await postLineGroup(['📲 RANGSAN Academy — ลูกค้าจองผ่านลิงค์', '', `👤 ${[name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', ')}${n>1?` (${n} คน)`:''}`, `📞 ${phone}${extra.lineId?` · LINE: ${extra.lineId}`:''}`, `📚 ${cbShortName(c)}`, `🗓️ ${dTh}${st.time?` · ${st.time} น.`:''}`, base.allergy?`⚠️ แพ้: ${base.allergy}`:'' ].filter(Boolean).join('\n')); }catch(e){}
         st.done = `<div class="cb-card cb-done"><div class="cb-ok">✓</div><h2>จองเรียบร้อยแล้ว</h2>
-          <p><b>${cbEsc(name)}</b>${n>1?` และผู้ร่วมเรียนอีก ${n-1} คน`:''}</p>
+          <p><b>${cbEsc([name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', '))}</b>${n>1?` · ${n} คน`:''}</p>
           <div class="cb-sum">📚 ${cbEsc(cbShortName(c))}<br>📅 ${dTh}${st.time?`<br>⏰ ${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)} น.`:''}</div>
           <p class="cb-note">แคปหน้าจอนี้เก็บไว้ได้เลย ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน</p></div>`;
         render();
@@ -12634,7 +12673,7 @@ async function startCustomerBooking(param){
 function cbDetailsHTML(b){
   const f = b.form || {}; const row = (k,v)=> v && (!Array.isArray(v) || v.length) ? `<div><span>${k}</span>${cbEsc(Array.isArray(v) ? v.join(', ') : v)}</div>` : '';
   return `<details class="bk-form-det"><summary>📋 ข้อมูลจากฟอร์มลูกค้า</summary><div class="bk-form-grid">
-    ${row('LINE ID', f.lineId)}${row('เพศ', f.gender)}${row('อาชีพ', f.occupation)}${row('รายได้', f.income)}${row('มาจาก', f.travelFrom)}
+    ${row('มาเรียนกับ', f.cameWith)}${row('LINE ID', f.lineId)}${row('เพศ', f.gender)}${row('อาชีพ', f.occupation)}${row('รายได้', f.income)}${row('มาจาก', f.travelFrom)}
     ${row('พื้นฐาน', f.background)}${row('อุปกรณ์ที่เคยใช้', f.equipment)}${row('เป้าหมาย', f.goals)}${row('อยากเน้น', f.focus)}
     ${row('ใบ Acknowledgment', f.ackLang)}${row('ยินยอมถ่ายภาพ', f.photoConsent)}${row('รู้จักจาก', f.heardFrom)}</div></details>`;
 }
