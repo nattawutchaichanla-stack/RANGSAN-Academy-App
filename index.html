@@ -1878,7 +1878,15 @@
   .reg-course{ color:#5A4433; }
   .eval-box .reg-name{ color:#EFE8D6; }
   .eval-box .reg-course{ color:#C9A97A; }
-  .reg-actions{ margin-top:8px; display:flex; justify-content:flex-end; }
+  .reg-actions{ margin-top:8px; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:6px 0; align-items:center; }
+  .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
+  .reg-mini:active{ transform:scale(.97); }
+  .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
+  .rs-small{ width:min(440px,100%); }
+  .rs-f{ display:flex; flex-direction:column; gap:5px; font-size:13px; margin-top:10px; }
+  .rs-f input, .rs-f select{ font:inherit; font-size:16px; padding:10px 12px; border-radius:12px; border:1px solid rgba(239,232,214,.25); background:rgba(239,232,214,.08); color:#EFE8D6; }
+  .rs-chk{ display:flex; align-items:center; gap:8px; font-size:13px; margin-top:12px; }
+  .rs-chk input{ width:18px; height:18px; accent-color:#DCA73D; }
   .reg-confirm-btn{ all:unset; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:999px;
     background:#DCA73D; color:#1A0F08; box-shadow:0 2px 6px rgba(0,0,0,.18); }
   .reg-confirm-btn:active{ transform:scale(.97); }
@@ -2023,6 +2031,10 @@
   #custBook .cb-ql{ font-size:15px; font-weight:400; }
   #custBook .cb-submit{ font-size:19px; font-weight:400; }
   #custBook .cb-done h2{ font-size:26px; }
+  #cbBg{ position:fixed; inset:0; z-index:0; background:#EFE8D6 center/cover no-repeat; pointer-events:none; }
+  #cbBg::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(239,232,214,.55) 0%, rgba(239,232,214,.78) 100%); }
+  #custBook.has-bg .cb-wrap{ position:relative; z-index:1; }
+  #custBook.has-bg .cb-card{ background:rgba(255,253,248,.94); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
   .cb-note{ font-size:12px; color:#7A6F5E; text-align:center; margin:4px 0 0; }
@@ -4347,7 +4359,7 @@ function renderRegistrationList(listBoxId){
     rows = rows.filter(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim() === regCourseFilter);
   }
   // sort by the day they'll actually attend class (soonest first), not by when they submitted the form
-  rows = rows.map(r=>({ r, iso: dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null }));
+  rows = rows.map(r=>{ const bk0 = regBookingForRow(r); return { r, iso: (bk0 && bk0.date) || (dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null) }; });
   rows.sort((a,b)=>{
     if(a.iso && b.iso) return a.iso.localeCompare(b.iso);
     if(a.iso) return -1;  // rows with a parseable class date come first
@@ -4377,21 +4389,129 @@ function renderRegistrationList(listBoxId){
       return `<div class="reg-row${bk && bk.taught ? ' is-done' : ''}" style="padding:9px 0; border-bottom:1px dashed var(--line);">
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
           <span class="reg-name" style="font-weight:700; font-size:13px;">${name||'-'}${(()=>{ const en = regRowsCache.enNameIdx>=0 ? (r[regRowsCache.enNameIdx]||'').trim() : ''; return en ? `<span class="name-en">${en}</span>` : ''; })()}</span>
-          <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none;">${joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม'}</span>
+          <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none; text-align:right;">${bk && bk.dateMovedFrom
+            ? `🗓️ ${rsThDate(bk.date)}${bk.startTime?` ${bk.startTime}`:''}<span class="reg-moved">เลื่อนจาก ${joinDate || rsThDate(bk.dateMovedFrom)}</span>`
+            : (joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม')}</span>
         </div>
         ${vip}
         <div class="reg-course" style="font-size:11.5px; margin-top:2px;">${course||'-'}${(()=>{ const a = ageFromRow(r, regRowsCache.ageCols); return a ? ` · <span class="reg-age">อายุ ${a}</span>` : ''; })()}</div>
         <div style="font-size:11px; color:#948a78; margin-top:2px;">
           ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} · สมัครเมื่อ ${submitted||'-'}
         </div>
-        <div class="reg-actions">${status}</div>
+        <div class="reg-actions"><button type="button" class="reg-mini" data-reg-edit="${rowIdx}">✏️ แก้วันเรียน</button><button type="button" class="reg-mini" data-reg-notify="${rowIdx}">📩 แจ้งลูกค้า</button>${status}</div>
       </div>`;
     }).join('')}
   `;
   box.querySelectorAll('.reg-confirm-btn').forEach(btn=>{
     btn.onclick = ()=> confirmTaughtFromRegistration(regRowsCache.dataRows[+btn.dataset.row], btn, box.id);
   });
+  box.querySelectorAll('[data-reg-edit]').forEach(btn=> btn.onclick = ()=> regEditDate(regRowsCache.dataRows[+btn.dataset.regEdit], btn, box.id));
+  box.querySelectorAll('[data-reg-notify]').forEach(btn=> btn.onclick = ()=> regNotifyCustomer(regRowsCache.dataRows[+btn.dataset.regNotify], btn));
 }
+function rsThDate(iso){ if(!iso) return ''; const d = new Date(iso+'T00:00:00'); return isNaN(d) ? iso : `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; }
+async function regBookingEnsure(r, btn){
+  let b = regBookingForRow(r);
+  if(!b){
+    const old = btn ? btn.textContent : '';
+    if(btn){ btn.disabled = true; btn.textContent = 'กำลังดึงข้อมูล...'; }
+    try{ await syncBookingsFromGoogleForm(); }catch(e){ console.error('sync failed', e); }
+    b = regBookingForRow(r);
+    if(btn){ btn.disabled = false; btn.textContent = old; }
+  }
+  if(!b) alert('จับคู่รายการนี้กับคิวในแอพไม่ได้ — ตรวจสอบชื่อ คอร์ส และวันที่ในฟอร์ม');
+  return b;
+}
+function rsSmallModal(html){
+  let ov = document.getElementById('rsSmallOv');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'rsSmallOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="cl-box rs-small"><button type="button" class="cl-x" aria-label="ปิด">✕</button>${html}</div>`;
+  ov.style.display = 'flex';
+  const close = ()=>{ ov.style.display = 'none'; };
+  ov.onclick = e=>{ if(e.target === ov) close(); };
+  ov.querySelector('.cl-x').onclick = close;
+  return { ov, close };
+}
+async function regEditDate(r, btn, boxId){
+  const b = await regBookingEnsure(r, btn); if(!b) return;
+  if(b.taught){ alert('คลาสนี้ยืนยันสอนเสร็จแล้ว แก้วันเรียนไม่ได้'); return; }
+  const c = courseById(b.courseId);
+  const timed = b.courseId === 'c6';
+  const { ov, close } = rsSmallModal(`<h3>✏️ แก้วันเรียน</h3>
+    <p class="cl-hint">${cbEsc(b.customerName||'')} · ${cbEsc(c ? c.name : '')}</p>
+    <label class="rs-f">วันเรียนใหม่<input type="date" id="regNewDate" value="${b.date||''}"></label>
+    ${timed ? `<label class="rs-f">รอบเวลา<select id="regNewTime">${(CB_TIMED[b.courseId]||['10:00','14:00']).map(t=>`<option ${b.startTime===t?'selected':''}>${t}</option>`).join('')}</select></label>` : ''}
+    <label class="rs-chk"><input type="checkbox" id="regMoveAll" ${isPerPersonCourse(b.courseId)?'':'checked'}> ย้ายผู้เรียนคนอื่นในคลาสเดียวกันไปด้วย</label>
+    <div id="regMoveWarn" class="cl-hint" style="color:#F2C66D;"></div>
+    <div class="cl-acts" style="margin-top:12px;"><button type="button" class="btn small" id="regDateSave">บันทึกวันใหม่</button></div>`);
+  const others = sharedBookings.filter(x=> x !== b && !x.taught && x.date === b.date && x.courseId === b.courseId && (x.startTime||'') === (b.startTime||''));
+  const mv = ov.querySelector('#regMoveAll');
+  if(!others.length) mv.closest('label').style.display = 'none';
+  else mv.closest('label').lastChild.textContent = ` ย้ายผู้เรียนคนอื่นในคลาสเดียวกันไปด้วย (${others.length} คน)`;
+  const di = ov.querySelector('#regNewDate'), warn = ov.querySelector('#regMoveWarn');
+  const check = ()=>{
+    const d = di.value; if(!d){ warn.textContent = ''; return; }
+    const moving = new Set([b].concat(mv.checked ? others : []));
+    const clash = sharedBookings.filter(x=> x.date === d && !moving.has(x) && x.courseId !== b.courseId);
+    const busy = (sharedBusy||[]).filter(x=> x.date === d && (x.who === BUSY_ALL));
+    const dd = new Date(d+'T00:00:00');
+    warn.textContent = [dd.getDay()===1 ? '⚠️ วันจันทร์ร้านปิด' : '', busy.length ? `⚠️ วันนั้นทั้งทีมไม่ว่าง/วันหยุด: ${busy[0].title||''}` : '', clash.length ? `⚠️ วันนั้นมีคลาสอื่นอยู่แล้ว ${clash.length} คิว` : ''].filter(Boolean).join(' · ');
+  };
+  di.onchange = check; mv.onchange = check; check();
+  ov.querySelector('#regDateSave').onclick = async ()=>{
+    const d = di.value; if(!d){ alert('กรุณาเลือกวันที่'); return; }
+    const t = timed ? ov.querySelector('#regNewTime').value : (b.startTime || '');
+    if(d === b.date && t === (b.startTime||'')){ close(); return; }
+    const list = [b].concat(mv.checked ? others : []);
+    list.forEach(x=>{
+      if(!x.dateMovedFrom) x.dateMovedFrom = x.date;
+      x.date = d; if(timed) x.startTime = t;
+      delete x.calledAt; delete x.calledBy; // new date → needs a new reminder call
+    });
+    await saveSharedBookings();
+    close();
+    flashSaved(`ย้ายวันเรียนแล้ว ${list.length} คน ✓`);
+    renderRegistrationList(boxId);
+    try{ renderLogTab(); }catch(e){}
+    if(confirm('ส่งข้อความแจ้งวันเรียนใหม่ให้ลูกค้าคนนี้เลยไหม?')) regNotifyCustomer(r, null, b);
+  };
+}
+function regNotifyText(b){
+  const c = courseById(b.courseId);
+  const d = new Date(b.date+'T00:00:00');
+  const dTh = d.toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const time = b.startTime ? `${b.startTime}–${addMinutesToTime(b.startTime, courseDurationMin(b.courseId)||90)} น.` : '10:00–17:00 น. (พักเบรก 13:00–14:00 น.)';
+  return [
+    `สวัสดีครับ คุณ${b.customerName || ''} 🙏`,
+    b.dateMovedFrom ? 'RANGSAN Academy ขอแจ้งวันเรียนใหม่ของคุณครับ' : 'RANGSAN Academy ขอยืนยันการจองคอร์สเรียนครับ',
+    '',
+    `📚 ${c ? c.name.replace(/^คอร์ส\s*\d+:\s*/,'') : ''}`,
+    `🗓️ ${dTh}`,
+    `⏰ ${time}`,
+    `📍 Rangsan ศูนย์จำหน่ายเครื่องชงกาแฟ อุปกรณ์และวัตถุดิบ (ประชาราษฎร์สาย 1)`,
+    '',
+    'หากต้องการเปลี่ยนแปลงวันเรียน ติดต่อได้ที่ 061 732 1346 ครับ ☕'
+  ].join('\n');
+}
+async function regNotifyCustomer(r, btn, bk){
+  const b = bk || await regBookingEnsure(r, btn); if(!b) return;
+  const msg = regNotifyText(b);
+  const phone = String(b.customerPhone||'').replace(/[^\d+]/g,'');
+  const lineId = r && regRowsCache && regRowsCache.lineIdx>=0 ? String(r[regRowsCache.lineIdx]||'').trim() : '';
+  const { ov, close } = rsSmallModal(`<h3>📩 แจ้งลูกค้า</h3>
+    <p class="cl-hint">ส่งถึง ${cbEsc(b.customerName||'')} คนเดียว${phone?` · 📞 ${cbEsc(b.customerPhone)}`:''}${lineId?` · LINE: ${cbEsc(lineId)}`:''}</p>
+    <textarea id="regMsg" class="ci-note" rows="10">${cbEsc(msg)}</textarea>
+    <div class="cl-acts" style="margin-top:10px;">
+      <button type="button" class="btn small" id="regMsgLine">ส่งทาง LINE</button>
+      ${phone ? `<button type="button" class="btn small ghost" id="regMsgSms">ส่ง SMS</button>` : ''}
+      <button type="button" class="btn small ghost" id="regMsgCopy">คัดลอก</button>
+    </div>
+    <p class="cl-hint" style="margin-top:8px;">ส่งทาง LINE → เลือกแชทของลูกค้าคนนี้ในหน้า LINE ที่เปิดขึ้นมา${lineId?` (ค้นหา LINE ID: ${cbEsc(lineId)})`:''}</p>`);
+  const txt = ()=> ov.querySelector('#regMsg').value;
+  ov.querySelector('#regMsgLine').onclick = ()=>{ sendTextToLine(txt()); markNotified(b); };
+  const sm = ov.querySelector('#regMsgSms'); if(sm) sm.onclick = ()=>{ location.href = `sms:${phone}${/iPad|iPhone|Mac/.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(txt())}`; markNotified(b); };
+  ov.querySelector('#regMsgCopy').onclick = async (e)=>{ try{ await navigator.clipboard.writeText(txt()); e.target.textContent = 'คัดลอกแล้ว ✓'; markNotified(b); }catch(err){ alert('คัดลอกไม่สำเร็จ ลองกดค้างที่ข้อความแล้วคัดลอกเอง'); } };
+}
+function markNotified(b){ b.notifiedAt = new Date().toISOString(); b.notifiedBy = currentUser || ''; saveSharedBookings(); }
 
 // ---------- returning customers ("ลูกค้าพิเศษ") ----------
 // someone counts as a returning customer when an earlier class of theirs is on record —
@@ -12544,7 +12664,7 @@ function cbCheck(name, label, opts, req, other){
     <div class="cb-opts">${opts.map(o=>`<label class="cb-opt"><input type="checkbox" name="${name}" value="${cbEsc(o)}"><span>${cbEsc(o)}</span></label>`).join('')}
     ${other?`<label class="cb-opt cb-other"><input type="checkbox" name="${name}" value="__other"><span>อื่นๆ:</span><input type="text" name="${name}_other" maxlength="80"></label>`:''}</div></div>`;
 }
-const CB_IMG_SLOTS = ()=> [{k:'cover', label:'ภาพปกฟอร์ม', hint:'แสดงด้านบนสุด (แนวนอน)', max:1400}, {k:'qr', label:'QR / บัญชีโอนเงิน', hint:'แสดงตรงช่องแนบสลิป', max:1000}]
+const CB_IMG_SLOTS = ()=> [{k:'cover', label:'ภาพปกฟอร์ม', hint:'แสดงด้านบนสุด (แนวนอน)', max:1400}, {k:'qr', label:'QR / บัญชีโอนเงิน', hint:'แสดงตรงช่องแนบสลิป', max:1000}, {k:'bg', label:'ภาพพื้นหลังทั้งหน้า', hint:'อยู่ด้านหลังการ์ดฟอร์มทั้งหน้า (แนวตั้งจะสวยบนมือถือ)', max:1600}]
   .concat(cbOpenCourses().map(c=> ({k:'course_'+c.id, label:cbShortName(c), hint:'รูปประกอบคอร์ส', max:1000})));
 const cbImg = {};
 async function loadCbImages(keys){
@@ -12576,11 +12696,18 @@ async function startCustomerBooking(param){
   const bookable = cbOpenCourses();
   const st = { cid: (param && param !== 'all' && bookable.some(c=> c.id === param)) ? param : '', date:'', time:'', ym:null, done:null };
   // pictures load in the background; the calendar shows first
-  loadCbImages(['cover','qr','qrNote'].concat(state.courses.map(c=> 'course_'+c.id))).then(()=>{ const f = document.querySelector('#cbForm'); if(!f || !f.dataset.touched) render(); }).catch(()=>{});
+  loadCbImages(['bg','cover','qr','qrNote'].concat(state.courses.map(c=> 'course_'+c.id))).then(()=>{ const f = document.querySelector('#cbForm'); if(!f || !f.dataset.touched) render(); }).catch(()=>{});
   const now = new Date(); now.setDate(now.getDate()+CB_LEAD_DAYS);
   st.ym = { y: now.getFullYear(), m: now.getMonth() };
   const head = ()=> `<header class="cb-head"><div class="rs-logo" role="img" aria-label="RANGSAN"></div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>${cbImg.cover && !st.done ? `<img class="cb-cover" src="${cbImg.cover}" alt="">` : ''}`;
-  const render = ()=>{
+  const applyBg = ()=>{
+    let bg = document.getElementById('cbBg');
+    if(cbImg.bg){
+      if(!bg){ bg = document.createElement('div'); bg.id = 'cbBg'; root.prepend(bg); }
+      bg.style.backgroundImage = `url("${cbImg.bg}")`; root.classList.add('has-bg');
+    } else if(bg){ bg.remove(); root.classList.remove('has-bg'); }
+  };
+  let render = ()=>{
     if(st.done){ root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; return; }
     if(!st.cid){
       root.innerHTML = `<div class="cb-wrap">${head()}<div class="cb-card"><h2>เลือกคอร์สที่ต้องการเรียน</h2>
@@ -12754,6 +12881,8 @@ async function startCustomerBooking(param){
       }
     };
   };
+  const _render = render;
+  render = ()=>{ _render(); applyBg(); };
   render();
   bootOff();
 }
