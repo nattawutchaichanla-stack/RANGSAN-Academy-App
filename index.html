@@ -2121,6 +2121,8 @@
   .cbw-next{ all:unset; cursor:pointer; flex:1; text-align:center; padding:14px; border-radius:999px; background:#165028; color:#EFE8D6; font-weight:700; font-size:16px; }
   .cbw-nav .cb-submit{ flex:1; }
   #custBook .cb-step3 .cb-form{ gap:0; }
+  #custBook .cb-travel{ display:grid; grid-template-columns:1fr; gap:12px; }
+  @media (min-width:560px){ #custBook .cb-travel{ grid-template-columns:3fr 2fr; } }
   .cb-submit{ opacity:.75; } .cb-submit.is-ready{ opacity:1; box-shadow:0 10px 24px -10px rgba(220,167,61,.9); }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
@@ -12961,7 +12963,7 @@ function cbPassBind(form, root){
     const sf = form.querySelector('input[name=slip]'); const stp = pass.querySelector('#cbpStamp'); const paid = !!(sf && sf.files[0]);
     stp.textContent = paid ? 'แนบสลิปแล้ว ✓' : 'รอแนบสลิป'; stp.classList.toggle('is-paid', paid);
     // progress over required questions
-    const req = [...form.querySelectorAll('input[required]')].map(i=> !!i.value.trim()).concat([...form.querySelectorAll('.cb-q[data-req]')].map(q=> !!q.querySelector('input:checked')));
+    const req = [...form.querySelectorAll('input[required], select[required]')].map(i=> !!i.value.trim()).concat([...form.querySelectorAll('.cb-q[data-req]')].map(q=> !!q.querySelector('input:checked')));
     const done = req.filter(Boolean).length;
     const st = root.querySelector('#cbpSteps');
     st.innerHTML = `<div class="cbp-bar"><i style="width:${Math.round(done/Math.max(1,req.length)*100)}%"></i></div><span>กรอกแล้ว ${done}/${req.length} ข้อ</span>`;
@@ -12978,7 +12980,7 @@ function cbPassBind(form, root){
 // ---- step-by-step slides for the booking form ----
 const CB_SLIDES = [
   { t:'ข้อมูลส่วนตัว',        keys:['heard','name','nameEn','gender','age'] },
-  { t:'อาชีพและการติดต่อ',     keys:['occupation','income','lineId','phone','travelFrom','qty','cbExtra'] },
+  { t:'อาชีพและการติดต่อ',     keys:['occupation','income','lineId','phone','travelFrom','province','district','qty','cbExtra'] },
   { t:'พื้นฐานกาแฟ',          keys:['background','equipment','machine','milk'] },
   { t:'เป้าหมายการเรียน',      keys:['goals','focus'] },
   { t:'ชำระเงินและยืนยัน',     keys:['slip','ackLang','consent','note','sum','submit'] },
@@ -13058,7 +13060,7 @@ function cbWizard(root, st, form){
     const missIn = sl=>{
       let miss = null;
       sl.querySelectorAll('.cb-miss').forEach(e=> e.classList.remove('cb-miss'));
-      sl.querySelectorAll('input[required]').forEach(inp=>{ if(!inp.value.trim()){ const l = inp.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
+      sl.querySelectorAll('input[required], select[required]').forEach(inp=>{ if(!inp.value.trim()){ const l = inp.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
       sl.querySelectorAll('.cb-q[data-req]').forEach(q=>{ if(!q.querySelector('input:checked')){ q.classList.add('cb-miss'); miss = miss || q; } });
       const ph = sl.querySelector('input[name=phone]'); if(!miss && ph && rsNormPhone(ph.value).length < 9){ miss = ph.closest('label'); miss.classList.add('cb-miss'); }
       return miss;
@@ -13102,6 +13104,7 @@ cbWizard.reflow = (root, st, form)=>{
   else { const bar = root.querySelector('#cbStepper'); if(bar){ const dots = bar.querySelectorAll('.cbs-dot'); dots.forEach((d,k)=>{ d.classList.toggle('on', k===0); d.classList.remove('done'); }); const t = bar.querySelector('.cbs-title'); if(t) t.innerHTML = `ขั้นตอน 1/${dots.length} · <b>วันเรียน</b>`; } }
   if(form && form.__fit) requestAnimationFrame(form.__fit);
 };
+const CB_PROVINCES = 'กรุงเทพมหานคร,นนทบุรี,ปทุมธานี,สมุทรปราการ,สมุทรสาคร,นครปฐม,กระบี่,กาญจนบุรี,กาฬสินธุ์,กำแพงเพชร,ขอนแก่น,จันทบุรี,ฉะเชิงเทรา,ชลบุรี,ชัยนาท,ชัยภูมิ,ชุมพร,เชียงราย,เชียงใหม่,ตรัง,ตราด,ตาก,นครนายก,นครพนม,นครราชสีมา,นครศรีธรรมราช,นครสวรรค์,นราธิวาส,น่าน,บึงกาฬ,บุรีรัมย์,ประจวบคีรีขันธ์,ปราจีนบุรี,ปัตตานี,พระนครศรีอยุธยา,พะเยา,พังงา,พัทลุง,พิจิตร,พิษณุโลก,เพชรบุรี,เพชรบูรณ์,แพร่,ภูเก็ต,มหาสารคาม,มุกดาหาร,แม่ฮ่องสอน,ยโสธร,ยะลา,ร้อยเอ็ด,ระนอง,ระยอง,ราชบุรี,ลพบุรี,ลำปาง,ลำพูน,เลย,ศรีสะเกษ,สกลนคร,สงขลา,สตูล,สมุทรสงคราม,สระแก้ว,สระบุรี,สิงห์บุรี,สุโขทัย,สุพรรณบุรี,สุราษฎร์ธานี,สุรินทร์,หนองคาย,หนองบัวลำภู,อ่างทอง,อำนาจเจริญ,อุดรธานี,อุตรดิตถ์,อุทัยธานี,อุบลราชธานี'.split(',');
 function cbExtraPersonHTML(n){
   return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
     <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
@@ -13199,7 +13202,8 @@ async function startCustomerBooking(param){
           ${cbRadio('income','รายได้เฉลี่ยต่อเดือน',['9,000฿ - 15,000฿','15,001฿ - 25,000฿','25,001฿ - 50,000฿','50,001฿ - 100,000฿','มากกว่า 200,000฿'],true)}
           <label>ช่องทางการติดต่อ LINE ID <i>*</i><input name="lineId" required maxlength="60" autocapitalize="off"></label>
           <label>เบอร์โทรติดต่อ <i>*</i><input name="phone" required inputmode="tel" maxlength="20" autocomplete="tel"></label>
-          <label>เดินทางมาจาก อำเภอ / จังหวัด <i>*</i><input name="travelFrom" required maxlength="80"></label>
+          <div class="cb-travel"><label>เดินทางมาจากจังหวัด <i>*</i><select name="province" required><option value="">— เลือกจังหวัด —</option><optgroup label="กรุงเทพฯ และปริมณฑล">${CB_PROVINCES.slice(0,6).map(p=>`<option>${p}</option>`).join('')}</optgroup><optgroup label="จังหวัดอื่นๆ (ก–ฮ)">${CB_PROVINCES.slice(6).map(p=>`<option>${p}</option>`).join('')}</optgroup><option value="ต่างประเทศ">ต่างประเทศ</option></select></label>
+          <label>เขต / อำเภอ <small>(ไม่บังคับ)</small><input name="district" maxlength="60" placeholder="เช่น บางซื่อ"></label></div>
           ${maxQty > 1 ? `<label>จำนวนผู้เรียน <i>*</i><select name="qty">${[...Array(maxQty)].map((_,i)=>`<option value="${i+1}">${i+1} คน</option>`).join('')}</select></label><div id="cbExtra"></div>` : ''}
           ${cbRadio('background','ข้อมูลพื้นฐานก่อนเรียน',['ไม่มีพื้นฐาน','มีพื้นฐานเล็กน้อย','ระดับปานกลาง','มีประสบการณ์มาก','เคยทำงานร้านกาแฟ'],true)}
           ${cbRadio('equipment','อุปกรณ์ที่เคยใช้',['ไม่มี','เครื่องชง Semi-Automatic','เครื่องชง Manual','เครื่องชง Capsule','เครื่องชง Drip / Filter Coffee','เครื่องชง Moka Pot','เครื่องชง Cold Brew'],true,true)}
@@ -13251,13 +13255,13 @@ async function startCustomerBooking(param){
       // required checks, highlight the first missing one
       form.querySelectorAll('.cb-miss').forEach(el=> el.classList.remove('cb-miss'));
       let miss = null;
-      form.querySelectorAll('input[required]').forEach(inp=>{ if(!inp.value.trim()){ const l = inp.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
+      form.querySelectorAll('input[required], select[required]').forEach(inp=>{ if(!inp.value.trim()){ const l = inp.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
       form.querySelectorAll('.cb-q[data-req]').forEach(q=>{ const n = q.dataset.q; const v = cbFormValue(form, n, true); if(!v.length){ q.classList.add('cb-miss'); miss = miss || q; } });
       if(!miss && rsNormPhone(phone).length < 9){ miss = form.querySelector('input[name=phone]').closest('label'); miss.classList.add('cb-miss'); }
       if(miss){ if(form.__goSlide) form.__goSlide(form.__slideOf(miss)); miss.scrollIntoView({behavior:'smooth', block:'center'}); alert('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบ'); return; }
       const extra = {
         heardFrom: cbFormValue(form,'heard'), gender: cbFormValue(form,'gender'), occupation: cbFormValue(form,'occupation'),
-        income: cbFormValue(form,'income'), lineId: (fd.lineId||'').trim(), travelFrom: (fd.travelFrom||'').trim(),
+        income: cbFormValue(form,'income'), lineId: (fd.lineId||'').trim(), travelFrom: [String(fd.district||'').trim(), String(fd.province||'').trim()].filter(Boolean).join(', '),
         background: cbFormValue(form,'background'), equipment: cbFormValue(form,'equipment'),
         goals: cbFormValue(form,'goals',true), focus: cbFormValue(form,'focus',true),
         ackLang: cbFormValue(form,'ackLang'), photoConsent: cbFormValue(form,'consent')
