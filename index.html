@@ -2082,6 +2082,18 @@
   #custBook .cb-form textarea{ border-radius:12px; border:1px solid #C9BFAE; padding:12px 16px; }
   #custBook .cb-form input:focus, #custBook .cb-form select:focus, #custBook .cb-form textarea:focus{ outline:none; border-color:#165028; box-shadow:0 0 0 4px rgba(220,167,61,.28); }
   #custBook .cb-form .cb-other input[type=text]{ height:38px; }
+  /* readable line length: shorter rows, options in columns on wide screens */
+  .cbp-kicker span{ display:block; font-size:11px; letter-spacing:0; color:#7A6F5E; font-weight:600; margin-top:1px; }
+  #custBook .cb-form{ max-width:620px; }
+  #custBook .cb-qh, #custBook .cb-note, #custBook .cl-hint{ max-width:34em; line-height:1.65; }
+  #custBook .cb-ql{ max-width:30em; line-height:1.5; }
+  #custBook .cb-form .cb-opts{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap:8px; }
+  #custBook .cb-form .cb-opt{ align-items:flex-start; line-height:1.45; min-height:46px; align-content:center; }
+  #custBook .cb-form .cb-opt span{ padding-top:1px; }
+  #custBook .cb-form .cb-opt input{ margin-top:2px !important; }
+  #custBook .cb-form .cb-other{ grid-column:1 / -1; align-items:center; }
+  #custBook .cb-form [data-q="consent"] .cb-opts, #custBook .cb-form [data-q="ackLang"] .cb-opts{ grid-template-columns:repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+  #custBook .cb-sum{ max-width:34em; }
   .cb-submit{ opacity:.75; } .cb-submit.is-ready{ opacity:1; box-shadow:0 10px 24px -10px rgba(220,167,61,.9); }
   .cb-submit{ all:unset; cursor:pointer; text-align:center; padding:15px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:800; font-size:16px; }
   .cb-submit:disabled{ opacity:.6; }
@@ -12837,7 +12849,7 @@ function cbPassHTML(c, st){
   return `<div class="cb-pass" id="cbPass">
     <div class="cbp-hl" id="cbpHl"></div>
     <div class="cbp-main">
-      <div class="cbp-kicker">RANGSAN ACADEMY · ใบยืนยันการจองเรียน</div>
+      <div class="cbp-kicker">RANGSAN ACADEMY<span>ใบยืนยันการจองเรียน</span></div>
       <div class="cbp-course" data-hl="course">${cbEsc(cbShortName(c))}</div>
       <div class="cbp-row" data-hl="date"><span>📅 ${dTh}</span><span>⏰ ${time}</span></div>
       <div class="cbp-line"></div>
@@ -13005,11 +13017,11 @@ async function startCustomerBooking(param){
           ${cbRadio('milk','แพ้นมวัว',['แพ้','ไม่แพ้'],true,true)}
           ${cbCheck('goals','เป้าหมายการเรียนคอร์ส',['เปิดร้านกาแฟ','พัฒนาทักษะส่วนตัว','อบรมพนักงาน','ต่อยอดธุรกิจเดิม','สมัครงาน / ทำงานร้านกาแฟ'],true)}
           ${cbCheck('focus','หัวข้อที่อยากให้เน้นเป็นพิเศษ (เลือกได้มากกว่า 1 ข้อ)',['การบริหารร้าน / วางระบบหน้าร้าน','สูตรเครื่องดื่ม / การพัฒนาเมนู','การใช้อุปกรณ์ / เครื่องชง / เครื่องบด','การสตีมนม / เทลาเต้อาร์ต','การบริการลูกค้า / การแก้ปัญหาหน้างาน','การตลาด / การขาย / คอนเทนต์','การคำนวณต้นทุน / ตั้งราคา','การบด / แทมป์ / สกัดชอตเอสเปรสโซ','Workflow การทำงานหลังบาร์','การเปิดร้านจริง / การเตรียมระบบร้าน'],true,true)}
-          <div class="cb-q"><div class="cb-ql">หลักฐานการชำระเงิน (สลิป)</div><div class="cb-qh">โปรดแนบสลิปเพื่อทำการจองคิว · ขอขอบพระคุณที่ไว้วางใจใช้บริการ 🙏</div>
+          <div class="cb-q"><div class="cb-ql">หลักฐานการชำระเงิน (สลิป)</div><div class="cb-qh">โปรดแนบสลิปเพื่อทำการจองคิว<br>ขอขอบพระคุณที่ไว้วางใจใช้บริการ 🙏</div>
             ${cbImg.qr ? `<img class="cb-qr" src="${cbImg.qr}" alt="QR ชำระเงิน">` : ''}${cbImg.qrNote ? `<div class="cb-qrnote">${cbEsc(cbImg.qrNote).replace(/\n/g,'<br>')}</div>` : ''}
             <label class="cb-file"><input type="file" name="slip" accept="image/*"><span id="cbSlipName">📎 แนบรูปสลิป</span></label></div>
           ${cbIsWorkshop(st.cid) ? '' : cbRadio('ackLang','ประสงค์ออกใบ Acknowledgment เป็นภาษาไทย หรือ ภาษาอังกฤษ',['ภาษาไทย','ภาษาอังกฤษ'],false,false,'*หมายเหตุ : ใบ Acknowledgment ให้เฉพาะคอร์สเรียน Private เท่านั้น')}
-          ${cbRadio('consent','การยินยอมให้ใช้ภาพถ่ายและวิดีโอ พร้อมรับสิทธิพิเศษ',['ยินยอม และรับสิทธิ์ส่วนลด 5%','ไม่ยินยอม'],true,false,'ระหว่างการเรียนหรือเข้าร่วมกิจกรรม ทาง RANGSAN มีการถ่ายภาพและบันทึกวิดีโอ เพื่อนำไปใช้ประชาสัมพันธ์ รีวิวหลักสูตร และเผยแพร่ผ่านช่องทางออนไลน์ของบริษัท ผู้ที่ยินยอมจะได้รับสิทธิ์ส่วนลดทันที 5% สำหรับการซื้อวัตถุดิบ RANGSAN เท่านั้น')}
+          ${cbRadio('consent','การยินยอมให้ใช้ภาพถ่ายและวิดีโอ พร้อมรับสิทธิพิเศษ',['ยินยอม และรับสิทธิ์ส่วนลด 5%','ไม่ยินยอม'],true,false,'ระหว่างการเรียนหรือเข้าร่วมกิจกรรม ทาง RANGSAN มีการถ่ายภาพและบันทึกวิดีโอ เพื่อนำไปใช้ประชาสัมพันธ์ รีวิวหลักสูตร และเผยแพร่ผ่านช่องทางออนไลน์ของบริษัท<br><br>🎁 ผู้ที่ยินยอมจะได้รับสิทธิ์ส่วนลดทันที 5%<br>สำหรับการซื้อวัตถุดิบ RANGSAN เท่านั้น')}
           <label>หมายเหตุถึงอาจารย์<textarea name="note" rows="2" maxlength="300"></textarea></label>
           <div class="cb-sum">📅 ${dateTh}${st.time?` · ${st.time} น.`:''}<br>📚 ${cbEsc(cbShortName(c))}</div>
           <button type="submit" class="cb-submit">ยืนยันการจอง</button>
