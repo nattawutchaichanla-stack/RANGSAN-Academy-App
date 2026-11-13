@@ -1939,6 +1939,7 @@
   .rs-chk input{ width:18px; height:18px; accent-color:#DCA73D; }
   .reg-confirm-btn{ all:unset; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:999px;
     background:#DCA73D; color:#1A0F08; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+  .reg-confirm-btn.is-late{ background:#C8553D !important; color:#fff !important; }
   .reg-confirm-btn:active{ transform:scale(.97); }
   .reg-confirm-btn[disabled]{ opacity:.6; cursor:wait; }
   .reg-done{ font-size:12px; font-weight:700; color:#2E7D4F; background:rgba(46,125,79,.12); padding:6px 12px; border-radius:999px; }
@@ -4557,7 +4558,12 @@ function renderRegistrationList(listBoxId){
       const vip = vipBadgeHTML(customerHistory(name, phone, dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null, bk && bk.syncKey));
       const status = bk && bk.taught
         ? `<span class="reg-done">✓ สอนเสร็จแล้ว${bk.instructor && bk.instructor!=='ยังไม่ระบุ' ? ' · '+bk.instructor : ''}</span>`
-        : `<button type="button" class="reg-confirm-btn" data-row="${rowIdx}">ยืนยันสอนเสร็จ ✓</button>`;
+        : (()=>{ // the "taught" button only shows on the class day (or after, if it was missed)
+            const classDay = (bk && bk.date) || (dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null);
+            const today = rsLocalYMD();
+            if(!classDay || classDay > today) return '';
+            return `<button type="button" class="reg-confirm-btn${classDay < today ? ' is-late' : ''}" data-row="${rowIdx}">${classDay < today ? 'ยังไม่ยืนยัน · ' : ''}ยืนยันสอนเสร็จ ✓</button>`;
+          })();
       return `<div class="reg-row${bk && bk.taught ? ' is-done' : ''}" style="padding:9px 0; border-bottom:1px dashed var(--line);">
         <div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px;">
           <span class="reg-name" style="font-weight:700; font-size:13px;">${name||'-'}${(()=>{ const en = regRowsCache.enNameIdx>=0 ? (r[regRowsCache.enNameIdx]||'').trim() : ''; return en ? `<span class="name-en">${en}</span>` : ''; })()}</span>
