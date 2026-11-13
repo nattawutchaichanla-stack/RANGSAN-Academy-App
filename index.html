@@ -1929,6 +1929,14 @@
   .hd-legend i{ display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:-6px; }
   .hd-legend i.free{ background:rgba(46,125,79,.6); } .hd-legend i.part{ background:rgba(220,167,61,.6); } .hd-legend i.full{ background:rgba(239,232,214,.3); } .hd-legend i.busy{ background:rgba(200,85,61,.6); }
   .hd-picked{ margin-top:8px; font-size:13.5px; color:#EFE8D6; } .hd-picked b{ color:#DCA73D; }
+  .reg-daybar{ display:flex; align-items:center; gap:6px; margin:0 0 10px; flex-wrap:wrap; }
+  .reg-daynav{ all:unset; cursor:pointer; width:36px; height:36px; border-radius:50%; text-align:center; line-height:36px; font-size:20px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; }
+  .reg-daynav:disabled{ opacity:.3; cursor:default; }
+  .reg-daypick{ position:relative; flex:1; min-width:150px; text-align:center; padding:8px 10px; border-radius:12px; background:rgba(220,167,61,.12); color:#EFE8D6; font-size:14px; cursor:pointer; }
+  .reg-daypick b{ color:#DCA73D; } .reg-daypick span{ font-size:11px; padding:1px 6px; border-radius:999px; background:#DCA73D; color:#1A0F08; font-weight:700; margin-left:4px; }
+  .reg-daypick input{ position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; }
+  .reg-dayall{ all:unset; cursor:pointer; padding:8px 12px; border-radius:999px; border:1px solid rgba(239,232,214,.3); font-size:12.5px; color:#EFE8D6; }
+  .reg-dayall.on{ background:#DCA73D; color:#1A0F08; border-color:#DCA73D; font-weight:700; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -4450,6 +4458,7 @@ function buildSheetCsvUrl(url){
   return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv${gid ? '&gid='+gid : ''}`;
 }
 let regCourseFilter = 'ทั้งหมด';
+let regDayFilter = null; // 'YYYY-MM-DD' = only that class day · 'all' = every day · null = today
 let regRowsCache = null;
 async function loadRegistrationList(filterRowId, listBoxId){
   filterRowId = filterRowId || 'regCourseFilterRow';
@@ -4533,6 +4542,20 @@ function renderRegistrationList(listBoxId){
   // only classes not confirmed as taught yet, newest registration first (Google Form appends rows in order)
   const allIdx = new Map(dataRows.map((r,i)=> [r, i]));
   rows = rows.filter(r=>{ const bk0 = regBookingForRow(r); return !(bk0 && bk0.taught) && !isCancelledKey(regKeyForRow(r)); });
+  // show only the chosen class day (default: today)
+  const dayOf = r=>{ const bk0 = regBookingForRow(r); return (bk0 && bk0.date) || (dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null); };
+  const selDay = regDayFilter === 'all' ? 'all' : (regDayFilter || rsLocalYMD());
+  const dayCount = d=> rows.filter(r=> dayOf(r) === d).length;
+  if(selDay !== 'all') rows = rows.filter(r=> dayOf(r) === selDay);
+  const dayBar = (()=>{
+    const lab = selDay === 'all' ? 'ทุกวัน' : new Date(selDay+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short', year:'2-digit'});
+    return `<div class="reg-daybar">
+      <button type="button" class="reg-daynav" data-dmv="-1" ${selDay==='all'?'disabled':''}>‹</button>
+      <label class="reg-daypick">📅 <b>${lab}</b>${selDay !== 'all' && selDay === rsLocalYMD() ? ' <span>วันนี้</span>' : ''}<input type="date" id="regDayInput_${listBoxId}" value="${selDay==='all'?'':selDay}"></label>
+      <button type="button" class="reg-daynav" data-dmv="1" ${selDay==='all'?'disabled':''}>›</button>
+      <button type="button" class="reg-dayall ${selDay==='all'?'on':''}">${selDay==='all'?'ดูเฉพาะวันนี้':'ดูทุกวัน'}</button>
+    </div>`;
+  })();
   const pendingTotal = rows.length;
   rows.sort((a,b)=>{
     const ta = timeIdx>=0 ? parseFormTimestamp(a[timeIdx]) : null, tb = timeIdx>=0 ? parseFormTimestamp(b[timeIdx]) : null;
@@ -4540,12 +4563,19 @@ function renderRegistrationList(listBoxId){
     return allIdx.get(b) - allIdx.get(a);
   });
   rows = rows.slice(0,50);
+  const bindDayBar = ()=>{
+    const go = d=>{ regDayFilter = d; renderRegistrationList(listBoxId); };
+    box.querySelectorAll('[data-dmv]').forEach(b=> b.onclick = ()=>{ const t = new Date(selDay+'T00:00:00'); t.setDate(t.getDate() + Number(b.dataset.dmv)); go(rsLocalYMD(t)); });
+    const inp = box.querySelector('.reg-daypick input'); if(inp) inp.onchange = ()=>{ if(inp.value) go(inp.value); };
+    const al = box.querySelector('.reg-dayall'); if(al) al.onclick = ()=> go(selDay === 'all' ? null : 'all');
+  };
   if(!rows.length){
-    box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ไม่มีรายการที่ยังไม่ยืนยันสอน ✓</div>`;
+    box.innerHTML = dayBar + `<div style="text-align:center; color:#948a78; padding:16px; font-size:13px;">${selDay==='all' ? 'ไม่มีรายการที่ยังไม่ยืนยันสอน ✓' : 'ไม่มีผู้เรียนที่ยังไม่ยืนยันในวันนี้'}</div>`;
+    bindDayBar();
     return;
   }
-  box.innerHTML = `
-    <p class="hint" style="margin-bottom:8px;">ยังไม่ยืนยันสอน ${pendingTotal} รายการ${pendingTotal>rows.length?` (แสดง ${rows.length} ล่าสุด)`:''} · เรียงจากสมัครล่าสุด${sharedCancelled.length?` · <button type="button" class="reg-link" data-reg-cancelled>ดูที่ยกเลิก (${sharedCancelled.length})</button>`:''}</p>
+  box.innerHTML = dayBar + `
+    <p class="hint" style="margin-bottom:8px;">${selDay==='all' ? 'ทุกวัน · ' : ''}ยังไม่ยืนยันสอน ${pendingTotal} คน${pendingTotal>rows.length?` (แสดง ${rows.length} ล่าสุด)`:''} · เรียงจากสมัครล่าสุด${sharedCancelled.length?` · <button type="button" class="reg-link" data-reg-cancelled>ดูที่ยกเลิก (${sharedCancelled.length})</button>`:''}</p>
     ${rows.map(r=>{
       const name = nameIdx>=0 ? r[nameIdx] : '-';
       const phone = phoneIdx>=0 ? r[phoneIdx] : '';
@@ -4583,6 +4613,7 @@ function renderRegistrationList(listBoxId){
   box.querySelectorAll('.reg-confirm-btn').forEach(btn=>{
     btn.onclick = ()=> confirmTaughtFromRegistration(regRowsCache.dataRows[+btn.dataset.row], btn, box.id);
   });
+  bindDayBar();
   box.querySelectorAll('[data-reg-cancel]').forEach(btn=> btn.onclick = ()=> regCancel(regRowsCache.dataRows[+btn.dataset.regCancel], btn, box.id));
   const cl = box.querySelector('[data-reg-cancelled]'); if(cl) cl.onclick = ()=> openCancelledList(box.id);
   box.querySelectorAll('[data-reg-edit]').forEach(btn=> btn.onclick = ()=> regEditDate(regRowsCache.dataRows[+btn.dataset.regEdit], btn, box.id));
@@ -6010,6 +6041,7 @@ function instructorKPI(name){
 }
 
 function openInstructorProfile(name, booking){
+  regDayFilter = (booking && booking.date) ? booking.date : null; // list only the class day that was tapped
   const photo = instructorPhotos[name];
   const initial = (name||'').replace('อาจารย์','').trim().charAt(0) || '?';
   const idx = state.instructors.indexOf(name);
