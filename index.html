@@ -1898,6 +1898,13 @@
   .cx-spin{ display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:cxSpin .7s linear infinite; vertical-align:-2px; margin-right:6px; }
   @keyframes cxSpin{ to{ transform:rotate(360deg); } }
   .cx-done{ text-align:center; } .cx-ok-ico{ width:56px; height:56px; margin:4px auto 8px; border-radius:50%; background:#2E7D4F; color:#fff; font-size:30px; line-height:56px; }
+  .hold-box{ padding:12px; margin:6px 0 14px; border-radius:16px; background:rgba(220,167,61,.08); border:1px solid rgba(220,167,61,.35); }
+  .hold-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap:4px 12px; }
+  .hold-new{ margin-top:12px; padding:12px; border-radius:12px; background:rgba(46,125,79,.25); font-weight:700; }
+  .hold-url{ margin:8px 0; padding:8px 10px; border-radius:10px; background:rgba(0,0,0,.25); font-family:'IBM Plex Mono',monospace; font-size:12px; word-break:break-all; font-weight:500; color:#EFE8D6; }
+  .hold-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 0; border-top:1px solid rgba(239,232,214,.12); font-size:14px; }
+  .bk-src-hold{ display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:999px; background:#F6EBD3; color:#8A6416; margin-left:4px; vertical-align:middle; }
+  #custBook.is-hold .cbs-dot[data-step="0"]{ cursor:default; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -10254,7 +10261,7 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
-          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.source==='link' ? '<span class="bk-src-link">📲 จองผ่านลิงค์</span>' : ''}${b.slipKey ? `<button type="button" class="bk-slip-btn" data-slip="${b.slipKey}">🧾 สลิป</button>` : ''}${b.customerName ? (b.customerNameEn
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.source==='link' ? '<span class="bk-src-link">📲 จองผ่านลิงค์</span>' : ''}${b.source==='hold' ? `<span class="bk-src-hold">🔒 ล็อกวันไว้ · รอลูกค้ากรอก</span><button type="button" class="bk-slip-btn" data-hold-copy="${b.holdId}">🔗 ลิงค์</button>` : ''}${b.slipKey ? `<button type="button" class="bk-slip-btn" data-slip="${b.slipKey}">🧾 สลิป</button>` : ''}${b.customerName ? (b.customerNameEn
               ? ` <button type="button" class="en-name" data-en-name="${b._idx}" title="แก้ชื่อภาษาอังกฤษ">${b.customerNameEn} ✎</button>`
               : ` <button type="button" class="en-name is-auto" data-en-name="${b._idx}" title="ระบบสะกดให้ — แตะเพื่อยืนยันหรือแก้">${thaiRomanize(b.customerName)} ✎</button>`) : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
@@ -12914,6 +12921,11 @@ function cbIsWorkshop(cid){ return isPerPersonCourse(cid); }
 function cbSeats(cid){ const c = courseById(cid); return Math.max(1, Number(c && c.students) || 1); }
 // availability of one course on one date → { ok, reason, rounds:[{time, left}] , left }
 function cbAvailability(cid, dateStr){
+  const H = window.__cbHold;
+  if(H && cid === H.cid && dateStr === H.date){ // date locked by staff for this customer
+    const seats = cbIsWorkshop(cid) ? Math.max(1, H.seats||1) : cbSeats(cid);
+    return H.time ? { ok:true, left:seats, rounds:[{ time:H.time, left:seats }] } : { ok:true, left:seats };
+  }
   const today = rsLocalYMD();
   const minD = new Date(today+'T00:00:00'); minD.setDate(minD.getDate()+CB_LEAD_DAYS);
   const maxD = new Date(today+'T00:00:00'); maxD.setDate(maxD.getDate()+CB_RANGE_DAYS);
@@ -12937,7 +12949,8 @@ function cbAvailability(cid, dateStr){
   const left = cap - day.length;
   return left > 0 ? { ok:true, left } : { ok:false, reason:'full' };
 }
-function customerBookingUrl(cid){ return location.origin + location.pathname + '?book=' + encodeURIComponent(cid || 'all'); }
+function customerBookingUrl(cid, holdId){ return location.origin + location.pathname + '?book=' + encodeURIComponent(cid || 'all') + (holdId ? '&hold=' + encodeURIComponent(holdId) : ''); }
+const holdGroups = ()=>{ const g = {}; (sharedBookings||[]).filter(b=> b.source === 'hold' && b.holdId).forEach(b=> (g[b.holdId] = g[b.holdId] || []).push(b)); return g; };
 const cbEsc = s=> String(s==null?'':s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cbShortName = c=> c.name.replace(/^คอร์ส\s*\d+:\s*/,'');
 function cbRadio(name, label, opts, req, other, hint){
@@ -13070,7 +13083,7 @@ function cbWizard(root, st, form){
   const paint = i=>{
     bar.innerHTML = `<div class="cbs-dots">${steps.map((t,k)=>`<button type="button" class="cbs-dot ${k<i?'done':''} ${k===i?'on':''}" data-step="${k}" ${k>i && !(form && k<= (form.__maxStep||1)) ? 'disabled' : ''} aria-label="${t}">${k<i?'✓':k+1}</button>`).join('<i></i>')}</div>
       <div class="cbs-title">ขั้นตอน ${i+1}/${steps.length} · <b>${steps[i]}</b></div>`;
-    bar.querySelectorAll('[data-step]').forEach(b=> b.onclick = ()=>{ const k = +b.dataset.step; if(k === 0){ st.step = 0; cbWizard.reflow(root, st, form); } else if(form){ st.step = 1; cbWizard.reflow(root, st, form); form.__goSlide(k-1); } });
+    bar.querySelectorAll('[data-step]').forEach(b=> b.onclick = ()=>{ const k = +b.dataset.step; if(k === 0 && st.hold) return; if(k === 0){ st.step = 0; cbWizard.reflow(root, st, form); } else if(form){ st.step = 1; cbWizard.reflow(root, st, form); form.__goSlide(k-1); } });
   };
   const toForm = root.querySelector('#cbToForm');
   if(toForm) toForm.onclick = ()=>{ st.step = 1; cbWizard.reflow(root, st, form); form.__goSlide(form.__step || 0); window.scrollTo({top:0, behavior:'smooth'}); };
@@ -13126,7 +13139,8 @@ function cbWizard(root, st, form){
       const top = root.querySelector('#cbStepper'); if(top && top.getBoundingClientRect().top < 0) top.scrollIntoView({behavior:'smooth', block:'start'});
     };
     slides.forEach((sl, i)=>{
-      sl.querySelector('.cbw-back').onclick = ()=>{ if(i === 0){ st.step = 0; cbWizard.reflow(root, st, form); window.scrollTo({top:0, behavior:'smooth'}); } else form.__goSlide(i-1); };
+      if(i === 0 && st.hold){ sl.querySelector('.cbw-back').style.visibility = 'hidden'; }
+      sl.querySelector('.cbw-back').onclick = ()=>{ if(i === 0 && st.hold) return; if(i === 0){ st.step = 0; cbWizard.reflow(root, st, form); window.scrollTo({top:0, behavior:'smooth'}); } else form.__goSlide(i-1); };
       const nx = sl.querySelector('.cbw-next');
       if(nx) nx.onclick = ()=>{ const m = missIn(sl); if(m){ fit(); m.scrollIntoView({behavior:'smooth', block:'center'}); return; } form.__goSlide(i+1); };
     });
@@ -13189,6 +13203,23 @@ async function startCustomerBooking(param){
   catch(e){ bootOff(); root.innerHTML = `<div class="cb-wrap"><div class="cb-card"><h2>โหลดตารางไม่สำเร็จ</h2><p>กรุณาลองเปิดลิงค์ใหม่อีกครั้ง</p></div></div>`; return; }
   const bookable = cbOpenCourses();
   const st = { step:0, cid: (param && param !== 'all' && bookable.some(c=> c.id === param)) ? param : '', date:'', time:'', ym:null, done:null };
+  const holdId = new URLSearchParams(location.search).get('hold');
+  if(holdId){
+    const hs = (sharedBookings||[]).filter(b=> b.holdId === holdId && b.source === 'hold');
+    if(!hs.length){
+      const used = (sharedBookings||[]).some(b=> b.holdRef === holdId);
+      bootOff();
+      root.innerHTML = `<div class="cb-wrap"><header class="cb-head"><div class="rs-logo" role="img" aria-label="RANGSAN"></div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>
+        <div class="cb-card cb-done"><div class="cb-ok" style="${used?'':'background:#8A6416'}">${used?'✓':'!'}</div><h2>${used?'กรอกข้อมูลเรียบร้อยแล้ว':'ลิงค์นี้ใช้ไม่ได้แล้ว'}</h2>
+        <p class="cb-note">${used?'การจองนี้กรอกข้อมูลครบแล้ว ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน':'ลิงค์อาจถูกยกเลิกหรือหมดอายุ กรุณาติดต่อทีมงาน 061 732 1346'}</p></div></div>`;
+      return;
+    }
+    const h = hs[0];
+    window.__cbHold = { id: holdId, cid: h.courseId, date: h.date, time: h.startTime || '', seats: hs.length };
+    st.hold = window.__cbHold; st.cid = h.courseId; st.date = h.date; st.time = h.startTime || ''; st.step = 1;
+    if(!bookable.some(c=> c.id === h.courseId)) bookable.push(courseById(h.courseId));
+    root.classList.add('is-hold');
+  }
   // pictures load in the background; the calendar shows first
   loadCbImages(['bg','cover','qr','qrNote'].concat(state.courses.map(c=> 'course_'+c.id))).then(()=>{ const f = document.querySelector('#cbForm'); if(!f || !f.dataset.touched) render(); }).catch(()=>{});
   const now = new Date(); now.setDate(now.getDate()+CB_LEAD_DAYS);
@@ -13330,6 +13361,11 @@ async function startCustomerBooking(param){
       const btn = form.querySelector('.cb-submit'); btn.disabled = true; btn.textContent = 'กำลังจอง...';
       try{
         await loadSharedBookings(); await loadSharedBusy(); // ตรวจซ้ำกับข้อมูลล่าสุด กันจองชนกัน
+        let holdRecs = [];
+        if(st.hold){
+          holdRecs = sharedBookings.filter(b=> b.holdId === st.hold.id && b.source === 'hold');
+          if(!holdRecs.length){ alert('ลิงค์นี้ถูกยกเลิกหรือมีการกรอกไปแล้ว กรุณาติดต่อทีมงาน'); btn.disabled = false; btn.textContent = 'ยืนยันการจอง'; return; }
+        }
         const a = cbAvailability(st.cid, st.date);
         const left = !a.ok ? 0 : (a.rounds ? ((a.rounds.find(r=> r.time===st.time)||{}).left||0) : (cbIsWorkshop(st.cid) ? a.left : 1));
         const qty = Math.max(1, Math.min(Number(fd.qty)||1, cbIsWorkshop(st.cid) ? left : cbSeats(st.cid)));
@@ -13345,6 +13381,13 @@ async function startCustomerBooking(param){
           catch(e){ console.error('slip upload failed', e); }
         }
         if(st.time) base.startTime = st.time;
+        if(st.hold){
+          const h0 = holdRecs[0];
+          base.holdRef = st.hold.id; base.source = 'link';
+          if(h0.instructor) base.instructor = h0.instructor;
+          if(h0.holdNote) base.note = [h0.holdNote, base.note].filter(Boolean).join(' · ');
+          sharedBookings = sharedBookings.filter(b=> !(b.holdId === st.hold.id && b.source === 'hold'));
+        }
         const n = qty;
         for(let i=0;i<n;i++){
           const b = { ...base, customerPhone: phone };
@@ -13389,6 +13432,12 @@ async function startCustomerBooking(param){
     const f = root.querySelector('#cbForm'); if(f && f.querySelector('.cb-submit[disabled]')) return; // submitting
     try{ await Promise.all([loadSharedBookings(), loadSharedBusy()]); }catch(e){ return; }
     const now = sig(); if(now === liveSig) return; liveSig = now;
+    if(st.hold){
+      if(!(sharedBookings||[]).some(b=> b.holdId === st.hold.id && b.source === 'hold')){
+        st.done = `<div class="cb-card cb-done"><div class="cb-ok" style="background:#8A6416">!</div><h2>ลิงค์นี้ถูกยกเลิกแล้ว</h2><p class="cb-note">กรุณาติดต่อทีมงาน 061 732 1346</p></div>`; render();
+      }
+      return;
+    }
     if(st.date){
       const a = cbAvailability(st.cid, st.date);
       const lost = !a.ok || (a.rounds && st.time && !((a.rounds.find(r=> r.time === st.time)||{}).left > 0));
@@ -13423,7 +13472,15 @@ async function showSlip(key){
     ov.style.display = 'flex'; ov.onclick = e=>{ if(e.target === ov) ov.style.display = 'none'; }; ov.querySelector('.cl-x').onclick = ()=> ov.style.display = 'none';
   }catch(e){ alert('โหลดสลิปไม่สำเร็จ'); }
 }
-document.addEventListener('click', e=>{ const s = e.target.closest('.bk-slip-btn'); if(s){ e.stopPropagation(); showSlip(s.dataset.slip); } }, true);
+document.addEventListener('click', e=>{
+  const h = e.target.closest('[data-hold-copy]');
+  if(h){ e.stopPropagation(); e.preventDefault(); const arr = holdGroups()[h.dataset.holdCopy]; if(!arr) return; const url = customerBookingUrl(arr[0].courseId, h.dataset.holdCopy);
+    const { ov } = rsSmallModal(`<h3>🔒 ลิงค์กรอกข้อมูล</h3><p class="cl-hint">${cbEsc(arr[0].holdName||'')} · ${rsThDate(arr[0].date)}</p><div class="hold-url">${cbEsc(url)}</div><div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="hcCopy">คัดลอก</button><button type="button" class="btn small ghost" id="hcLine">ส่ง LINE</button></div>`);
+    ov.querySelector('#hcCopy').onclick = (ev)=> navigator.clipboard.writeText(url).then(()=> ev.target.textContent = 'คัดลอกแล้ว ✓').catch(()=> prompt('คัดลอกลิงค์นี้', url));
+    ov.querySelector('#hcLine').onclick = ()=> sendTextToLine(holdShareText(arr[0], url));
+    return; }
+  const s = e.target.closest('.bk-slip-btn'); if(s && s.dataset.slip){ e.stopPropagation(); showSlip(s.dataset.slip); }
+}, true);
 // staff: links to send customers
 function openCustomerLinkModal(){
   let ov = document.getElementById('custLinkOverlay');
@@ -13432,6 +13489,7 @@ function openCustomerLinkModal(){
   ov.innerHTML = `<div class="cl-box"><button type="button" class="cl-x" aria-label="ปิด">✕</button>
     <h3>🔗 ลิงค์ให้ลูกค้าจองเอง</h3>
     <p class="cl-hint">ส่งลิงค์ให้ลูกค้า ลูกค้าเลือกได้เฉพาะวันที่ยังว่าง วันที่มีคนจองแล้วกดไม่ได้ เวิร์คช็อปรับจนที่นั่งเต็ม การจองจะเข้าแอพทันที</p>
+    <div id="cbHoldAdmin"></div>
     <div id="cbImgAdmin"><div class="cl-hint">กำลังโหลดภาพประกอบ...</div></div>
     <h3 style="margin-top:18px;">ลิงค์แต่ละคอร์ส</h3>
     ${rows.map(r=>`<div class="cl-row"><div class="cl-name">${cbEsc(r.name)}</div>
@@ -13441,8 +13499,89 @@ function openCustomerLinkModal(){
   ov.onclick = (e)=>{ if(e.target === ov) ov.style.display = 'none'; };
   ov.querySelector('.cl-x').onclick = ()=>{ ov.style.display = 'none'; };
   ov.querySelectorAll('[data-copy]').forEach(b=> b.onclick = async ()=>{ const u = customerBookingUrl(b.dataset.copy); try{ await navigator.clipboard.writeText(u); b.textContent = 'คัดลอกแล้ว ✓'; }catch(e){ prompt('คัดลอกลิงค์นี้', u); } setTimeout(()=> b.textContent = 'คัดลอก', 2000); });
+  renderCbHoldAdmin();
   renderCbImgAdmin();
   ov.querySelectorAll('[data-line]').forEach(b=> b.onclick = ()=>{ const c = courseById(b.dataset.line); sendTextToLine(`จองคอร์สเรียน RANGSAN Academy${c?` — ${cbShortName(c)}`:''}\nเลือกวันว่างและกรอกข้อมูลได้ที่ลิงค์นี้เลยครับ 👇\n${customerBookingUrl(b.dataset.line)}`); });
+}
+function holdShareText(h, url){
+  const c = courseById(h.courseId);
+  const d = new Date(h.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  return `สวัสดีครับ${h.holdName ? ` คุณ${h.holdName}` : ''} 🙏\nRANGSAN Academy ล็อกวันเรียนไว้ให้แล้วครับ\n\n📚 ${c ? cbShortName(c) : ''}\n🗓️ ${d}${h.startTime ? ` · ${h.startTime} น.` : ''}\n\nรบกวนกรอกข้อมูลผู้เรียนที่ลิงค์นี้ได้เลยครับ 👇\n${url}`;
+}
+function renderCbHoldAdmin(){
+  const box = document.getElementById('cbHoldAdmin'); if(!box) return;
+  const groups = Object.entries(holdGroups()).sort((a,b)=> a[1][0].date.localeCompare(b[1][0].date));
+  const today = rsLocalYMD();
+  box.innerHTML = `<div class="hold-box"><h3 style="margin:0 0 4px;">🔒 ล็อกวันให้ลูกค้า แล้วส่งลิงค์ให้กรอกข้อมูล</h3>
+    <p class="cl-hint">ร้านเลือกคอร์สและวันเอง ลูกค้าแค่กรอกข้อมูล วันนั้นจะถูกจองไว้ทันที คนอื่นจองทับไม่ได้</p>
+    <div class="hold-grid">
+      <label class="rs-f">คอร์ส<select id="hdCourse">${state.courses.map(c=>`<option value="${c.id}">${cbEsc(c.name)}</option>`).join('')}</select></label>
+      <label class="rs-f">วันเรียน<input type="date" id="hdDate" min="${today}"></label>
+      <label class="rs-f" id="hdTimeWrap">รอบ<select id="hdTime"></select></label>
+      <label class="rs-f" id="hdSeatWrap">จำนวนที่นั่ง<select id="hdSeats"></select></label>
+      <label class="rs-f">ชื่อลูกค้า (ไว้ดูเอง)<input id="hdName" maxlength="60" placeholder="เช่น คุณเอ"></label>
+      <label class="rs-f">หมายเหตุ<input id="hdNote" maxlength="80" placeholder="เช่น โอนมัดจำแล้ว"></label>
+    </div>
+    <div id="hdWarn" class="cl-hint" style="color:#F2C66D;"></div>
+    <div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="hdCreate">🔒 ล็อกวัน + สร้างลิงค์</button></div>
+    <div id="hdResult"></div>
+    ${groups.length ? `<div class="hold-list"><div class="cl-name" style="margin-top:14px;">ลิงค์ที่ล็อกไว้ รอลูกค้ากรอก (${groups.length})</div>${groups.map(([id, arr])=>{ const h = arr[0], c = courseById(h.courseId); return `<div class="hold-row">
+      <div><b>${cbEsc(h.holdName || 'ไม่ระบุชื่อ')}</b> · ${rsThDate(h.date)}${h.startTime?` ${h.startTime}`:''}<div class="ci-hint" style="margin:2px 0 0;">${cbEsc(c ? cbShortName(c) : '')}${arr.length>1?` · ${arr.length} ที่นั่ง`:''}${h.holdNote?` · ${cbEsc(h.holdNote)}`:''}</div></div>
+      <div class="cl-acts"><button type="button" class="btn small" data-hd-copy="${id}">คัดลอก</button><button type="button" class="btn small ghost" data-hd-line="${id}">LINE</button><button type="button" class="btn small ghost" data-hd-del="${id}">ยกเลิก</button></div></div>`; }).join('')}</div>` : ''}
+  </div>`;
+  const cSel = box.querySelector('#hdCourse'), dIn = box.querySelector('#hdDate'), tSel = box.querySelector('#hdTime'), sSel = box.querySelector('#hdSeats'), warn = box.querySelector('#hdWarn');
+  const sync = ()=>{
+    const cid = cSel.value, times = CB_TIMED[cid];
+    box.querySelector('#hdTimeWrap').style.display = times ? '' : 'none';
+    tSel.innerHTML = (times||[]).map(t=>`<option>${t}</option>`).join('');
+    const ws = cbIsWorkshop(cid);
+    box.querySelector('#hdSeatWrap').style.display = ws ? '' : 'none';
+    sSel.innerHTML = [...Array(cbSeats(cid))].map((_,i)=>`<option value="${i+1}">${i+1} ที่นั่ง</option>`).join('');
+    const d = dIn.value; if(!d){ warn.textContent = ''; return; }
+    const msgs = [];
+    if(new Date(d+'T00:00:00').getDay() === 1) msgs.push('วันจันทร์ร้านปิด');
+    const busy = (sharedBusy||[]).filter(x=> x.date === d); if(busy.length) msgs.push(`วันนั้นมีกิจกรรม: ${busy.map(x=> x.title||'ไม่ว่าง').join(', ')}`);
+    const other = (sharedBookings||[]).filter(x=> x.date === d && (x.courseId !== cid || !ws)); if(other.length) msgs.push(`วันนั้นมีคิวอยู่แล้ว ${other.length} คิว`);
+    warn.textContent = msgs.length ? '⚠️ ' + msgs.join(' · ') : '';
+  };
+  cSel.onchange = sync; dIn.onchange = sync; sync();
+  const share = (id, mode, btn)=>{
+    const arr = holdGroups()[id]; if(!arr) return;
+    const url = customerBookingUrl(arr[0].courseId, id);
+    if(mode === 'line') sendTextToLine(holdShareText(arr[0], url));
+    else { navigator.clipboard.writeText(url).then(()=>{ btn.textContent = 'คัดลอกแล้ว ✓'; setTimeout(()=> btn.textContent = 'คัดลอก', 2000); }).catch(()=> prompt('คัดลอกลิงค์นี้', url)); }
+  };
+  box.querySelector('#hdCreate').onclick = async (e)=>{
+    const btn = e.currentTarget; if(btn.disabled) return;
+    const cid = cSel.value, d = dIn.value;
+    if(!d){ alert('กรุณาเลือกวันเรียน'); return; }
+    if(warn.textContent && !confirm(warn.textContent.replace('⚠️ ','') + '\nยังต้องการล็อกวันนี้ไหม?')) return;
+    btn.disabled = true; btn.textContent = 'กำลังล็อก...';
+    try{
+      await loadSharedBookings();
+      const id = 'hd_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+      const n = cbIsWorkshop(cid) ? (Number(sSel.value)||1) : 1;
+      const name = box.querySelector('#hdName').value.trim(), note = box.querySelector('#hdNote').value.trim();
+      for(let i=0;i<n;i++) sharedBookings.push({ date:d, courseId:cid, startTime: CB_TIMED[cid] ? tSel.value : undefined, instructor:'ยังไม่ระบุ',
+        customerName: name ? `${name} (รอกรอกฟอร์ม)` : 'รอลูกค้ากรอกฟอร์ม', source:'hold', holdId:id, holdName:name, holdNote:note,
+        createdAt:new Date().toISOString(), createdBy: currentUser||'' });
+      await saveSharedBookings();
+      renderCbHoldAdmin();
+      const res = document.getElementById('hdResult');
+      const url = customerBookingUrl(cid, id);
+      if(res){ res.innerHTML = `<div class="hold-new">✓ ล็อกวันแล้ว — ส่งลิงค์นี้ให้ลูกค้า<div class="hold-url">${cbEsc(url)}</div><div class="cl-acts"><button type="button" class="btn small" data-hd-copy="${id}">คัดลอก</button><button type="button" class="btn small ghost" data-hd-line="${id}">ส่ง LINE</button></div></div>`;
+        res.querySelectorAll('[data-hd-copy]').forEach(b=> b.onclick = ()=> share(id, 'copy', b));
+        res.querySelectorAll('[data-hd-line]').forEach(b=> b.onclick = ()=> share(id, 'line', b)); }
+      try{ renderLogTab(); }catch(err){}
+    }catch(err){ console.error(err); alert('ล็อกวันไม่สำเร็จ ลองใหม่อีกครั้ง'); btn.disabled = false; btn.textContent = '🔒 ล็อกวัน + สร้างลิงค์'; }
+  };
+  box.querySelectorAll('.hold-list [data-hd-copy]').forEach(b=> b.onclick = ()=> share(b.dataset.hdCopy, 'copy', b));
+  box.querySelectorAll('.hold-list [data-hd-line]').forEach(b=> b.onclick = ()=> share(b.dataset.hdLine, 'line', b));
+  box.querySelectorAll('[data-hd-del]').forEach(b=> b.onclick = async ()=>{
+    const id = b.dataset.hdDel; if(!confirm('ยกเลิกการล็อกวันนี้? ลิงค์ที่ส่งไปจะใช้ไม่ได้')) return;
+    await loadSharedBookings(); sharedBookings = sharedBookings.filter(x=> x.holdId !== id || x.source !== 'hold'); await saveSharedBookings();
+    renderCbHoldAdmin(); try{ renderLogTab(); }catch(err){}
+  });
 }
 async function renderCbImgAdmin(){
   const box = document.getElementById('cbImgAdmin'); if(!box) return;
