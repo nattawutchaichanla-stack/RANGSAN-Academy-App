@@ -1985,7 +1985,36 @@
   .rw-util{ justify-self:end; display:flex; gap:14px; } .rw-util button{ all:unset; cursor:pointer; position:relative; font-size:19px; line-height:1; color:#EFE8D6; }
   .rw-badge{ position:absolute; top:-7px; right:-10px; min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:999px; background:#DCA73D; color:#1A0F08; font-size:10px; font-style:normal; font-weight:800; line-height:16px; text-align:center; }
   #custBook.is-shop .sh-wrap.is-list{ max-width:none; padding:0 0 110px; }
-  #custBook.is-shop .sh-wrap.is-list > :not(.rw-track):not(.rw-mob){ max-width:1080px; margin-left:auto; margin-right:auto; padding-left:16px; padding-right:16px; box-sizing:border-box; }
+  #custBook.is-shop .sh-wrap.is-list > :not(.rw-track):not(.rw-mob):not(.pm-hero){ max-width:1080px; margin-left:auto; margin-right:auto; padding-left:16px; padding-right:16px; box-sizing:border-box; }
+  .pm-hero{ position:relative; overflow:hidden; background:radial-gradient(120% 90% at 85% 0%, #1F5A33 0%, #0B2A15 55%, #071A0D 100%); color:#F3EDE0; }
+  .pm-bg{ position:absolute; inset:0; background:center/cover no-repeat; transform:scale(1.04); }
+  .pm-hero.has-img::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(7,26,13,.55) 0%, rgba(7,26,13,.72) 55%, rgba(7,26,13,.9) 100%); }
+  .pm-in{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:clamp(28px,6vh,64px) clamp(16px,4vw,48px) 22px; min-height:calc(100vh - 52px); min-height:calc(100svh - 52px); box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; }
+  #custBook.is-embed .pm-in{ min-height:auto; }
+  .pm-kick{ font-size:11.5px; letter-spacing:.32em; font-weight:700; color:#DCA73D; }
+  .pm-title{ margin:10px 0 8px; font-family:'FC Jong Jaroen','FC Krung Thep',sans-serif; font-weight:400; font-size:clamp(34px,5.4vw,64px); line-height:1.05; color:#F3EDE0; }
+  .pm-sub{ margin:0; max-width:520px; font-size:15px; line-height:1.6; color:rgba(243,237,224,.78); }
+  .pm-row{ margin-top:clamp(20px,4vh,36px); display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:16px; }
+  .pm-card{ all:unset; cursor:pointer; position:relative; display:flex; flex-direction:column; border-radius:20px; overflow:hidden; background:#FBF8F1; color:#1F1A12; box-shadow:0 18px 40px rgba(0,0,0,.28); transition:transform .25s ease, box-shadow .25s ease; }
+  .pm-card:hover{ transform:translateY(-4px); box-shadow:0 24px 50px rgba(0,0,0,.36); }
+  .pm-no{ position:absolute; left:14px; top:12px; z-index:1; font-size:10.5px; letter-spacing:.24em; font-weight:700; color:#B07F1E; }
+  .pm-save{ position:absolute; right:12px; top:10px; z-index:1; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; background:#C8452D; color:#fff; }
+  .pm-pic{ aspect-ratio:4/3; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#F3EDE0,#E9E0CB); font-size:64px; }
+  .pm-pic img{ max-width:82%; max-height:82%; object-fit:contain; }
+  .pm-b{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .pm-name{ font-size:16px; font-weight:700; line-height:1.35; color:#0B2A15; }
+  .pm-desc{ margin:0; font-size:13px; line-height:1.55; color:#6A604F; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .pm-foot{ margin-top:auto; padding-top:8px; display:flex; align-items:flex-end; justify-content:space-between; gap:8px; }
+  .pm-price{ font-size:20px; font-weight:800; color:#165028; } .pm-price s{ font-size:12.5px; font-weight:500; color:#9A8F7C; }
+  .pm-go{ font-size:12px; font-weight:700; color:#0B2A15; border-bottom:1.5px solid #DCA73D; white-space:nowrap; }
+  .pm-next{ margin-top:22px; text-align:center; font-size:12.5px; color:rgba(243,237,224,.6); }
+  @media (max-width:900px){ .pm-row{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+  @media (max-width:600px){ .pm-row{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; margin:22px -16px 0; padding:4px 16px 18px; gap:12px; scrollbar-width:none; } .pm-row::-webkit-scrollbar{ display:none; } .pm-card{ flex:0 0 78%; scroll-snap-align:start; } .pm-in{ min-height:auto; } }
+  .sl-bg-prev{ position:relative; height:150px; border-radius:14px; overflow:hidden; background:radial-gradient(120% 90% at 85% 0%, #1F5A33 0%, #0B2A15 60%); margin:6px 0 10px; }
+  .sl-bg-prev img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .sl-bg-prev:not(.empty)::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(7,26,13,.45), rgba(7,26,13,.85)); }
+  .sl-bg-prev.empty > span{ position:absolute; right:12px; top:10px; font-size:11.5px; color:rgba(243,237,224,.6); }
+  .sl-bg-demo{ position:absolute; left:16px; bottom:14px; z-index:1; color:#F3EDE0; display:flex; flex-direction:column; gap:2px; } .sl-bg-demo small{ font-size:9.5px; letter-spacing:.28em; color:#DCA73D; font-weight:700; } .sl-bg-demo b{ font-family:'FC Jong Jaroen','FC Krung Thep',sans-serif; font-weight:400; font-size:26px; }
   .rw-track{ position:relative; }
   html:has(#custBook.is-shop), html:has(#custBook.is-shop) body{ overflow:visible !important; overflow-x:clip !important; height:auto !important; }
   .rw-pin{ position:sticky; top:52px; display:flex; overflow:hidden; background:#F3EDE0; }
@@ -13871,6 +13900,21 @@ const SHOP_LOOKS = [
   { img:'matcha',  cat:'มัทฉะ & ใบชา', en:'MATCHA & TEA', t:'มัทฉะ & ใบชาพรีเมียม', blurb:'มัทฉะคัดเกรดพิเศษและใบชาแท้ 100% พร้อมชุดอุปกรณ์ตีมัทฉะครบเซ็ต', pick:['ct031','ct032','ct033','ct004'] },
   { img:'pitcher', cat:'อุปกรณ์ชงกาแฟ', en:'BARISTA TOOLS', t:'อุปกรณ์บาริสต้า', blurb:'แทมป์เปอร์ พิชเชอร์ ด้ามชง และเครื่องมือหลังบาร์ที่บาริสต้ามืออาชีพเลือกใช้', pick:['ct098','ct082','ct096','ct085'] },
 ];
+function shopPromoHTML(){
+  const items = shopProducts.filter(p=> p.active !== false && p.cat === 'เซ็ตโปรโมชั่น');
+  if(!items.length) return '';
+  const bg = cbImg.shopbg || '';
+  const t = cbImg.shopPromoT || 'เซ็ตโปรโมชั่น';
+  const sub = cbImg.shopPromoS || 'ชุดคุ้มที่คัดมาให้แล้ว ทั้งเปิดร้านและบาร์ที่บ้าน';
+  return `<section class="pm-hero ${bg?'has-img':''}" id="pmHero">${bg?`<div class="pm-bg" style="background-image:url('${bg}')"></div>`:''}
+    <div class="pm-in"><div class="pm-head"><span class="pm-kick">RANGSAN · PROMOTION</span><h2 class="pm-title">${cbEsc(t)}</h2><p class="pm-sub">${cbEsc(sub)}</p></div>
+    <div class="pm-row">${items.map((p,i)=>{ const on = p.sale && Number(p.sale) < Number(p.price); return `<button type="button" class="pm-card" data-pid="${p.id}">
+      <span class="pm-no">SET ${String(i+1).padStart(2,'0')}</span>${on?`<span class="pm-save">ประหยัด ${shopMoney(Number(p.price)-Number(p.sale))}</span>`:''}
+      <div class="pm-pic">${shopImg[p.id] ? `<img src="${shopImg[p.id]}" alt="">` : `<span>${shopEmoji(p.cat)}</span>`}</div>
+      <div class="pm-b"><div class="pm-name">${cbEsc(p.name)}</div>${p.desc?`<p class="pm-desc">${cbEsc(p.desc)}</p>`:''}
+      <div class="pm-foot"><span class="pm-price">${shopMoney(shopPrice(p))}${on?` <s>${shopMoney(p.price)}</s>`:''}</span><span class="pm-go">ดูรายละเอียด →</span></div></div></button>`; }).join('')}</div>
+    <div class="pm-next">เลื่อนลงเพื่อดูคอลเลกชันสินค้า ↓</div></div></section>`;
+}
 function shopRunwayHTML(){
   const L = SHOP_LOOKS;
   const card = id=>{ const p = shopProducts.find(x=> x.id === id); if(!p || p.active === false) return ''; return `<button type="button" class="rw-card" data-pid="${p.id}">
@@ -13976,7 +14020,7 @@ async function startShop(){
   const bootOff = ()=>{ const bt = document.getElementById('cbBoot'); if(bt){ clearInterval(window.__cbBootTimer); bt.classList.add('out'); setTimeout(()=> bt.remove(), 400); } };
   state = JSON.parse(JSON.stringify(DEFAULT_STATE)); mergeMissingCourses(state);
   loadSharedLineRelayUrl().catch(()=>{});
-  await Promise.all([loadShopProducts(), loadCbImages(['qr','qrNote','bg'])]).catch(()=>{});
+  await Promise.all([loadShopProducts(), loadCbImages(['qr','qrNote','bg','shopbg','shopPromoT','shopPromoS'])]).catch(()=>{});
   const list = ()=> shopProducts.filter(p=> p.active !== false);
   let cart = []; if(SHOP_ORDERING){ try{ cart = JSON.parse(localStorage.getItem('rangsan_shop_cart')||'[]'); }catch(e){} } else root.classList.add('is-catalog');
   const saveCart = ()=>{ try{ localStorage.setItem('rangsan_shop_cart', JSON.stringify(cart)); }catch(e){} };
@@ -13988,7 +14032,7 @@ async function startShop(){
     <nav class="rw-tabs"><button type="button" class="on">SHOP</button><a href="${location.pathname}?book=all">คอร์สเรียน</a></nav>
     <div class="rw-util"><button type="button" id="shSearchBtn" aria-label="ค้นหา">⌕</button>${SHOP_ORDERING ? `<button type="button" id="shHeadCart" aria-label="ตะกร้า">🛒${cartQty()?`<i class="rw-badge">${cartQty()}</i>`:''}</button>` : ''}</div></header>`;
   const render = ()=>{
-    if(cbImg.bg){ root.classList.add('has-bg'); if(!root.querySelector('#cbBg')){ const bg = document.createElement('div'); bg.id = 'cbBg'; bg.style.backgroundImage = `url("${cbImg.bg}")`; root.prepend(bg); } }
+    const pageBg = cbImg.shopbg || cbImg.bg; if(pageBg){ root.classList.add('has-bg'); if(!root.querySelector('#cbBg')){ const bg = document.createElement('div'); bg.id = 'cbBg'; bg.style.backgroundImage = `url("${pageBg}")`; root.prepend(bg); } }
     const keepBg = root.querySelector('#cbBg');
     let html = '';
     if(st.done){ html = st.done; }
@@ -14000,7 +14044,7 @@ async function startShop(){
       if(st.cat !== 'ทั้งหมด') items = items.filter(p=> p.cat === st.cat);
       if(st.q) items = items.filter(p=> (p.name+' '+(p.desc||'')+' '+(p.code||'')).toLowerCase().includes(st.q.toLowerCase()));
       const showRw = st.cat === 'ทั้งหมด' && !st.q && !st.searchOpen;
-      html = `${showRw ? shopRunwayHTML() : ''}
+      html = `${showRw ? shopPromoHTML() + shopRunwayHTML() : ''}
         <div class="sh-sec" id="shGridTop"><div class="sh-sec-h"><span>${st.cat === 'ทั้งหมด' ? 'สินค้าทั้งหมด' : cbEsc(st.cat)}</span><small>${items.length} รายการ</small></div>
         <div class="sh-search ${st.searchOpen || st.q ? 'open' : ''}"><input id="shQ" type="search" placeholder="ค้นหาชื่อสินค้า หรือรหัส เช่น A001" value="${cbEsc(st.q)}"></div></div>
         <div class="sh-cats">${['ทั้งหมด'].concat(cats).map(c=>`<button type="button" class="sh-cat ${st.cat===c?'on':''}" data-cat="${cbEsc(c)}">${cbEsc(c)}</button>`).join('')}</div>
@@ -14116,8 +14160,8 @@ function renderShopTab(){
   let host = document.getElementById('shopLayer'); if(!host){ host = document.createElement('div'); host.id = 'shopLayer'; document.body.appendChild(host); }
   if(!host.querySelector('#shopFrame')){
     host.innerHTML = `<div class="shop-frame-wrap"><iframe id="shopFrame" title="ร้านค้า RANGSAN" src="${location.pathname}?shop&embed=1"></iframe></div>
-      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน">${SHOP_ORDERING ? `<button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button>` : ''}<button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
-    host.querySelectorAll('[data-sa]').forEach(b=> b.onclick = ()=>{ if(b.dataset.sa === 'reload'){ document.getElementById('shopFrame').contentWindow.location.reload(); return; } openShopAdmin(b.dataset.sa); });
+      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน">${SHOP_ORDERING ? `<button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button>` : ''}<button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="look" aria-label="หน้าร้าน">🎨<span> หน้าร้าน</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
+    host.querySelectorAll('[data-sa]').forEach(b=> b.onclick = ()=>{ if(b.dataset.sa === 'reload'){ { const f = document.getElementById('shopFrame'); f.src = f.src; } return; } openShopAdmin(b.dataset.sa); });
   }
   shopStaffBadge();
 }
@@ -14126,16 +14170,34 @@ function openShopAdmin(tab, host){
   let ov = host;
   if(!ov){ ov = document.getElementById('shopAdminOv'); if(!ov){ ov = document.createElement('div'); ov.id = 'shopAdminOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); } }
   ov.innerHTML = `<div class="cl-box ${host?'shop-page':''}">${host?'':'<button type="button" class="cl-x" aria-label="ปิด">✕</button>'}<h3>🛍 ร้านค้าออนไลน์</h3>
-    <div class="cl-tabs">${SHOP_ORDERING ? '<button type="button" data-st="orders">📦 ออเดอร์</button>' : ''}<button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
+    <div class="cl-tabs">${SHOP_ORDERING ? '<button type="button" data-st="orders">📦 ออเดอร์</button>' : ''}<button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="look">🎨 หน้าร้าน</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
     <div id="shopAdminBody"><p class="cl-hint">กำลังโหลด...</p></div></div>`;
-  if(!host){ ov.style.display = 'flex'; const close = ()=>{ ov.style.display = 'none'; if(ov.dataset.dirty){ delete ov.dataset.dirty; const f = document.getElementById('shopFrame'); if(f) f.contentWindow.location.reload(); } shopStaffBadge(); }; ov.onclick = e=>{ if(e.target === ov) close(); }; ov.querySelector('.cl-x').onclick = close; }
+  if(!host){ ov.style.display = 'flex'; const close = ()=>{ ov.style.display = 'none'; if(ov.dataset.dirty){ delete ov.dataset.dirty; const f = document.getElementById('shopFrame'); if(f) f.src = f.src; } shopStaffBadge(); }; ov.onclick = e=>{ if(e.target === ov) close(); }; ov.querySelector('.cl-x').onclick = close; }
   const show = async t=>{ ov.querySelectorAll('[data-st]').forEach(b=> b.classList.toggle('on', b.dataset.st === t)); try{ localStorage.setItem('rangsan_shop_tab', t); }catch(e){}
     await Promise.all([loadShopProducts(), loadShopOrders()]);
-    if(t === 'products') shopAdminProducts(); else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
+    if(t === 'products') shopAdminProducts(); else if(t === 'look'){ await loadCbImages(['shopbg','shopPromoT','shopPromoS']); shopAdminLook(); } else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
   ov.querySelectorAll('[data-st]').forEach(b=> b.onclick = ()=> show(b.dataset.st));
   let t0 = tab; try{ t0 = t0 || localStorage.getItem('rangsan_shop_tab') || 'orders'; }catch(e){ t0 = 'orders'; }
   if(!SHOP_ORDERING && t0 === 'orders') t0 = 'products';
   show(t0);
+}
+function shopAdminLook(){
+  const body = document.getElementById('shopAdminBody');
+  const dirty = ()=>{ const o = document.getElementById('shopAdminOv'); if(o) o.dataset.dirty = '1'; };
+  body.innerHTML = `<p class="cl-hint">ตั้งค่าหน้าแรกของร้าน — ส่วน “เซ็ตโปรโมชั่น” จะขึ้นบนสุด ดึงสินค้าจากหมวด <b>เซ็ตโปรโมชั่น</b> อัตโนมัติ</p>
+    <div class="rs-f" style="margin-top:8px;">ภาพพื้นหลังหน้าร้าน</div>
+    <div class="sl-bg-prev ${cbImg.shopbg?'':'empty'}">${cbImg.shopbg?`<img src="${cbImg.shopbg}" alt="">`:'<span>ยังไม่มีภาพ — ใช้พื้นสีเขียวเข้มของแบรนด์</span>'}<div class="sl-bg-demo"><small>RANGSAN · PROMOTION</small><b>${cbEsc(cbImg.shopPromoT || 'เซ็ตโปรโมชั่น')}</b></div></div>
+    <div class="cl-acts"><label class="btn small">${cbImg.shopbg?'เปลี่ยนภาพ':'ใส่ภาพพื้นหลัง'}<input type="file" accept="image/*" id="slBgFile" hidden></label>${cbImg.shopbg?'<button type="button" class="btn small ghost" id="slBgDel">ลบภาพ</button>':''}</div>
+    <p class="cl-hint">แนะนำภาพแนวนอน เช่น บาร์กาแฟ เมล็ดกาแฟ ระบบจะลดขนาดและใส่เงาเข้มให้อ่านตัวหนังสือได้ชัด</p>
+    <label class="rs-f" style="margin-top:14px;">หัวข้อ<input id="slT" maxlength="40" placeholder="เซ็ตโปรโมชั่น" value="${cbEsc(cbImg.shopPromoT||'')}"></label>
+    <label class="rs-f">คำอธิบายสั้น<input id="slS" maxlength="90" placeholder="ชุดคุ้มที่คัดมาให้แล้ว ทั้งเปิดร้านและบาร์ที่บ้าน" value="${cbEsc(cbImg.shopPromoS||'')}"></label>
+    <div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="slSave">บันทึกข้อความ</button></div>`;
+  body.querySelector('#slBgFile').onchange = async e=>{ const f = e.target.files[0]; if(!f) return;
+    try{ const img = await resizeImageFile(f, 1800, 0.82); await window.storage.set('shared_cbimg_shopbg', img, true); cbImg.shopbg = img; dirty(); flashSaved(); shopAdminLook(); }
+    catch(err){ console.error(err); alert('อัปโหลดภาพไม่สำเร็จ ลองใหม่อีกครั้ง'); } };
+  const del = body.querySelector('#slBgDel'); if(del) del.onclick = async ()=>{ if(!confirm('ลบภาพพื้นหลังหน้าร้าน?')) return; await window.storage.set('shared_cbimg_shopbg', '', true); cbImg.shopbg = ''; dirty(); shopAdminLook(); };
+  body.querySelector('#slSave').onclick = async ()=>{ const t = body.querySelector('#slT').value.trim(), sv = body.querySelector('#slS').value.trim();
+    await Promise.all([window.storage.set('shared_cbimg_shopPromoT', t, true), window.storage.set('shared_cbimg_shopPromoS', sv, true)]); cbImg.shopPromoT = t; cbImg.shopPromoS = sv; dirty(); flashSaved(); shopAdminLook(); };
 }
 function shopAdminLink(){
   const body = document.getElementById('shopAdminBody'); const url = shopUrl();
