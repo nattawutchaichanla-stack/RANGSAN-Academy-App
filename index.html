@@ -2040,7 +2040,9 @@
   .cl-box.shop-page h3{ font-size:20px; }
   .cl-box.shop-page .sh-order{ padding:14px 0; }
   @media (min-width:900px){ .cl-box.shop-page #shopAdminBody .sh-order{ display:grid; grid-template-columns:1fr; } }
-  body.shop-tab-open #tab-shop{ position:fixed; inset:0; z-index:25; background:#F3EDE0; }
+  #shopLayer{ display:none; position:fixed; inset:0; z-index:25; background:#F3EDE0; }
+  body.shop-tab-open #shopLayer{ display:block; }
+  body.shop-tab-open main, body.shop-tab-open #pullRefreshIndicator{ visibility:hidden; }
   body.shop-tab-open{ overflow:hidden; }
   .shop-frame-wrap{ position:absolute; inset:0; bottom:calc(70px + env(safe-area-inset-bottom)); }
   .shop-frame-wrap iframe{ width:100%; height:100%; border:0; display:block; background:#F3EDE0; }
@@ -13044,14 +13046,14 @@ document.addEventListener('visibilitychange', ()=>{
       indicator.classList.remove('spinning');
       indicator.style.marginTop = '-70px';
       main.style.transform = 'translateY(0)';
-      setTimeout(()=>{ main.style.transition = ''; }, 250);
+      setTimeout(()=>{ main.style.transition = ''; main.style.transform = ''; }, 250);
       refreshing = false;
     } else {
       indicator.style.transition = 'margin-top .2s';
       main.style.transition = 'transform .2s';
       indicator.style.marginTop = '-70px';
       main.style.transform = 'translateY(0)';
-      setTimeout(()=>{ indicator.style.transition = ''; main.style.transition = ''; }, 220);
+      setTimeout(()=>{ indicator.style.transition = ''; main.style.transition = ''; main.style.transform = ''; }, 220);
     }
   });
 })();
@@ -14111,7 +14113,7 @@ async function startShop(){
 
 // ---------- staff: products & orders ----------
 function renderShopTab(){
-  const host = document.getElementById('tab-shop'); if(!host) return;
+  let host = document.getElementById('shopLayer'); if(!host){ host = document.createElement('div'); host.id = 'shopLayer'; document.body.appendChild(host); }
   if(!host.querySelector('#shopFrame')){
     host.innerHTML = `<div class="shop-frame-wrap"><iframe id="shopFrame" title="ร้านค้า RANGSAN" src="${location.pathname}?shop&embed=1"></iframe></div>
       <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน">${SHOP_ORDERING ? `<button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button>` : ''}<button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
