@@ -2000,8 +2000,10 @@
   .pm-card:hover{ transform:translateY(-4px); box-shadow:0 24px 50px rgba(0,0,0,.36); }
   .pm-no{ position:absolute; left:14px; top:12px; z-index:1; font-size:10.5px; letter-spacing:.24em; font-weight:700; color:#B07F1E; }
   .pm-save{ position:absolute; right:12px; top:10px; z-index:1; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; background:#C8452D; color:#fff; }
-  .pm-pic{ aspect-ratio:4/3; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#F3EDE0,#E9E0CB); font-size:64px; }
-  .pm-pic img{ max-width:82%; max-height:82%; object-fit:contain; }
+  .pm-pic{ position:relative; aspect-ratio:1/1; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#F3EDE0,#E9E0CB); font-size:64px; }
+  .pm-pic img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center top; transition:transform .5s ease; }
+  .pm-card:hover .pm-pic img{ transform:scale(1.03); }
+  .pm-no{ padding:4px 9px; border-radius:999px; background:rgba(251,248,241,.92); left:10px; top:10px; }
   .pm-b{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1; }
   .pm-name{ font-size:16px; font-weight:700; line-height:1.35; color:#0B2A15; }
   .pm-desc{ margin:0; font-size:13px; line-height:1.55; color:#6A604F; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
