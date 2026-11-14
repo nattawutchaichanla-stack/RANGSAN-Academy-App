@@ -1987,6 +1987,25 @@
   #custBook.is-shop .sh-wrap.is-list{ max-width:none; padding:0 0 110px; }
   #custBook.is-shop .sh-wrap.is-list > :not(.rw-track):not(.rw-mob):not(.pm-hero){ max-width:1080px; margin-left:auto; margin-right:auto; padding-left:16px; padding-right:16px; box-sizing:border-box; }
   .ic-h{ margin:6px 0 4px; font-size:16px; } .ic-sec + .ic-sec{ margin-top:18px; padding-top:14px; border-top:1px solid rgba(239,232,214,.14); } .ic-top{ margin-bottom:10px; }
+  .rw-bgs{ position:absolute; inset:0; z-index:0; }
+  .rw-bgl{ position:absolute; inset:0; background:center/cover no-repeat; opacity:0; transition:opacity .6s ease; }
+  .rw-bgl.on{ opacity:1; }
+  .rw-bgs::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(243,237,224,.88) 0%, rgba(243,237,224,.55) 45%, rgba(243,237,224,.35) 100%); }
+  .rw-head.has-img{ background:linear-gradient(rgba(14,46,25,.78), rgba(14,46,25,.86)), var(--hd-bg) center/cover no-repeat !important; }
+  #custBook.has-pagebg #cbBg::after{ background:linear-gradient(180deg, rgba(243,237,224,.84) 0%, rgba(243,237,224,.92) 100%); }
+  .sl-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; margin-top:8px; }
+  .sl-slot{ display:flex; gap:10px; padding:8px; border-radius:14px; background:rgba(255,255,255,.05); border:1px solid rgba(239,232,214,.12); }
+  .sl-slot.busy{ opacity:.5; pointer-events:none; }
+  .sl-thumb{ position:relative; flex:none; width:96px; height:72px; border-radius:10px; overflow:hidden; }
+  .sl-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .sl-thumb.tone-dark{ background:linear-gradient(160deg,#1F5A33,#0B2A15); } .sl-thumb.tone-light, .sl-thumb.tone-cream{ background:linear-gradient(160deg,#F3EDE0,#E4D9C2); }
+  .sl-thumb:not(.empty).tone-dark::after{ content:''; position:absolute; inset:0; background:rgba(7,26,13,.45); }
+  .sl-thumb:not(.empty).tone-light::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(243,237,224,.75), rgba(243,237,224,.25)); }
+  .sl-thumb:not(.empty).tone-cream::after{ content:''; position:absolute; inset:0; background:rgba(243,237,224,.7); }
+  .sl-thumb.empty span{ position:absolute; inset:0; display:grid; place-items:center; font-size:11px; color:rgba(120,110,90,.9); } .sl-thumb.tone-dark.empty span{ color:rgba(243,237,224,.6); }
+  .sl-info{ min-width:0; display:flex; flex-direction:column; gap:2px; } .sl-info b{ font-size:13.5px; } .sl-info small{ font-size:11.5px; opacity:.7; line-height:1.4; }
+  .sl-acts{ margin-top:auto; padding-top:4px; display:flex; gap:6px; }
+  .sl-acts .btn.ghost{ color:#F3EDE0 !important; border-color:rgba(243,237,224,.4) !important; background:transparent !important; }
   .pm-hero{ position:relative; overflow:hidden; background:radial-gradient(120% 90% at 85% 0%, #1F5A33 0%, #0B2A15 55%, #071A0D 100%); color:#F3EDE0; }
   .pm-bg{ position:absolute; inset:0; background:center/cover no-repeat; transform:scale(1.04); }
   .pm-hero.has-img::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(7,26,13,.55) 0%, rgba(7,26,13,.72) 55%, rgba(7,26,13,.9) 100%); }
@@ -13852,7 +13871,7 @@ async function renderCbImgAdmin(boxArg){
   const box = boxArg || document.getElementById('cbImgAdmin'); if(!box) return;
   const slots = CB_IMG_SLOTS();
   await loadCbImages(slots.map(x=> x.k).concat(['qrNote']));
-  box.innerHTML = `<h3 class="ic-h">📝 ฟอร์มจองคอร์ส</h3><p class="cl-hint">รูปที่ใส่จะขึ้นในหน้าฟอร์มของลูกค้าทันที ลบออกได้ตลอด · ถ้าหน้าร้านไม่ได้ใส่พื้นหลังเอง จะใช้ “ภาพพื้นหลังทั้งหน้า” ชุดนี้</p>
+  box.innerHTML = `<h3 class="ic-h">📝 ฟอร์มจองคอร์ส</h3><p class="cl-hint">รูปที่ใส่จะขึ้นในหน้าฟอร์มของลูกค้าทันที ลบออกได้ตลอด </p>
     ${slots.map(sl=>`<div class="ci-row"><div class="ci-prev">${cbImg[sl.k]?`<img src="${cbImg[sl.k]}" alt="">`:'<span>ไม่มีรูป</span>'}</div>
       <div class="ci-main"><div class="cl-name">${cbEsc(sl.label)}</div><div class="ci-hint">${sl.hint}</div>
         <div class="cl-acts"><label class="btn small">${cbImg[sl.k]?'เปลี่ยนรูป':'ใส่รูป'}<input type="file" accept="image/*" data-ci="${sl.k}" data-max="${sl.max}" hidden></label>${cbImg[sl.k]?`<button type="button" class="btn small ghost" data-ci-del="${sl.k}">ลบ</button>`:''}</div>
@@ -13911,6 +13930,16 @@ const SHOP_LOOKS = [
   { img:'matcha',  cat:'มัทฉะ & ใบชา', en:'MATCHA & TEA', t:'มัทฉะ & ใบชาพรีเมียม', blurb:'มัทฉะคัดเกรดพิเศษและใบชาแท้ 100% พร้อมชุดอุปกรณ์ตีมัทฉะครบเซ็ต', pick:['ct031','ct032','ct033','ct004'] },
   { img:'pitcher', cat:'อุปกรณ์ชงกาแฟ', en:'BARISTA TOOLS', t:'อุปกรณ์บาริสต้า', blurb:'แทมป์เปอร์ พิชเชอร์ ด้ามชง และเครื่องมือหลังบาร์ที่บาริสต้ามืออาชีพเลือกใช้', pick:['ct098','ct082','ct096','ct085'] },
 ];
+function shopBgSlots(){
+  return [
+    { k:'shopbg', t:'ส่วนเซ็ตโปรโมชั่น (หน้าแรก)', d:'ระบบใส่เงาเข้มให้ตัวหนังสือขาวอ่านชัด', tone:'dark' },
+    { k:'shopbgHead', t:'แถบหัวร้าน (โลโก้ RANGSAN)', d:'แถบเขียวด้านบนสุด — ใส่เงาเขียวเข้มทับ', tone:'dark' },
+    { k:'shopbgRw', t:'ฉาก COLLECTION (ใช้ทุก LOOK)', d:'ฉากหลังส่วนสไลด์ — ใส่ฝ้าสีครีมให้สินค้าเด่น', tone:'light' },
+    ...SHOP_LOOKS.map((l,i)=>({ k:'shopbgLook'+(i+1), t:`ฉาก LOOK ${String(i+1).padStart(2,'0')} · ${l.t}`, d:'ถ้าไม่ใส่ จะใช้ฉาก COLLECTION', tone:'light' })),
+    { k:'shopbgPage', t:'พื้นหลังส่วนรายการสินค้า', d:'ด้านหลังรายการสินค้าทั้งหมด — ใส่ฝ้าครีมเข้มให้อ่านง่าย', tone:'cream' },
+  ];
+}
+const SHOP_BG_KEYS = ()=> shopBgSlots().map(x=> x.k);
 function shopPromoHTML(){
   const items = shopProducts.filter(p=> p.active !== false && p.cat === 'เซ็ตโปรโมชั่น');
   if(!items.length) return '';
@@ -13932,7 +13961,8 @@ function shopRunwayHTML(){
     <div class="rw-pic${shopImg[p.id] && shopImg[p.id] === SHOP_CUTS[SHOP_BUILTIN_IMG[p.id]] ? ' is-cut' : ''}">${shopImg[p.id] ? `<img src="${shopImg[p.id]}" alt="">` : `<span>${shopEmoji(p.cat)}</span>`}</div>
     <div class="rw-meta"><span class="rw-pname">${cbEsc(p.name)}</span><span class="rw-price">${shopMoney(shopPrice(p))}</span></div></button>`; };
   return `<section class="rw-track" id="rwTrack"><div class="rw-pin" id="rwPin">
-    <div class="rw-stage" id="rwStage">
+    <div class="rw-stage" id="rwStage">${(()=>{ const any = L.some((l,i)=> cbImg['shopbgLook'+(i+1)]) || cbImg.shopbgRw; if(!any) return '';
+        return `<div class="rw-bgs">${L.map((l,i)=>{ const u = cbImg['shopbgLook'+(i+1)] || cbImg.shopbgRw; return u ? `<div class="rw-bgl${i===0?' on':''}" data-bg="${i}" style="background-image:url('${u}')"></div>` : `<div class="rw-bgl${i===0?' on':''}" data-bg="${i}"></div>`; }).join('')}</div>`; })()}
       <div class="rw-floor"></div>
       <div class="rw-copy"><h2 class="rw-title">COLLECTION</h2><p class="rw-blurb" id="rwBlurb">${cbEsc(L[0].blurb)}</p></div>
       ${L.map((l,i)=>`<button type="button" class="rw-fig" data-look="${i}" aria-label="${cbEsc(l.t)}"><img src="${SHOP_CUTS[l.img]}" alt=""><i class="rw-shadow"></i></button>`).join('')}
@@ -13987,6 +14017,7 @@ function shopRunwayInit(root, onPick, onOpenCat){
       nameEl.classList.remove('in'); void nameEl.offsetWidth; nameEl.classList.add('in');
       dots.forEach((d,k)=> d.classList.toggle('on', k === idx));
       groups.forEach((g,k)=> g.classList.toggle('on', k === idx));
+      track.querySelectorAll('.rw-bgl').forEach((b,k)=> b.classList.toggle('on', k === idx));
       if(mob){ mob.innerHTML = `<div class="rw-gh">${String(idx+1).padStart(2,'0')} · ${cbEsc(L[idx].en)}</div><div class="rw-mob-row">${groups[idx] ? [...groups[idx].querySelectorAll('.rw-card')].map(c=> c.outerHTML).join('') : ''}</div>`;
         mob.querySelectorAll('[data-pid]').forEach(b=> b.onclick = ()=> onPick(b.dataset.pid)); }
     }
@@ -14037,7 +14068,7 @@ async function startShop(){
   const bootOff = ()=>{ const bt = document.getElementById('cbBoot'); if(bt){ clearInterval(window.__cbBootTimer); bt.classList.add('out'); setTimeout(()=> bt.remove(), 400); } };
   state = JSON.parse(JSON.stringify(DEFAULT_STATE)); mergeMissingCourses(state);
   loadSharedLineRelayUrl().catch(()=>{});
-  await Promise.all([loadShopProducts(), loadCbImages(['qr','qrNote','bg','shopbg','shopPromoT','shopPromoS'])]).catch(()=>{});
+  await Promise.all([loadShopProducts(), loadCbImages(['qr','qrNote','bg','shopPromoT','shopPromoS', ...SHOP_BG_KEYS()])]).catch(()=>{});
   const list = ()=> shopProducts.filter(p=> p.active !== false);
   let cart = []; if(SHOP_ORDERING){ try{ cart = JSON.parse(localStorage.getItem('rangsan_shop_cart')||'[]'); }catch(e){} } else root.classList.add('is-catalog');
   const saveCart = ()=>{ try{ localStorage.setItem('rangsan_shop_cart', JSON.stringify(cart)); }catch(e){} };
@@ -14045,11 +14076,11 @@ async function startShop(){
   const cartQty = ()=> cart.reduce((a,x)=> a + x.qty, 0);
   const cartTotal = ()=> cart.reduce((a,x)=>{ const p = shopProducts.find(z=> z.id === x.id); return a + (p ? shopPrice(p) * x.qty : 0); }, 0);
   Object.keys(SHOP_BUILTIN_IMG).forEach(id=>{ if(!shopImg[id]) shopImg[id] = SHOP_CUTS[SHOP_BUILTIN_IMG[id]]; });
-  const head = `<header class="rw-head"><div class="rs-logo rw-logo" role="img" aria-label="RANGSAN"></div>
+  const head = `<header class="rw-head${cbImg.shopbgHead?' has-img':''}"${cbImg.shopbgHead?` style="--hd-bg:url('${cbImg.shopbgHead}')"`:''}><div class="rs-logo rw-logo" role="img" aria-label="RANGSAN"></div>
     <nav class="rw-tabs"><button type="button" class="on">SHOP</button><a href="${location.pathname}?book=all">คอร์สเรียน</a></nav>
     <div class="rw-util"><button type="button" id="shSearchBtn" aria-label="ค้นหา">⌕</button>${SHOP_ORDERING ? `<button type="button" id="shHeadCart" aria-label="ตะกร้า">🛒${cartQty()?`<i class="rw-badge">${cartQty()}</i>`:''}</button>` : ''}</div></header>`;
   const render = ()=>{
-    const pageBg = cbImg.shopbg || cbImg.bg; if(pageBg){ root.classList.add('has-bg'); if(!root.querySelector('#cbBg')){ const bg = document.createElement('div'); bg.id = 'cbBg'; bg.style.backgroundImage = `url("${pageBg}")`; root.prepend(bg); } }
+    const pageBg = cbImg.shopbgPage; root.classList.toggle('has-pagebg', !!pageBg); if(pageBg){ root.classList.add('has-bg'); if(!root.querySelector('#cbBg')){ const bg = document.createElement('div'); bg.id = 'cbBg'; bg.style.backgroundImage = `url("${pageBg}")`; root.prepend(bg); } }
     const keepBg = root.querySelector('#cbBg');
     let html = '';
     if(st.done){ html = st.done; }
@@ -14201,18 +14232,20 @@ function openShopAdmin(tab, host){
 function shopAdminLook(boxArg){
   const body = boxArg || document.getElementById('shopAdminBody'); if(!body) return;
   const dirty = shopMarkDirty;
-  body.innerHTML = `<h3 class="ic-h">🛍 หน้าร้านค้า</h3><p class="cl-hint">ตั้งค่าหน้าแรกของร้าน — ส่วน “เซ็ตโปรโมชั่น” จะขึ้นบนสุด ดึงสินค้าจากหมวด <b>เซ็ตโปรโมชั่น</b> อัตโนมัติ</p>
-    <div class="rs-f" style="margin-top:8px;">ภาพพื้นหลังหน้าร้าน</div>
-    <div class="sl-bg-prev ${cbImg.shopbg?'':'empty'}">${cbImg.shopbg?`<img src="${cbImg.shopbg}" alt="">`:'<span>ยังไม่มีภาพ — ใช้พื้นสีเขียวเข้มของแบรนด์</span>'}<div class="sl-bg-demo"><small>RANGSAN · PROMOTION</small><b>${cbEsc(cbImg.shopPromoT || 'เซ็ตโปรโมชั่น')}</b></div></div>
-    <div class="cl-acts"><label class="btn small">${cbImg.shopbg?'เปลี่ยนภาพ':'ใส่ภาพพื้นหลัง'}<input type="file" accept="image/*" id="slBgFile" hidden></label>${cbImg.shopbg?'<button type="button" class="btn small ghost" id="slBgDel">ลบภาพ</button>':''}</div>
-    <p class="cl-hint">แนะนำภาพแนวนอน เช่น บาร์กาแฟ เมล็ดกาแฟ ระบบจะลดขนาดและใส่เงาเข้มให้อ่านตัวหนังสือได้ชัด</p>
-    <label class="rs-f" style="margin-top:14px;">หัวข้อ<input id="slT" maxlength="40" placeholder="เซ็ตโปรโมชั่น" value="${cbEsc(cbImg.shopPromoT||'')}"></label>
+  const slots = shopBgSlots(), has = slots.filter(x=> cbImg[x.k]).length;
+  body.innerHTML = `<h3 class="ic-h">🛍 หน้าร้านค้า</h3><p class="cl-hint">ใส่ภาพพื้นหลังแยกได้ทีละส่วน (ใส่แล้ว ${has}/${slots.length}) — ระบบปรับเงา/ฝ้าให้อ่านตัวหนังสือได้ชัดเอง · ส่วนเซ็ตโปรโมชั่นดึงสินค้าจากหมวด <b>เซ็ตโปรโมชั่น</b></p>
+    <div class="sl-grid">${slots.map(x=>`<div class="sl-slot" data-k="${x.k}">
+      <div class="sl-thumb tone-${x.tone} ${cbImg[x.k]?'':'empty'}">${cbImg[x.k]?`<img src="${cbImg[x.k]}" alt="">`:'<span>ยังไม่มีภาพ</span>'}</div>
+      <div class="sl-info"><b>${cbEsc(x.t)}</b><small>${cbEsc(x.d)}</small>
+      <div class="sl-acts"><label class="btn small">${cbImg[x.k]?'เปลี่ยน':'ใส่ภาพ'}<input type="file" accept="image/*" data-up="${x.k}" hidden></label>${cbImg[x.k]?`<button type="button" class="btn small ghost" data-del="${x.k}">ลบ</button>`:''}</div></div></div>`).join('')}</div>
+    <label class="rs-f" style="margin-top:16px;">หัวข้อส่วนเซ็ตโปรโมชั่น<input id="slT" maxlength="40" placeholder="เซ็ตโปรโมชั่น" value="${cbEsc(cbImg.shopPromoT||'')}"></label>
     <label class="rs-f">คำอธิบายสั้น<input id="slS" maxlength="90" placeholder="ชุดคุ้มที่คัดมาให้แล้ว ทั้งเปิดร้านและบาร์ที่บ้าน" value="${cbEsc(cbImg.shopPromoS||'')}"></label>
     <div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="slSave">บันทึกข้อความ</button></div>`;
-  body.querySelector('#slBgFile').onchange = async e=>{ const f = e.target.files[0]; if(!f) return;
-    try{ const img = await resizeImageFile(f, 1800, 0.82); await window.storage.set('shared_cbimg_shopbg', img, true); cbImg.shopbg = img; dirty(); flashSaved(); shopAdminLook(body); }
-    catch(err){ console.error(err); alert('อัปโหลดภาพไม่สำเร็จ ลองใหม่อีกครั้ง'); } };
-  const del = body.querySelector('#slBgDel'); if(del) del.onclick = async ()=>{ if(!confirm('ลบภาพพื้นหลังหน้าร้าน?')) return; await window.storage.set('shared_cbimg_shopbg', '', true); cbImg.shopbg = ''; dirty(); shopAdminLook(body); };
+  body.querySelectorAll('[data-up]').forEach(inp=> inp.onchange = async e=>{ const f = e.target.files[0]; if(!f) return; const k = inp.dataset.up;
+    const card = inp.closest('.sl-slot'); card.classList.add('busy');
+    try{ const img = await resizeImageFile(f, 1800, 0.82); await window.storage.set('shared_cbimg_'+k, img, true); cbImg[k] = img; dirty(); flashSaved(); shopAdminLook(body); }
+    catch(err){ console.error(err); card.classList.remove('busy'); alert('อัปโหลดภาพไม่สำเร็จ ลองใหม่อีกครั้ง'); } });
+  body.querySelectorAll('[data-del]').forEach(b=> b.onclick = async ()=>{ const k = b.dataset.del; if(!confirm('ลบภาพนี้?')) return; await window.storage.set('shared_cbimg_'+k, '', true); cbImg[k] = ''; dirty(); shopAdminLook(body); });
   body.querySelector('#slSave').onclick = async ()=>{ const t = body.querySelector('#slT').value.trim(), sv = body.querySelector('#slS').value.trim();
     await Promise.all([window.storage.set('shared_cbimg_shopPromoT', t, true), window.storage.set('shared_cbimg_shopPromoS', sv, true)]); cbImg.shopPromoT = t; cbImg.shopPromoS = sv; dirty(); flashSaved(); shopAdminLook(body); };
 }
@@ -14220,7 +14253,7 @@ function shopMarkDirty(){ const o = document.getElementById('shopAdminOv'); if(o
 async function renderImgCenter(host){
   if(!host) return;
   host.innerHTML = `<p class="cl-hint ic-top">รวมรูปภาพและพื้นหลังทั้งหมดไว้ที่นี่ — ทั้งหน้าร้านค้า และฟอร์มจองคอร์ส</p><div class="ic-sec ic-shop"><p class="cl-hint">กำลังโหลด...</p></div><div class="ic-sec ic-form"></div>`;
-  await loadCbImages(['shopbg','shopPromoT','shopPromoS']);
+  await loadCbImages(['shopPromoT','shopPromoS', ...SHOP_BG_KEYS()]);
   shopAdminLook(host.querySelector('.ic-shop'));
   renderCbImgAdmin(host.querySelector('.ic-form'));
 }
