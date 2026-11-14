@@ -2040,6 +2040,18 @@
   .cl-box.shop-page h3{ font-size:20px; }
   .cl-box.shop-page .sh-order{ padding:14px 0; }
   @media (min-width:900px){ .cl-box.shop-page #shopAdminBody .sh-order{ display:grid; grid-template-columns:1fr; } }
+  body.shop-tab-open #tab-shop{ position:fixed; inset:0; z-index:25; background:#F3EDE0; }
+  body.shop-tab-open{ overflow:hidden; }
+  .shop-frame-wrap{ position:absolute; inset:0; bottom:calc(70px + env(safe-area-inset-bottom)); }
+  .shop-frame-wrap iframe{ width:100%; height:100%; border:0; display:block; background:#F3EDE0; }
+  .shop-staff{ position:absolute; right:12px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:2; display:flex; gap:4px; padding:5px; border-radius:999px; background:rgba(22,20,16,.86); backdrop-filter:blur(8px); box-shadow:0 6px 20px rgba(0,0,0,.25); }
+  .shop-staff button{ all:unset; cursor:pointer; position:relative; color:#F3EDE0; font-size:12.5px; font-weight:600; padding:8px 12px; border-radius:999px; white-space:nowrap; }
+  .shop-staff button:hover{ background:rgba(255,255,255,.12); }
+  .shop-staff i{ font-style:normal; position:absolute; top:-4px; right:-2px; min-width:17px; height:17px; border-radius:9px; background:#C8452D; color:#fff; font-size:10.5px; display:grid; place-items:center; padding:0 4px; }
+  @media (max-width:700px){ .shop-staff span{ display:none; } .shop-staff button{ font-size:16px; padding:8px 11px; } }
+  #custBook.is-embed .rw-tabs a{ display:none; }
+  #custBook.is-embed .sh-fab{ bottom:76px; }
+  #custBook.is-embed .sh-wrap{ padding-bottom:150px; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -6251,7 +6263,7 @@ function switchTab(tab){
   if(tab==='stock'){
     Promise.all([loadRetailProducts(), loadSharedBookings(), loadStandaloneSales(), loadStockMovements(), loadCustomCategories()]).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
   }
-  if(tab==='shop'){ openShopAdmin(null, document.getElementById('tab-shop')); window.scrollTo(0,0); }
+  if(tab==='shop') renderShopTab(); document.body.classList.toggle('shop-tab-open', tab==='shop');
   if(tab==='sell'){
     loadRetailProducts().then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
   }
@@ -13835,7 +13847,7 @@ let shopProducts = [], shopOrders = [];
 const shopImg = {};
 const shopMoney = n=> '฿' + (Math.round(Number(n)||0)).toLocaleString('th-TH');
 async function loadShopProducts(){ try{ const r = await window.storage.get('shared_shop_products', true); shopProducts = r && r.value ? JSON.parse(r.value) : JSON.parse(JSON.stringify(SHOP_SEED)); }catch(e){ if(!shopProducts.length) shopProducts = JSON.parse(JSON.stringify(SHOP_SEED)); } return shopProducts; }
-async function saveShopProducts(){ await window.storage.set('shared_shop_products', JSON.stringify(shopProducts), true); }
+async function saveShopProducts(){ await window.storage.set('shared_shop_products', JSON.stringify(shopProducts), true); const o = document.getElementById('shopAdminOv'); if(o) o.dataset.dirty = '1'; }
 async function loadShopOrders(){ try{ const r = await window.storage.get('shared_shop_orders', true); shopOrders = r && r.value ? JSON.parse(r.value) : []; }catch(e){} return shopOrders; }
 async function saveShopOrders(){ await window.storage.set('shared_shop_orders', JSON.stringify(shopOrders), true); }
 async function loadShopImg(ids){ await Promise.all(ids.map(async id=>{ if(id in shopImg && shopImg[id]) return; let v = ''; try{ const r = await window.storage.get('shared_shopimg_'+id, true); v = (r && r.value) || ''; }catch(e){} shopImg[id] = v || (SHOP_BUILTIN_IMG[id] ? SHOP_CUTS[SHOP_BUILTIN_IMG[id]] : ''); })); }
@@ -13955,7 +13967,7 @@ function shopRunwayInit(root, onPick, onOpenCat){
 // ---------- customer page ----------
 async function startShop(){
   document.body.classList.add('cust-mode');
-  const root = document.createElement('div'); root.id = 'custBook'; root.classList.add('is-shop'); document.body.appendChild(root);
+  const root = document.createElement('div'); root.id = 'custBook'; root.classList.add('is-shop'); if(/[?&]embed/.test(location.search)) root.classList.add('is-embed'); document.body.appendChild(root);
   const bootOff = ()=>{ const bt = document.getElementById('cbBoot'); if(bt){ clearInterval(window.__cbBootTimer); bt.classList.add('out'); setTimeout(()=> bt.remove(), 400); } };
   state = JSON.parse(JSON.stringify(DEFAULT_STATE)); mergeMissingCourses(state);
   loadSharedLineRelayUrl().catch(()=>{});
@@ -14095,13 +14107,23 @@ async function startShop(){
 }
 
 // ---------- staff: products & orders ----------
+function renderShopTab(){
+  const host = document.getElementById('tab-shop'); if(!host) return;
+  if(!host.querySelector('#shopFrame')){
+    host.innerHTML = `<div class="shop-frame-wrap"><iframe id="shopFrame" title="ร้านค้า RANGSAN" src="${location.pathname}?shop&embed=1"></iframe></div>
+      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน"><button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button><button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
+    host.querySelectorAll('[data-sa]').forEach(b=> b.onclick = ()=>{ if(b.dataset.sa === 'reload'){ document.getElementById('shopFrame').contentWindow.location.reload(); return; } openShopAdmin(b.dataset.sa); });
+  }
+  shopStaffBadge();
+}
+function shopStaffBadge(){ const el = document.getElementById('shopStaffN'); if(!el) return; const n = (typeof shopOrders !== 'undefined' ? shopOrders : []).filter(o=> o.status === 'new').length; el.textContent = n || ''; el.style.display = n ? '' : 'none'; }
 function openShopAdmin(tab, host){
   let ov = host;
   if(!ov){ ov = document.getElementById('shopAdminOv'); if(!ov){ ov = document.createElement('div'); ov.id = 'shopAdminOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); } }
   ov.innerHTML = `<div class="cl-box ${host?'shop-page':''}">${host?'':'<button type="button" class="cl-x" aria-label="ปิด">✕</button>'}<h3>🛍 ร้านค้าออนไลน์</h3>
     <div class="cl-tabs"><button type="button" data-st="orders">📦 ออเดอร์</button><button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
     <div id="shopAdminBody"><p class="cl-hint">กำลังโหลด...</p></div></div>`;
-  if(!host){ ov.style.display = 'flex'; ov.onclick = e=>{ if(e.target === ov) ov.style.display = 'none'; }; ov.querySelector('.cl-x').onclick = ()=> ov.style.display = 'none'; }
+  if(!host){ ov.style.display = 'flex'; const close = ()=>{ ov.style.display = 'none'; if(ov.dataset.dirty){ delete ov.dataset.dirty; const f = document.getElementById('shopFrame'); if(f) f.contentWindow.location.reload(); } shopStaffBadge(); }; ov.onclick = e=>{ if(e.target === ov) close(); }; ov.querySelector('.cl-x').onclick = close; }
   const show = async t=>{ ov.querySelectorAll('[data-st]').forEach(b=> b.classList.toggle('on', b.dataset.st === t)); try{ localStorage.setItem('rangsan_shop_tab', t); }catch(e){}
     await Promise.all([loadShopProducts(), loadShopOrders()]);
     if(t === 'products') shopAdminProducts(); else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
@@ -14202,7 +14224,7 @@ async function watchShopOrders(){
   try{ await loadShopOrders(); }catch(e){ return; }
   const ids = shopOrders.map(o=> o.id);
   try{ localStorage.setItem('rangsan_shop_seen', JSON.stringify(ids.slice(-300))); }catch(e){}
-  const btn = document.querySelector('#shopAdminBtn .ic'); if(btn){ const n = shopOrders.filter(o=> o.status === 'new').length; btn.dataset.n = n || ''; }
+  const btn = document.querySelector('#shopAdminBtn .ic'); if(btn){ const n = shopOrders.filter(o=> o.status === 'new').length; btn.dataset.n = n || ''; } shopStaffBadge();
   if(!seen) return;
   const fresh = shopOrders.filter(o=> !seen.includes(o.id));
   if(fresh.length) rsToast(`🛍 <b>ออเดอร์ใหม่ ${fresh.length} รายการ</b><br>${fresh.slice(0,3).map(o=> `${cbEsc(o.name)} · ${shopMoney(o.total)}`).join('<br>')}`, 9000);
