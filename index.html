@@ -1969,7 +1969,7 @@
   .sh-lmain{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:15px; } .sh-lmain small{ color:#7A6F5E; font-size:13px; } .sh-lmain span{ color:#165028; font-weight:700; }
   .sh-total{ display:flex; justify-content:space-between; align-items:baseline; margin-top:12px; font-size:16px; } .sh-total b{ font-size:22px; color:#165028; }
   .sh-back button{ all:unset; cursor:pointer; color:#B07F1E; font-weight:700; font-size:15px; margin-bottom:8px; display:inline-block; }
-  .sh-admin-btn{ position:relative; } .sh-admin-btn[data-n]:not([data-n=""])::after{ content:attr(data-n); position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; border-radius:9px; background:#C8553D; color:#fff; font-size:11px; line-height:18px; text-align:center; font-weight:700; }
+  .sh-admin-btn{ position:relative; } .sh-admin-btn[data-n]:not([data-n=""])::after{ content:attr(data-n); position:absolute; top:2px; right:calc(50% - 22px); min-width:18px; height:18px; border-radius:9px; background:#C8553D; color:#fff; font-size:11px; line-height:18px; text-align:center; font-weight:700; }
   .sh-ofil{ display:flex; gap:6px; margin-bottom:8px; } .sh-ofil button{ all:unset; cursor:pointer; padding:7px 12px; border-radius:999px; border:1px solid rgba(239,232,214,.3); font-size:13px; } .sh-ofil button.on{ background:#DCA73D; color:#1A0F08; border-color:#DCA73D; font-weight:700; }
   .sh-order{ padding:12px 0; border-top:1px solid rgba(239,232,214,.12); } .sh-oh{ display:flex; justify-content:space-between; gap:8px; } .sh-st{ font-weight:700; font-size:13px; }
   .sh-oitems{ font-size:14px; line-height:1.7; } .sh-oitems span{ color:#DCA73D; margin-left:6px; } .sh-ot{ margin-top:4px; font-size:14px; } .sh-ot b{ color:#DCA73D; }
@@ -4019,6 +4019,10 @@ var qrcode = function() {
   <button data-tab="pl">
     <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 .9-3 2.2c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-1.1-3-2.5"/></svg></span>
     <span class="lbl">กำไร</span>
+  </button>
+  <button id="shopAdminBtn" type="button" class="sh-admin-btn">
+    <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg></span>
+    <span class="lbl">ร้านค้า</span>
   </button>
   <button id="moreNavBtn" type="button">
     <span class="ic"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></span>
@@ -9830,7 +9834,6 @@ function renderLogTab(){
           ` : ''}
           <button class="btn small ghost" id="syncFromFormBtn" title="ดึงคิวจากฟอร์มลงทะเบียน">📋⟳</button>
           <button class="btn small ghost" id="refreshBookings" title="รีเฟรชตารางล่าสุด">⟳</button>
-          <button class="btn small ghost sh-admin-btn" id="shopAdminBtn" title="ร้านค้าออนไลน์">🛍</button>
           <button class="btn small ghost" id="cancelledListBtn" title="รายการที่ยกเลิก">🗂</button>
           <button class="btn small ghost" id="custLinkBtn" title="ลิงค์ให้ลูกค้าจองเอง">🔗</button>
           <button class="add-fab" id="openBookingModalBtn" title="จองคิวสอน">+</button>
@@ -10783,7 +10786,7 @@ function renderLogTab(){
   };
   { const cl = document.getElementById('custLinkBtn'); if(cl) cl.onclick = openCustomerLinkModal; }
   { const cx = document.getElementById('cancelledListBtn'); if(cx) cx.onclick = ()=> openCancelledList(null); }
-  { const sb = document.getElementById('shopAdminBtn'); if(sb) sb.onclick = ()=> openShopAdmin(); }
+
   document.getElementById('refreshBookings').onclick = async ()=>{
     await loadSharedBookings();
     renderBookingCards();
@@ -14086,6 +14089,7 @@ async function startShop(){
 }
 
 // ---------- staff: products & orders ----------
+document.addEventListener('click', e=>{ if(e.target.closest('#shopAdminBtn')) openShopAdmin(); });
 function openShopAdmin(tab){
   let ov = document.getElementById('shopAdminOv');
   if(!ov){ ov = document.createElement('div'); ov.id = 'shopAdminOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); }
