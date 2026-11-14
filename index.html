@@ -1937,6 +1937,44 @@
   .reg-daypick input{ position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; }
   .reg-dayall{ all:unset; cursor:pointer; padding:8px 12px; border-radius:999px; border:1px solid rgba(239,232,214,.3); font-size:12.5px; color:#EFE8D6; }
   .reg-dayall.on{ background:#DCA73D; color:#1A0F08; border-color:#DCA73D; font-weight:700; }
+  /* ---------- online shop ---------- */
+  #custBook.is-shop .sh-wrap{ max-width:760px; padding-bottom:110px; }
+  .sh-search input{ width:100%; box-sizing:border-box; height:50px; border-radius:14px; border:1px solid #C9BFAE; padding:0 16px; font:inherit; font-size:16px; background:#fff; }
+  .sh-cats{ display:flex; gap:8px; overflow-x:auto; padding:12px 0; scrollbar-width:none; } .sh-cats::-webkit-scrollbar{ display:none; }
+  .sh-cat{ all:unset; cursor:pointer; flex:none; padding:9px 16px; border-radius:999px; border:1px solid #C9BFAE; background:#FFFDF8; font-size:15px; color:#3A3226; }
+  .sh-cat.on{ background:#165028; border-color:#165028; color:#EFE8D6; }
+  .sh-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(46%, 200px), 1fr)); gap:12px; }
+  .sh-card{ all:unset; cursor:pointer; display:flex; flex-direction:column; background:#FFFDF8; border:1px solid #E7DECB; border-radius:16px; overflow:hidden; box-shadow:0 2px 8px rgba(11,42,21,.05); }
+  .sh-img{ position:relative; aspect-ratio:1/1; background:#F4EEDF; display:flex; align-items:center; justify-content:center; font-size:40px; overflow:hidden; }
+  .sh-img img{ width:100%; height:100%; object-fit:cover; } .sh-img.big{ aspect-ratio:4/3; border-radius:16px; font-size:60px; }
+  .sh-badge{ position:absolute; top:8px; left:8px; font-style:normal; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:999px; background:#C8553D; color:#fff; }
+  .sh-name{ padding:10px 12px 2px; font-size:15px; font-weight:600; color:#1F1A12; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .sh-price{ padding:2px 12px 12px; font-size:16px; font-weight:800; color:#165028; } .sh-price s{ font-weight:500; color:#A89A80; font-size:13px; } .sh-price small{ font-weight:500; color:#7A6F5E; font-size:12.5px; }
+  .sh-price.big{ padding:4px 0; font-size:22px; }
+  .sh-fab{ all:unset; cursor:pointer; position:fixed; left:50%; transform:translateX(-50%); bottom:max(18px, env(safe-area-inset-bottom)); z-index:20; padding:15px 24px; border-radius:999px; background:#165028; color:#EFE8D6; font-size:16px; box-shadow:0 12px 26px -8px rgba(11,42,21,.6); white-space:nowrap; }
+  .sh-fab b{ color:#DCA73D; }
+  .sh-sheet-ov{ position:fixed; inset:0; z-index:50; background:rgba(11,42,21,.5); display:flex; align-items:flex-end; justify-content:center; }
+  .sh-sheet{ position:relative; width:min(560px,100%); max-height:92vh; overflow:auto; background:#FFFDF8; border-radius:24px 24px 0 0; padding:16px 16px max(20px, env(safe-area-inset-bottom)); }
+  @media (min-width:700px){ .sh-sheet-ov{ align-items:center; } .sh-sheet{ border-radius:24px; } }
+  .sh-x{ all:unset; cursor:pointer; position:absolute; top:22px; right:22px; z-index:2; width:36px; height:36px; border-radius:50%; background:rgba(255,253,248,.9); text-align:center; line-height:36px; }
+  .sh-sheet-b{ padding:12px 4px 0; } .sh-sheet h2{ font-family:'FC Jong Jaroen','FC Krung Thep',sans-serif; font-weight:400; font-size:24px; margin:2px 0; color:#0B2A15; }
+  .sh-cat-l{ font-size:13px; color:#B07F1E; font-weight:700; } .sh-desc{ font-size:15px; line-height:1.7; color:#3A3226; margin:8px 0 0; }
+  .sh-opts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; } .sh-opt{ all:unset; cursor:pointer; padding:9px 14px; border-radius:12px; border:1px solid #C9BFAE; font-size:15px; }
+  .sh-opt.on{ border-color:#165028; background:#EEF5EF; color:#165028; font-weight:700; }
+  .sh-qtyrow{ display:flex; gap:12px; align-items:center; margin-top:16px; } .sh-qtyrow .cb-submit{ flex:1; text-align:center; }
+  .sh-qty{ display:flex; align-items:center; border:1px solid #C9BFAE; border-radius:14px; overflow:hidden; } .sh-qty button{ all:unset; cursor:pointer; width:44px; height:48px; text-align:center; font-size:22px; color:#165028; }
+  .sh-qty span{ min-width:30px; text-align:center; font-weight:800; font-size:17px; } .sh-qty.sm button{ width:36px; height:38px; font-size:18px; }
+  .sh-line{ display:flex; gap:10px; align-items:center; padding:10px 0; border-bottom:1px dashed #E7DECB; }
+  .sh-limg{ flex:none; width:58px; height:58px; border-radius:12px; overflow:hidden; background:#F4EEDF; display:flex; align-items:center; justify-content:center; font-size:24px; } .sh-limg img{ width:100%; height:100%; object-fit:cover; }
+  .sh-lmain{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:15px; } .sh-lmain small{ color:#7A6F5E; font-size:13px; } .sh-lmain span{ color:#165028; font-weight:700; }
+  .sh-total{ display:flex; justify-content:space-between; align-items:baseline; margin-top:12px; font-size:16px; } .sh-total b{ font-size:22px; color:#165028; }
+  .sh-back button{ all:unset; cursor:pointer; color:#B07F1E; font-weight:700; font-size:15px; margin-bottom:8px; display:inline-block; }
+  .sh-admin-btn{ position:relative; } .sh-admin-btn[data-n]:not([data-n=""])::after{ content:attr(data-n); position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; border-radius:9px; background:#C8553D; color:#fff; font-size:11px; line-height:18px; text-align:center; font-weight:700; }
+  .sh-ofil{ display:flex; gap:6px; margin-bottom:8px; } .sh-ofil button{ all:unset; cursor:pointer; padding:7px 12px; border-radius:999px; border:1px solid rgba(239,232,214,.3); font-size:13px; } .sh-ofil button.on{ background:#DCA73D; color:#1A0F08; border-color:#DCA73D; font-weight:700; }
+  .sh-order{ padding:12px 0; border-top:1px solid rgba(239,232,214,.12); } .sh-oh{ display:flex; justify-content:space-between; gap:8px; } .sh-st{ font-weight:700; font-size:13px; }
+  .sh-oitems{ font-size:14px; line-height:1.7; } .sh-oitems span{ color:#DCA73D; margin-left:6px; } .sh-ot{ margin-top:4px; font-size:14px; } .sh-ot b{ color:#DCA73D; }
+  .sh-ostat{ font:inherit; font-size:13px; padding:6px 8px; border-radius:10px; background:rgba(239,232,214,.08); color:#EFE8D6; border:1px solid rgba(239,232,214,.25); }
+  .sp-row{ display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid rgba(239,232,214,.1); } .sp-row.off{ opacity:.5; } .sp-row .ci-main b{ font-size:14.5px; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -3773,7 +3811,7 @@ var qrcode = function() {
 </style>
 <script>
 (function(){ try{
-  if(!/[?&]book(=|&|$)/.test(location.search)) return;
+  if(!/[?&](book|shop)(=|&|$)/.test(location.search)) return;
   var d=document.createElement('div'); d.id='cbBoot';
   var cells=''; for(var i=0;i<35;i++) cells+='<div class="cbb-sk"></div>';
   d.innerHTML='<div class="cbb-head"><div class="cbb-brand" role="img" aria-label="RANGSAN"></div><div class="cbb-sub">ACADEMY · จองคอร์สเรียน</div></div>'+
@@ -9316,6 +9354,7 @@ function hideLoginScreen(){
   startFormLiveSync();
   setTimeout(remindCallsDue, 7000);
   setTimeout(watchLinkBookings, 9000); setInterval(watchLinkBookings, 60000);
+  setTimeout(watchShopOrders, 11000); setInterval(watchShopOrders, 60000);
 }
 
 // ---------- reminder: classes that already ended but were never confirmed as taught ----------
@@ -9730,6 +9769,7 @@ function renderLogTab(){
           ` : ''}
           <button class="btn small ghost" id="syncFromFormBtn" title="ดึงคิวจากฟอร์มลงทะเบียน">📋⟳</button>
           <button class="btn small ghost" id="refreshBookings" title="รีเฟรชตารางล่าสุด">⟳</button>
+          <button class="btn small ghost sh-admin-btn" id="shopAdminBtn" title="ร้านค้าออนไลน์">🛍</button>
           <button class="btn small ghost" id="cancelledListBtn" title="รายการที่ยกเลิก">🗂</button>
           <button class="btn small ghost" id="custLinkBtn" title="ลิงค์ให้ลูกค้าจองเอง">🔗</button>
           <button class="add-fab" id="openBookingModalBtn" title="จองคิวสอน">+</button>
@@ -10682,6 +10722,7 @@ function renderLogTab(){
   };
   { const cl = document.getElementById('custLinkBtn'); if(cl) cl.onclick = openCustomerLinkModal; }
   { const cx = document.getElementById('cancelledListBtn'); if(cx) cx.onclick = ()=> openCancelledList(null); }
+  { const sb = document.getElementById('shopAdminBtn'); if(sb) sb.onclick = ()=> openShopAdmin(); }
   document.getElementById('refreshBookings').onclick = async ()=>{
     await loadSharedBookings();
     renderBookingCards();
@@ -13716,7 +13757,271 @@ async function watchLinkBookings(){
   if(document.getElementById('bookingCardGrid')) whenScrollIdle(()=>{ try{ renderLogTab(); }catch(e){} });
 }
 
+// ===================== ร้านค้าออนไลน์ (?shop) — catalog, cart, checkout · admin: products / orders =====================
+const SHOP_CATS_DEFAULT = ['เครื่องชง','เครื่องบด','อุปกรณ์','วัตถุดิบ'];
+let shopProducts = [], shopOrders = [];
+const shopImg = {};
+const shopMoney = n=> '฿' + (Math.round(Number(n)||0)).toLocaleString('th-TH');
+async function loadShopProducts(){ try{ const r = await window.storage.get('shared_shop_products', true); shopProducts = r && r.value ? JSON.parse(r.value) : []; }catch(e){} return shopProducts; }
+async function saveShopProducts(){ await window.storage.set('shared_shop_products', JSON.stringify(shopProducts), true); }
+async function loadShopOrders(){ try{ const r = await window.storage.get('shared_shop_orders', true); shopOrders = r && r.value ? JSON.parse(r.value) : []; }catch(e){} return shopOrders; }
+async function saveShopOrders(){ await window.storage.set('shared_shop_orders', JSON.stringify(shopOrders), true); }
+async function loadShopImg(ids){ await Promise.all(ids.map(async id=>{ if(id in shopImg) return; try{ const r = await window.storage.get('shared_shopimg_'+id, true); shopImg[id] = (r && r.value) || ''; }catch(e){ shopImg[id] = ''; } })); }
+const shopCats = ()=>{ const seen = []; SHOP_CATS_DEFAULT.concat(shopProducts.map(p=> p.cat)).forEach(c=>{ if(c && !seen.includes(c)) seen.push(c); }); return seen.filter(c=> shopProducts.some(p=> p.cat === c && p.active !== false)); };
+const shopPrice = p=> (p.sale && Number(p.sale) > 0 && Number(p.sale) < Number(p.price)) ? Number(p.sale) : Number(p.price)||0;
+function shopUrl(){ return location.origin + location.pathname + '?shop'; }
+
+// ---------- customer page ----------
+async function startShop(){
+  document.body.classList.add('cust-mode');
+  const root = document.createElement('div'); root.id = 'custBook'; root.classList.add('is-shop'); document.body.appendChild(root);
+  const bootOff = ()=>{ const bt = document.getElementById('cbBoot'); if(bt){ clearInterval(window.__cbBootTimer); bt.classList.add('out'); setTimeout(()=> bt.remove(), 400); } };
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE)); mergeMissingCourses(state);
+  loadSharedLineRelayUrl().catch(()=>{});
+  await Promise.all([loadShopProducts(), loadCbImages(['qr','qrNote','bg'])]).catch(()=>{});
+  const list = ()=> shopProducts.filter(p=> p.active !== false);
+  let cart = []; try{ cart = JSON.parse(localStorage.getItem('rangsan_shop_cart')||'[]'); }catch(e){}
+  const saveCart = ()=>{ try{ localStorage.setItem('rangsan_shop_cart', JSON.stringify(cart)); }catch(e){} };
+  const st = { cat:'ทั้งหมด', q:'', view:'list', pid:null, done:null };
+  const cartQty = ()=> cart.reduce((a,x)=> a + x.qty, 0);
+  const cartTotal = ()=> cart.reduce((a,x)=>{ const p = shopProducts.find(z=> z.id === x.id); return a + (p ? shopPrice(p) * x.qty : 0); }, 0);
+  const head = `<header class="cb-head"><div class="rs-logo" role="img" aria-label="RANGSAN"></div><div class="cb-sub">SHOP · เครื่องชง อุปกรณ์ และวัตถุดิบ</div></header>`;
+  const render = ()=>{
+    if(cbImg.bg){ root.classList.add('has-bg'); if(!root.querySelector('#cbBg')){ const bg = document.createElement('div'); bg.id = 'cbBg'; bg.style.backgroundImage = `url("${cbImg.bg}")`; root.prepend(bg); } }
+    const keepBg = root.querySelector('#cbBg');
+    let html = '';
+    if(st.done){ html = st.done; }
+    else if(st.view === 'cart'){ html = cartHTML(); }
+    else if(st.view === 'checkout'){ html = checkoutHTML(); }
+    else {
+      const cats = shopCats();
+      let items = list();
+      if(st.cat !== 'ทั้งหมด') items = items.filter(p=> p.cat === st.cat);
+      if(st.q) items = items.filter(p=> (p.name+' '+(p.desc||'')).toLowerCase().includes(st.q.toLowerCase()));
+      html = `<div class="sh-search"><input id="shQ" type="search" placeholder="🔍 ค้นหาสินค้า" value="${cbEsc(st.q)}"></div>
+        <div class="sh-cats">${['ทั้งหมด'].concat(cats).map(c=>`<button type="button" class="sh-cat ${st.cat===c?'on':''}" data-cat="${cbEsc(c)}">${cbEsc(c)}</button>`).join('')}</div>
+        ${items.length ? `<div class="sh-grid">${items.map(p=>`<button type="button" class="sh-card" data-pid="${p.id}">
+          <div class="sh-img">${shopImg[p.id] ? `<img src="${shopImg[p.id]}" alt="" loading="lazy">` : `<span>${p.cat==='วัตถุดิบ'?'🫘':p.cat==='เครื่องบด'?'⚙️':p.cat==='อุปกรณ์'?'🥄':'☕'}</span>`}${p.sale && Number(p.sale)<Number(p.price) ? '<i class="sh-badge">ลดราคา</i>' : ''}</div>
+          <div class="sh-name">${cbEsc(p.name)}</div>
+          <div class="sh-price">${shopMoney(shopPrice(p))}${p.sale && Number(p.sale)<Number(p.price) ? ` <s>${shopMoney(p.price)}</s>` : ''}${p.unit?`<small> / ${cbEsc(p.unit)}</small>`:''}</div></button>`).join('')}</div>`
+          : `<div class="cb-card" style="text-align:center;"><p class="cb-note">${list().length ? 'ไม่พบสินค้าที่ค้นหา' : 'ยังไม่มีสินค้าในร้าน — แวะมาใหม่เร็วๆ นี้ ☕'}</p></div>`}`;
+    }
+    root.innerHTML = `<div class="cb-wrap sh-wrap">${head}${html}</div>${!st.done && st.view === 'list' && cartQty() ? `<button type="button" class="sh-fab" id="shCartBtn">🛒 ตะกร้า ${cartQty()} ชิ้น · <b>${shopMoney(cartTotal())}</b></button>` : ''}`;
+    if(keepBg) root.prepend(keepBg);
+    bind();
+    if(st.pid) openProduct(st.pid);
+  };
+  const openProduct = pid=>{
+    const p = shopProducts.find(z=> z.id === pid); if(!p){ st.pid = null; return; }
+    const opts = (p.options||'').split(',').map(x=> x.trim()).filter(Boolean);
+    const sh = document.createElement('div'); sh.className = 'sh-sheet-ov';
+    sh.innerHTML = `<div class="sh-sheet"><button type="button" class="sh-x" aria-label="ปิด">✕</button>
+      <div class="sh-img big">${shopImg[p.id] ? `<img src="${shopImg[p.id]}" alt="">` : '<span>☕</span>'}</div>
+      <div class="sh-sheet-b"><div class="sh-cat-l">${cbEsc(p.cat||'')}</div><h2>${cbEsc(p.name)}</h2>
+      <div class="sh-price big">${shopMoney(shopPrice(p))}${p.sale && Number(p.sale)<Number(p.price) ? ` <s>${shopMoney(p.price)}</s>` : ''}${p.unit?`<small> / ${cbEsc(p.unit)}</small>`:''}</div>
+      ${p.desc ? `<p class="sh-desc">${cbEsc(p.desc).replace(/\n/g,'<br>')}</p>` : ''}
+      ${opts.length ? `<div class="cb-ql" style="margin-top:12px;">ตัวเลือก</div><div class="sh-opts">${opts.map((o,i)=>`<button type="button" class="sh-opt ${i===0?'on':''}" data-o="${cbEsc(o)}">${cbEsc(o)}</button>`).join('')}</div>` : ''}
+      <div class="sh-qtyrow"><div class="sh-qty"><button type="button" data-q="-1">−</button><span id="shQty">1</span><button type="button" data-q="1">+</button></div>
+        <button type="button" class="cb-submit is-ready" id="shAdd">ใส่ตะกร้า</button></div></div></div>`;
+    root.appendChild(sh);
+    let qty = 1, opt = opts[0] || '';
+    const close = ()=>{ sh.remove(); st.pid = null; };
+    sh.onclick = e=>{ if(e.target === sh) close(); };
+    sh.querySelector('.sh-x').onclick = close;
+    sh.querySelectorAll('.sh-opt').forEach(b=> b.onclick = ()=>{ opt = b.dataset.o; sh.querySelectorAll('.sh-opt').forEach(x=> x.classList.toggle('on', x === b)); });
+    sh.querySelectorAll('[data-q]').forEach(b=> b.onclick = ()=>{ qty = Math.max(1, Math.min(99, qty + Number(b.dataset.q))); sh.querySelector('#shQty').textContent = qty; });
+    sh.querySelector('#shAdd').onclick = ()=>{
+      const ex = cart.find(x=> x.id === p.id && (x.opt||'') === opt);
+      if(ex) ex.qty += qty; else cart.push({ id:p.id, opt, qty });
+      saveCart(); st.pid = null; sh.remove(); render(); rsToast && rsToast(`🛒 เพิ่ม ${cbEsc(p.name)} แล้ว`, 1800);
+    };
+  };
+  const cartHTML = ()=>{
+    const rows = cart.map((x,i)=>{ const p = shopProducts.find(z=> z.id === x.id); if(!p) return ''; return `<div class="sh-line">
+      <div class="sh-limg">${shopImg[p.id] ? `<img src="${shopImg[p.id]}" alt="">` : '☕'}</div>
+      <div class="sh-lmain"><b>${cbEsc(p.name)}</b>${x.opt?`<small>${cbEsc(x.opt)}</small>`:''}<span>${shopMoney(shopPrice(p))}</span></div>
+      <div class="sh-qty sm"><button type="button" data-cq="${i}" data-d="-1">−</button><span>${x.qty}</span><button type="button" data-cq="${i}" data-d="1">+</button></div></div>`; }).join('');
+    return `<div class="cb-card"><div class="sh-back"><button type="button" id="shBack">‹ เลือกสินค้าต่อ</button></div><h2>🛒 ตะกร้าสินค้า</h2>
+      ${cart.length ? rows + `<div class="sh-total"><span>รวม</span><b>${shopMoney(cartTotal())}</b></div><p class="cb-note">ค่าจัดส่งทีมงานจะแจ้งยืนยันอีกครั้ง</p>
+      <button type="button" class="cb-submit is-ready" id="shToCheckout" style="width:100%;box-sizing:border-box;margin-top:10px;">ไปกรอกที่อยู่ / ชำระเงิน ›</button>` : '<p class="cb-note">ยังไม่มีสินค้าในตะกร้า</p>'}</div>`;
+  };
+  const checkoutHTML = ()=> `<div class="cb-card"><div class="sh-back"><button type="button" id="shBackCart">‹ กลับไปตะกร้า</button></div><h2>ข้อมูลผู้สั่งซื้อ</h2>
+    <form id="shForm" class="cb-form" novalidate>
+      <label>ชื่อ - นามสกุล <i>*</i><input name="name" required maxlength="80" autocomplete="name"></label>
+      <label>เบอร์โทร <i>*</i><input name="phone" required inputmode="tel" maxlength="20" autocomplete="tel"></label>
+      <label>LINE ID<input name="lineId" maxlength="60" autocapitalize="off"></label>
+      ${cbRadio('ship','วิธีรับสินค้า',['รับที่ร้าน (ประชาราษฎร์สาย 1)','ส่งพัสดุ','ส่งด่วน Grab / Lalamove'],true)}
+      <label id="shAddrWrap" style="display:none;">ที่อยู่จัดส่ง <i>*</i><textarea name="address" rows="3" maxlength="300" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"></textarea></label>
+      <label>หมายเหตุ<textarea name="note" rows="2" maxlength="300"></textarea></label>
+      <div class="cb-q"><div class="cb-ql">ชำระเงิน / แนบสลิป</div>${cbImg.qr ? `<img class="cb-qr" src="${cbImg.qr}" alt="QR">` : ''}${cbImg.qrNote ? `<div class="cb-qrnote">${cbEsc(cbImg.qrNote).replace(/\n/g,'<br>')}</div>` : ''}
+        <label class="cb-file"><input type="file" name="slip" accept="image/*"><span id="shSlipName">📎 แนบรูปสลิป (ถ้าโอนแล้ว)</span></label></div>
+      <div class="sh-total"><span>ยอดสินค้า ${cartQty()} ชิ้น</span><b>${shopMoney(cartTotal())}</b></div>
+      <button type="submit" class="cb-submit is-ready">ยืนยันสั่งซื้อ</button>
+    </form></div>`;
+  const bind = ()=>{
+    const q = root.querySelector('#shQ'); if(q) q.oninput = ()=>{ st.q = q.value; const pos = q.selectionStart; render(); const n = root.querySelector('#shQ'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
+    root.querySelectorAll('[data-cat]').forEach(b=> b.onclick = ()=>{ st.cat = b.dataset.cat; render(); });
+    root.querySelectorAll('[data-pid]').forEach(b=> b.onclick = ()=>{ st.pid = b.dataset.pid; openProduct(st.pid); });
+    const cb = root.querySelector('#shCartBtn'); if(cb) cb.onclick = ()=>{ st.view = 'cart'; render(); window.scrollTo(0,0); };
+    const bk = root.querySelector('#shBack'); if(bk) bk.onclick = ()=>{ st.view = 'list'; render(); };
+    const bc = root.querySelector('#shBackCart'); if(bc) bc.onclick = ()=>{ st.view = 'cart'; render(); };
+    root.querySelectorAll('[data-cq]').forEach(b=> b.onclick = ()=>{ const x = cart[+b.dataset.cq]; x.qty += Number(b.dataset.d); if(x.qty <= 0) cart.splice(+b.dataset.cq, 1); saveCart(); render(); });
+    const tc = root.querySelector('#shToCheckout'); if(tc) tc.onclick = ()=>{ st.view = 'checkout'; render(); window.scrollTo(0,0); };
+    const f = root.querySelector('#shForm');
+    if(f){
+      f.querySelectorAll('input[name=ship]').forEach(r=> r.onchange = ()=>{ const need = !String(cbFormValue(f,'ship')).startsWith('รับที่ร้าน'); f.querySelector('#shAddrWrap').style.display = need ? '' : 'none'; f.querySelector('textarea[name=address]').required = need; });
+      const sf = f.querySelector('input[name=slip]'); sf.onchange = ()=>{ root.querySelector('#shSlipName').textContent = sf.files[0] ? '✅ ' + sf.files[0].name : '📎 แนบรูปสลิป (ถ้าโอนแล้ว)'; };
+      f.onsubmit = async e=>{
+        e.preventDefault();
+        f.querySelectorAll('.cb-miss').forEach(x=> x.classList.remove('cb-miss'));
+        let miss = null;
+        f.querySelectorAll('input[required], textarea[required]').forEach(i=>{ if(!i.value.trim()){ const l = i.closest('label'); l.classList.add('cb-miss'); miss = miss || l; } });
+        if(!cbFormValue(f,'ship')){ const qq = f.querySelector('[data-q="ship"]'); qq.classList.add('cb-miss'); miss = miss || qq; }
+        const fd = Object.fromEntries(new FormData(f).entries());
+        if(!miss && rsNormPhone(fd.phone||'').length < 9){ miss = f.querySelector('input[name=phone]').closest('label'); miss.classList.add('cb-miss'); }
+        if(miss){ miss.scrollIntoView({behavior:'smooth', block:'center'}); return; }
+        const btn = f.querySelector('.cb-submit'); btn.disabled = true; btn.textContent = 'กำลังส่งคำสั่งซื้อ...';
+        try{
+          await loadShopProducts();
+          const items = cart.map(x=>{ const p = shopProducts.find(z=> z.id === x.id); return p && p.active !== false ? { id:p.id, name:p.name, opt:x.opt||'', qty:x.qty, price:shopPrice(p) } : null; }).filter(Boolean);
+          if(!items.length){ alert('สินค้าในตะกร้าไม่พร้อมขายแล้ว กรุณาเลือกใหม่'); btn.disabled = false; btn.textContent = 'ยืนยันสั่งซื้อ'; return; }
+          const id = 'SO' + new Date().toISOString().slice(2,10).replace(/-/g,'') + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+          const order = { id, at:new Date().toISOString(), status:'new', name:fd.name.trim(), phone:fd.phone.trim(), lineId:(fd.lineId||'').trim(), ship:cbFormValue(f,'ship'), address:(fd.address||'').trim(), note:(fd.note||'').trim(), items, total: items.reduce((a,x)=> a + x.price*x.qty, 0) };
+          const slip = f.querySelector('input[name=slip]').files[0];
+          if(slip){ try{ const img = await resizeImageFile(slip, 1300, 0.8); await window.storage.set('shared_shopslip_'+id, img, true); order.slipKey = 'shared_shopslip_'+id; }catch(err){ console.error(err); } }
+          await loadShopOrders(); shopOrders.push(order); await saveShopOrders();
+          try{ await postLineGroup(['🛍 RANGSAN SHOP — คำสั่งซื้อใหม่ ' + id, '', `👤 ${order.name} · 📞 ${order.phone}${order.lineId?` · LINE: ${order.lineId}`:''}`, ...items.map(x=> `• ${x.name}${x.opt?` (${x.opt})`:''} × ${x.qty} = ${shopMoney(x.price*x.qty)}`), `💰 รวม ${shopMoney(order.total)}${order.slipKey?' · แนบสลิปแล้ว':' · ยังไม่แนบสลิป'}`, `🚚 ${order.ship}`, order.address?`📍 ${order.address}`:''].filter(Boolean).join('\n')); }catch(err){}
+          cart = []; saveCart();
+          st.done = `<div class="cb-card cb-done"><div class="cb-ok">✓</div><h2>สั่งซื้อเรียบร้อย</h2><p>เลขที่คำสั่งซื้อ <b>${id}</b></p>
+            <div class="cb-sum" style="text-align:left;">${items.map(x=> `${cbEsc(x.name)}${x.opt?` (${cbEsc(x.opt)})`:''} × ${x.qty}`).join('<br>')}<br>รวม ${shopMoney(order.total)}</div>
+            <p class="cb-note">ทีมงานจะติดต่อยืนยันคำสั่งซื้อและค่าจัดส่งทาง ${order.lineId ? 'LINE / ' : ''}โทรศัพท์ · แคปหน้าจอนี้เก็บไว้ได้เลย</p></div>`;
+          render(); window.scrollTo(0,0);
+        }catch(err){ console.error('shop order failed', err); alert('ส่งคำสั่งซื้อไม่สำเร็จ ลองใหม่อีกครั้ง'); btn.disabled = false; btn.textContent = 'ยืนยันสั่งซื้อ'; }
+      };
+    }
+  };
+  render(); bootOff();
+  loadShopImg(list().map(p=> p.id)).then(()=>{ if(!document.querySelector('.sh-sheet-ov') && !document.querySelector('#shForm')) render(); });
+}
+
+// ---------- staff: products & orders ----------
+function openShopAdmin(tab){
+  let ov = document.getElementById('shopAdminOv');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'shopAdminOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="cl-box"><button type="button" class="cl-x" aria-label="ปิด">✕</button><h3>🛍 ร้านค้าออนไลน์</h3>
+    <div class="cl-tabs"><button type="button" data-st="orders">📦 ออเดอร์</button><button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
+    <div id="shopAdminBody"><p class="cl-hint">กำลังโหลด...</p></div></div>`;
+  ov.style.display = 'flex';
+  ov.onclick = e=>{ if(e.target === ov) ov.style.display = 'none'; };
+  ov.querySelector('.cl-x').onclick = ()=> ov.style.display = 'none';
+  const show = async t=>{ ov.querySelectorAll('[data-st]').forEach(b=> b.classList.toggle('on', b.dataset.st === t)); try{ localStorage.setItem('rangsan_shop_tab', t); }catch(e){}
+    await Promise.all([loadShopProducts(), loadShopOrders()]);
+    if(t === 'products') shopAdminProducts(); else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
+  ov.querySelectorAll('[data-st]').forEach(b=> b.onclick = ()=> show(b.dataset.st));
+  let t0 = tab; try{ t0 = t0 || localStorage.getItem('rangsan_shop_tab') || 'orders'; }catch(e){ t0 = 'orders'; }
+  show(t0);
+}
+function shopAdminLink(){
+  const body = document.getElementById('shopAdminBody'); const url = shopUrl();
+  body.innerHTML = `<p class="cl-hint">ส่งลิงค์นี้ให้ลูกค้าเลือกสินค้า ใส่ตะกร้า และสั่งซื้อเอง ออเดอร์จะเข้าแท็บ 📦 ออเดอร์ และแจ้งเข้ากลุ่ม LINE</p>
+    <div class="hold-url">${cbEsc(url)}</div><div class="cl-acts"><button type="button" class="btn small" id="shLinkCopy">คัดลอก</button><button type="button" class="btn small ghost" id="shLinkLine">ส่ง LINE</button><a class="btn small ghost" href="${url}" target="_blank" rel="noopener">เปิดดู</a></div>
+    <p class="cl-hint" style="margin-top:12px;">QR / ข้อความบัญชี และภาพพื้นหลัง ใช้ชุดเดียวกับฟอร์มจองคอร์ส (ตั้งได้ที่ 🔗 → 🖼 รูปในฟอร์ม)</p>`;
+  body.querySelector('#shLinkCopy').onclick = e=> navigator.clipboard.writeText(url).then(()=> e.target.textContent = 'คัดลอกแล้ว ✓').catch(()=> prompt('คัดลอกลิงค์นี้', url));
+  body.querySelector('#shLinkLine').onclick = ()=> sendTextToLine(`🛍 RANGSAN SHOP — เครื่องชง อุปกรณ์ และวัตถุดิบ\nเลือกสินค้าและสั่งซื้อได้ที่ลิงค์นี้เลยครับ 👇\n${url}`);
+}
+const SHOP_STATUS = { new:['🆕 ใหม่','#DCA73D'], confirmed:['✓ ยืนยันแล้ว','#7FC79A'], shipped:['🚚 ส่งแล้ว','#8FB8E8'], done:['✅ เสร็จ','#A8D5B5'], cancelled:['✕ ยกเลิก','#E0705A'] };
+function shopAdminOrders(){
+  const body = document.getElementById('shopAdminBody');
+  const fil = body.dataset.f || 'open';
+  const list = shopOrders.slice().reverse().filter(o=> fil === 'all' ? true : !['done','cancelled'].includes(o.status));
+  body.innerHTML = `<div class="sh-ofil"><button type="button" data-f="open" class="${fil==='open'?'on':''}">กำลังดำเนินการ</button><button type="button" data-f="all" class="${fil==='all'?'on':''}">ทั้งหมด (${shopOrders.length})</button></div>
+    ${list.length ? list.map(o=>`<div class="sh-order">
+      <div class="sh-oh"><b>${cbEsc(o.id)}</b><span class="sh-st" style="color:${(SHOP_STATUS[o.status]||SHOP_STATUS.new)[1]}">${(SHOP_STATUS[o.status]||SHOP_STATUS.new)[0]}</span></div>
+      <div class="ci-hint" style="margin:2px 0 6px;">${new Date(o.at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · ${cbEsc(o.name)} · 📞 ${cbEsc(o.phone)}${o.lineId?` · LINE ${cbEsc(o.lineId)}`:''}</div>
+      <div class="sh-oitems">${o.items.map(x=> `${cbEsc(x.name)}${x.opt?` (${cbEsc(x.opt)})`:''} × ${x.qty} <span>${shopMoney(x.price*x.qty)}</span>`).join('<br>')}</div>
+      <div class="sh-ot">รวม <b>${shopMoney(o.total)}</b> · ${cbEsc(o.ship)}</div>${o.address?`<div class="ci-hint">📍 ${cbEsc(o.address)}</div>`:''}${o.note?`<div class="ci-hint">📝 ${cbEsc(o.note)}</div>`:''}
+      <div class="cl-acts" style="margin-top:8px;">${o.slipKey?`<button type="button" class="btn small ghost" data-oslip="${o.slipKey}">🧾 สลิป</button>`:''}
+        <select class="sh-ostat" data-oid="${o.id}">${Object.entries(SHOP_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v[0]}</option>`).join('')}</select>
+        <button type="button" class="btn small ghost" data-onotify="${o.id}">📩 แจ้งลูกค้า</button></div></div>`).join('') : '<p class="cl-hint">ยังไม่มีออเดอร์</p>'}`;
+  body.querySelectorAll('[data-f]').forEach(b=> b.onclick = ()=>{ body.dataset.f = b.dataset.f; shopAdminOrders(); });
+  body.querySelectorAll('[data-oslip]').forEach(b=> b.onclick = ()=> showSlip(b.dataset.oslip));
+  body.querySelectorAll('.sh-ostat').forEach(sel=> sel.onchange = async ()=>{ await loadShopOrders(); const o = shopOrders.find(x=> x.id === sel.dataset.oid); if(!o) return; o.status = sel.value; o.statusBy = currentUser||''; o.statusAt = new Date().toISOString(); await saveShopOrders(); flashSaved('อัปเดตสถานะแล้ว ✓'); shopAdminOrders(); });
+  body.querySelectorAll('[data-onotify]').forEach(b=> b.onclick = ()=>{
+    const o = shopOrders.find(x=> x.id === b.dataset.onotify); if(!o) return;
+    const msg = [`สวัสดีครับ คุณ${o.name} 🙏`, `RANGSAN SHOP ขอแจ้งสถานะคำสั่งซื้อ ${o.id}`, `สถานะ: ${(SHOP_STATUS[o.status]||SHOP_STATUS.new)[0]}`, '', ...o.items.map(x=> `• ${x.name}${x.opt?` (${x.opt})`:''} × ${x.qty}`), `รวม ${shopMoney(o.total)}`, '', 'สอบถามเพิ่มเติม 061 732 1346 ครับ'].join('\n');
+    const phone = String(o.phone||'').replace(/[^\d+]/g,'');
+    const { ov } = rsSmallModal(`<h3>📩 แจ้งลูกค้า</h3><textarea id="regMsg" class="ci-note" rows="10">${cbEsc(msg)}</textarea>
+      <div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="soLine">ส่ง LINE</button>${phone?`<button type="button" class="btn small ghost" id="soSms">ส่ง SMS</button>`:''}<button type="button" class="btn small ghost" id="soCopy">คัดลอก</button></div>`);
+    const txt = ()=> ov.querySelector('#regMsg').value;
+    ov.querySelector('#soLine').onclick = ()=> sendTextToLine(txt());
+    const sm = ov.querySelector('#soSms'); if(sm) sm.onclick = ()=>{ location.href = `sms:${phone}${/iPad|iPhone|Mac/.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(txt())}`; };
+    ov.querySelector('#soCopy').onclick = e=> navigator.clipboard.writeText(txt()).then(()=> e.target.textContent = 'คัดลอกแล้ว ✓').catch(()=>{});
+  });
+}
+async function shopAdminProducts(){
+  const body = document.getElementById('shopAdminBody');
+  await loadShopImg(shopProducts.map(p=> p.id));
+  const cats = SHOP_CATS_DEFAULT.concat(shopProducts.map(p=> p.cat)).filter((c,i,a)=> c && a.indexOf(c) === i);
+  body.innerHTML = `<div class="cl-acts" style="margin-bottom:10px;"><button type="button" class="btn small" id="spAdd">＋ เพิ่มสินค้า</button><button type="button" class="btn small ghost" id="spBulk">📋 วางรายการหลายชิ้น</button></div>
+    ${shopProducts.length ? cats.filter(c=> shopProducts.some(p=> p.cat === c)).map(c=>`<div class="cl-name" style="margin-top:12px;">${cbEsc(c)} (${shopProducts.filter(p=> p.cat===c).length})</div>${shopProducts.filter(p=> p.cat === c).map(p=>`<div class="sp-row ${p.active===false?'off':''}">
+      <div class="ci-prev">${shopImg[p.id]?`<img src="${shopImg[p.id]}" alt="">`:'<span>ไม่มีรูป</span>'}</div>
+      <div class="ci-main"><b>${cbEsc(p.name)}</b><div class="ci-hint" style="margin:2px 0 0;">${shopMoney(shopPrice(p))}${p.sale && Number(p.sale)<Number(p.price)?` (ปกติ ${shopMoney(p.price)})`:''}${p.unit?` / ${cbEsc(p.unit)}`:''}${p.options?` · ตัวเลือก: ${cbEsc(p.options)}`:''}${p.active===false?' · ซ่อนอยู่':''}</div></div>
+      <button type="button" class="btn small ghost" data-pedit="${p.id}">แก้ไข</button></div>`).join('')}`).join('') : '<p class="cl-hint">ยังไม่มีสินค้า — กด "＋ เพิ่มสินค้า" หรือ "📋 วางรายการหลายชิ้น" (วางจาก Excel ได้)</p>'}`;
+  body.querySelector('#spAdd').onclick = ()=> shopEditProduct(null);
+  body.querySelector('#spBulk').onclick = shopBulkImport;
+  body.querySelectorAll('[data-pedit]').forEach(b=> b.onclick = ()=> shopEditProduct(b.dataset.pedit));
+}
+function shopEditProduct(pid){
+  const p = pid ? shopProducts.find(x=> x.id === pid) : { id:'sp_'+Date.now().toString(36), cat:SHOP_CATS_DEFAULT[0], name:'', price:'', sale:'', unit:'', options:'', desc:'', active:true };
+  const cats = SHOP_CATS_DEFAULT.concat(shopProducts.map(x=> x.cat)).filter((c,i,a)=> c && a.indexOf(c) === i);
+  const { ov, close } = rsSmallModal(`<h3>${pid?'แก้ไขสินค้า':'เพิ่มสินค้า'}</h3>
+    <label class="rs-f">หมวด<input id="spCat" list="spCats" value="${cbEsc(p.cat)}"><datalist id="spCats">${cats.map(c=>`<option value="${cbEsc(c)}">`).join('')}</datalist></label>
+    <label class="rs-f">ชื่อสินค้า<input id="spName" value="${cbEsc(p.name)}" maxlength="100"></label>
+    <div class="hold-grid"><label class="rs-f">ราคา (บาท)<input id="spPrice" inputmode="decimal" value="${cbEsc(p.price)}"></label><label class="rs-f">ราคาลด (ถ้ามี)<input id="spSale" inputmode="decimal" value="${cbEsc(p.sale||'')}"></label><label class="rs-f">หน่วย<input id="spUnit" value="${cbEsc(p.unit||'')}" placeholder="เครื่อง / ถุง / กก."></label></div>
+    <label class="rs-f">ตัวเลือก (คั่นด้วย ,)<input id="spOpts" value="${cbEsc(p.options||'')}" placeholder="เช่น สีดำ, สีเงิน หรือ 250g, 1kg"></label>
+    <label class="rs-f">รายละเอียด<textarea id="spDesc" class="ci-note" rows="3">${cbEsc(p.desc||'')}</textarea></label>
+    <div class="rs-f">รูปสินค้า</div><div class="cl-acts"><label class="btn small ghost">${shopImg[p.id]?'เปลี่ยนรูป':'ใส่รูป'}<input type="file" accept="image/*" id="spImg" hidden></label><span id="spImgSt" class="ci-hint"></span></div>
+    <label class="rs-chk"><input type="checkbox" id="spActive" ${p.active!==false?'checked':''}> แสดงในร้าน</label>
+    <div class="cx-acts">${pid?`<button type="button" class="cx-no" id="spDel">ลบ</button>`:''}<button type="button" class="cx-ok" id="spSave" style="background:#DCA73D;color:#1A0F08;">บันทึก</button></div>`);
+  let newImg = null;
+  ov.querySelector('#spImg').onchange = async e=>{ const f = e.target.files[0]; if(!f) return; ov.querySelector('#spImgSt').textContent = 'กำลังย่อรูป...'; try{ newImg = await resizeImageFile(f, 900, 0.85); ov.querySelector('#spImgSt').textContent = '✓ พร้อมบันทึก'; }catch(err){ ov.querySelector('#spImgSt').textContent = 'ใช้รูปนี้ไม่ได้'; } };
+  ov.querySelector('#spSave').onclick = async e=>{
+    const name = ov.querySelector('#spName').value.trim(), price = Number(String(ov.querySelector('#spPrice').value).replace(/[^\d.]/g,''));
+    if(!name || !(price >= 0) || ov.querySelector('#spPrice').value === ''){ alert('กรุณาใส่ชื่อและราคา'); return; }
+    e.currentTarget.disabled = true; e.currentTarget.textContent = 'กำลังบันทึก...';
+    await loadShopProducts();
+    const rec = { id:p.id, cat: ov.querySelector('#spCat').value.trim() || 'อื่นๆ', name, price, sale: Number(String(ov.querySelector('#spSale').value).replace(/[^\d.]/g,'')) || '', unit: ov.querySelector('#spUnit').value.trim(), options: ov.querySelector('#spOpts').value.trim(), desc: ov.querySelector('#spDesc').value.trim(), active: ov.querySelector('#spActive').checked };
+    const i = shopProducts.findIndex(x=> x.id === p.id); if(i >= 0) shopProducts[i] = rec; else shopProducts.push(rec);
+    await saveShopProducts();
+    if(newImg){ await window.storage.set('shared_shopimg_'+p.id, newImg, true); shopImg[p.id] = newImg; }
+    close(); flashSaved('บันทึกสินค้าแล้ว ✓'); shopAdminProducts();
+  };
+  const del = ov.querySelector('#spDel'); if(del) del.onclick = async ()=>{ if(!confirm(`ลบ "${p.name}"?`)) return; await loadShopProducts(); shopProducts = shopProducts.filter(x=> x.id !== p.id); await saveShopProducts(); window.storage.set('shared_shopimg_'+p.id, '', true).catch(()=>{}); close(); shopAdminProducts(); };
+}
+function shopBulkImport(){
+  const { ov, close } = rsSmallModal(`<h3>📋 วางรายการสินค้า</h3><p class="cl-hint">1 บรรทัด = 1 สินค้า · รูปแบบ: <b>หมวด, ชื่อสินค้า, ราคา, หน่วย</b> (คั่นด้วย , หรือแท็บ — ก๊อปจาก Excel วางได้เลย)<br>เช่น <code>วัตถุดิบ, เมล็ดกาแฟคั่วกลาง 1kg, 590, ถุง</code></p>
+    <textarea id="spBulkTxt" class="ci-note" rows="10" placeholder="เครื่องชง, เครื่องชงรุ่น A, 25900, เครื่อง"></textarea>
+    <div id="spBulkPrev" class="cl-hint"></div><div class="cx-acts"><button type="button" class="cx-ok" id="spBulkOk" style="background:#DCA73D;color:#1A0F08;">เพิ่มสินค้า</button></div>`);
+  const parse = ()=> ov.querySelector('#spBulkTxt').value.split(/\n/).map(l=> l.split(/\t|,(?![^"]*")/).map(x=> x.trim().replace(/^"|"$/g,''))).filter(a=> a.length >= 3 && a[1] && a[2]).map(a=> ({ cat:a[0]||'อื่นๆ', name:a[1], price: Number(String(a[2]).replace(/[^\d.]/g,''))||0, unit:a[3]||'' }));
+  ov.querySelector('#spBulkTxt').oninput = ()=>{ const r = parse(); ov.querySelector('#spBulkPrev').textContent = r.length ? `อ่านได้ ${r.length} รายการ` : ''; };
+  ov.querySelector('#spBulkOk').onclick = async ()=>{ const r = parse(); if(!r.length){ alert('ยังอ่านรายการไม่ได้ — ตรวจรูปแบบ หมวด, ชื่อ, ราคา'); return; }
+    await loadShopProducts(); r.forEach((x,i)=> shopProducts.push({ id:'sp_'+Date.now().toString(36)+i, ...x, sale:'', options:'', desc:'', active:true })); await saveShopProducts();
+    close(); flashSaved(`เพิ่ม ${r.length} สินค้าแล้ว ✓`); shopAdminProducts(); };
+}
+async function watchShopOrders(){
+  if(document.hidden || !currentUser) return;
+  let seen = null; try{ seen = JSON.parse(localStorage.getItem('rangsan_shop_seen')||'null'); }catch(e){}
+  try{ await loadShopOrders(); }catch(e){ return; }
+  const ids = shopOrders.map(o=> o.id);
+  try{ localStorage.setItem('rangsan_shop_seen', JSON.stringify(ids.slice(-300))); }catch(e){}
+  const btn = document.getElementById('shopAdminBtn'); if(btn){ const n = shopOrders.filter(o=> o.status === 'new').length; btn.dataset.n = n || ''; }
+  if(!seen) return;
+  const fresh = shopOrders.filter(o=> !seen.includes(o.id));
+  if(fresh.length) rsToast(`🛍 <b>ออเดอร์ใหม่ ${fresh.length} รายการ</b><br>${fresh.slice(0,3).map(o=> `${cbEsc(o.name)} · ${shopMoney(o.total)}`).join('<br>')}`, 9000);
+}
+
 (async function init(){
+  { if(new URLSearchParams(location.search).has('shop')){ const sp = document.getElementById('splashScreen'); if(sp) sp.remove(); startShop(); return; } }
   { const bp = new URLSearchParams(location.search).get('book'); if(bp !== null){ const sp = document.getElementById('splashScreen'); if(sp) sp.remove(); startCustomerBooking(bp); return; } }
   // set up the splash screen dismissal FIRST and independently of everything else below —
   // otherwise if the app takes an unusual path early on (e.g. the first-run setup prompt),
