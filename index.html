@@ -1986,6 +1986,7 @@
   .rw-badge{ position:absolute; top:-7px; right:-10px; min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:999px; background:#DCA73D; color:#1A0F08; font-size:10px; font-style:normal; font-weight:800; line-height:16px; text-align:center; }
   #custBook.is-shop .sh-wrap.is-list{ max-width:none; padding:0 0 110px; }
   #custBook.is-shop .sh-wrap.is-list > :not(.rw-track):not(.rw-mob):not(.pm-hero){ max-width:1080px; margin-left:auto; margin-right:auto; padding-left:16px; padding-right:16px; box-sizing:border-box; }
+  .ic-h{ margin:6px 0 4px; font-size:16px; } .ic-sec + .ic-sec{ margin-top:18px; padding-top:14px; border-top:1px solid rgba(239,232,214,.14); } .ic-top{ margin-bottom:10px; }
   .pm-hero{ position:relative; overflow:hidden; background:radial-gradient(120% 90% at 85% 0%, #1F5A33 0%, #0B2A15 55%, #071A0D 100%); color:#F3EDE0; }
   .pm-bg{ position:absolute; inset:0; background:center/cover no-repeat; transform:scale(1.04); }
   .pm-hero.has-img::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(7,26,13,.55) 0%, rgba(7,26,13,.72) 55%, rgba(7,26,13,.9) 100%); }
@@ -13706,9 +13707,9 @@ function openCustomerLinkModal(){
   const rows = [{ id:'all', name:'ทุกคอร์ส (ลูกค้าเลือกคอร์สเอง)' }].concat(cbOpenCourses().map(c=> ({ id:c.id, name:c.name })));
   ov.innerHTML = `<div class="cl-box"><button type="button" class="cl-x" aria-label="ปิด">✕</button>
     <h3>🔗 ลิงค์จองคอร์สสำหรับลูกค้า</h3>
-    <div class="cl-tabs"><button type="button" data-cltab="hold">🔒 ล็อกวัน</button><button type="button" data-cltab="links">🔗 ลิงค์จองเอง</button><button type="button" data-cltab="img">🖼 รูปในฟอร์ม</button></div>
+    <div class="cl-tabs"><button type="button" data-cltab="hold">🔒 ล็อกวัน</button><button type="button" data-cltab="links">🔗 ลิงค์จองเอง</button><button type="button" data-cltab="img">🖼 รูป & พื้นหลัง</button></div>
     <div class="cl-pane" data-pane="hold"><div id="cbHoldAdmin"></div></div>
-    <div class="cl-pane" data-pane="img"><div id="cbImgAdmin"><div class="cl-hint">กำลังโหลดภาพประกอบ...</div></div></div>
+    <div class="cl-pane" data-pane="img" id="clImgPane"><div class="cl-hint">กำลังโหลดภาพประกอบ...</div></div>
     <div class="cl-pane" data-pane="links">
     <p class="cl-hint">ส่งลิงค์ให้ลูกค้า ลูกค้าเลือกได้เฉพาะวันที่ยังว่าง วันที่มีคนจองแล้วกดไม่ได้ เวิร์คช็อปรับจนที่นั่งเต็ม การจองจะเข้าแอพทันที</p>
     ${rows.map(r=>`<div class="cl-row"><div class="cl-name">${cbEsc(r.name)}</div>
@@ -13723,7 +13724,7 @@ function openCustomerLinkModal(){
   showTab(tab0);
   ov.querySelectorAll('[data-copy]').forEach(b=> b.onclick = async ()=>{ const u = customerBookingUrl(b.dataset.copy); try{ await navigator.clipboard.writeText(u); b.textContent = 'คัดลอกแล้ว ✓'; }catch(e){ prompt('คัดลอกลิงค์นี้', u); } setTimeout(()=> b.textContent = 'คัดลอก', 2000); });
   renderCbHoldAdmin();
-  renderCbImgAdmin();
+  renderImgCenter(ov.querySelector('#clImgPane'));
   ov.querySelectorAll('[data-line]').forEach(b=> b.onclick = ()=>{ const c = courseById(b.dataset.line); sendTextToLine(`จองคอร์สเรียน RANGSAN Academy${c?` — ${cbShortName(c)}`:''}\nเลือกวันว่างและกรอกข้อมูลได้ที่ลิงค์นี้เลยครับ 👇\n${customerBookingUrl(b.dataset.line)}`); });
 }
 function holdShareText(h, url){
@@ -13837,11 +13838,11 @@ function renderCbHoldAdmin(){
     renderCbHoldAdmin(); try{ renderLogTab(); }catch(err){}
   });
 }
-async function renderCbImgAdmin(){
-  const box = document.getElementById('cbImgAdmin'); if(!box) return;
+async function renderCbImgAdmin(boxArg){
+  const box = boxArg || document.getElementById('cbImgAdmin'); if(!box) return;
   const slots = CB_IMG_SLOTS();
   await loadCbImages(slots.map(x=> x.k).concat(['qrNote']));
-  box.innerHTML = `<h3 style="margin:14px 0 4px;">🖼 ภาพประกอบในฟอร์ม</h3><p class="cl-hint">รูปที่ใส่จะขึ้นในหน้าฟอร์มของลูกค้าทันที ลบออกได้ตลอด</p>
+  box.innerHTML = `<h3 class="ic-h">📝 ฟอร์มจองคอร์ส</h3><p class="cl-hint">รูปที่ใส่จะขึ้นในหน้าฟอร์มของลูกค้าทันที ลบออกได้ตลอด · ถ้าหน้าร้านไม่ได้ใส่พื้นหลังเอง จะใช้ “ภาพพื้นหลังทั้งหน้า” ชุดนี้</p>
     ${slots.map(sl=>`<div class="ci-row"><div class="ci-prev">${cbImg[sl.k]?`<img src="${cbImg[sl.k]}" alt="">`:'<span>ไม่มีรูป</span>'}</div>
       <div class="ci-main"><div class="cl-name">${cbEsc(sl.label)}</div><div class="ci-hint">${sl.hint}</div>
         <div class="cl-acts"><label class="btn small">${cbImg[sl.k]?'เปลี่ยนรูป':'ใส่รูป'}<input type="file" accept="image/*" data-ci="${sl.k}" data-max="${sl.max}" hidden></label>${cbImg[sl.k]?`<button type="button" class="btn small ghost" data-ci-del="${sl.k}">ลบ</button>`:''}</div>
@@ -13850,10 +13851,10 @@ async function renderCbImgAdmin(){
   box.querySelectorAll('input[data-ci]').forEach(inp=> inp.onchange = async ()=>{
     const f = inp.files[0]; if(!f) return; const k = inp.dataset.ci; const st = box.querySelector(`[data-ci-st="${k}"]`);
     st.textContent = 'กำลังอัปโหลด...';
-    try{ const img = await resizeImageFile(f, Number(inp.dataset.max)||1000, 0.85); await window.storage.set('shared_cbimg_'+k, img, true); cbImg[k] = img; renderCbImgAdmin(); flashSaved(); }
+    try{ const img = await resizeImageFile(f, Number(inp.dataset.max)||1000, 0.85); await window.storage.set('shared_cbimg_'+k, img, true); cbImg[k] = img; renderCbImgAdmin(box); shopMarkDirty(); flashSaved(); }
     catch(e){ console.error(e); st.textContent = 'อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้ง'; }
   });
-  box.querySelectorAll('[data-ci-del]').forEach(b=> b.onclick = async ()=>{ if(!confirm('ลบรูปนี้ออกจากฟอร์ม?')) return; const k = b.dataset.ciDel; await window.storage.set('shared_cbimg_'+k, '', true); cbImg[k] = ''; renderCbImgAdmin(); });
+  box.querySelectorAll('[data-ci-del]').forEach(b=> b.onclick = async ()=>{ if(!confirm('ลบรูปนี้ออกจากฟอร์ม?')) return; const k = b.dataset.ciDel; await window.storage.set('shared_cbimg_'+k, '', true); cbImg[k] = ''; renderCbImgAdmin(box); shopMarkDirty(); });
   const ns = box.querySelector('#ciQrNoteSave'); if(ns) ns.onclick = async ()=>{ const v = box.querySelector('#ciQrNote').value.trim(); await window.storage.set('shared_cbimg_qrNote', v, true); cbImg.qrNote = v; flashSaved(); };
 }
 // staff: toast when a customer books through the link
@@ -14160,7 +14161,7 @@ function renderShopTab(){
   let host = document.getElementById('shopLayer'); if(!host){ host = document.createElement('div'); host.id = 'shopLayer'; document.body.appendChild(host); }
   if(!host.querySelector('#shopFrame')){
     host.innerHTML = `<div class="shop-frame-wrap"><iframe id="shopFrame" title="ร้านค้า RANGSAN" src="${location.pathname}?shop&embed=1"></iframe></div>
-      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน">${SHOP_ORDERING ? `<button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button>` : ''}<button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="look" aria-label="หน้าร้าน">🎨<span> หน้าร้าน</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
+      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน">${SHOP_ORDERING ? `<button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button>` : ''}<button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="look" aria-label="รูปและพื้นหลัง">🖼<span> รูป & พื้นหลัง</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
     host.querySelectorAll('[data-sa]').forEach(b=> b.onclick = ()=>{ if(b.dataset.sa === 'reload'){ { const f = document.getElementById('shopFrame'); f.src = f.src; } return; } openShopAdmin(b.dataset.sa); });
   }
   shopStaffBadge();
@@ -14170,21 +14171,21 @@ function openShopAdmin(tab, host){
   let ov = host;
   if(!ov){ ov = document.getElementById('shopAdminOv'); if(!ov){ ov = document.createElement('div'); ov.id = 'shopAdminOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); } }
   ov.innerHTML = `<div class="cl-box ${host?'shop-page':''}">${host?'':'<button type="button" class="cl-x" aria-label="ปิด">✕</button>'}<h3>🛍 ร้านค้าออนไลน์</h3>
-    <div class="cl-tabs">${SHOP_ORDERING ? '<button type="button" data-st="orders">📦 ออเดอร์</button>' : ''}<button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="look">🎨 หน้าร้าน</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
+    <div class="cl-tabs">${SHOP_ORDERING ? '<button type="button" data-st="orders">📦 ออเดอร์</button>' : ''}<button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="look">🖼 รูป & พื้นหลัง</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
     <div id="shopAdminBody"><p class="cl-hint">กำลังโหลด...</p></div></div>`;
   if(!host){ ov.style.display = 'flex'; const close = ()=>{ ov.style.display = 'none'; if(ov.dataset.dirty){ delete ov.dataset.dirty; const f = document.getElementById('shopFrame'); if(f) f.src = f.src; } shopStaffBadge(); }; ov.onclick = e=>{ if(e.target === ov) close(); }; ov.querySelector('.cl-x').onclick = close; }
   const show = async t=>{ ov.querySelectorAll('[data-st]').forEach(b=> b.classList.toggle('on', b.dataset.st === t)); try{ localStorage.setItem('rangsan_shop_tab', t); }catch(e){}
     await Promise.all([loadShopProducts(), loadShopOrders()]);
-    if(t === 'products') shopAdminProducts(); else if(t === 'look'){ await loadCbImages(['shopbg','shopPromoT','shopPromoS']); shopAdminLook(); } else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
+    if(t === 'products') shopAdminProducts(); else if(t === 'look'){ await renderImgCenter(document.getElementById('shopAdminBody')); } else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
   ov.querySelectorAll('[data-st]').forEach(b=> b.onclick = ()=> show(b.dataset.st));
   let t0 = tab; try{ t0 = t0 || localStorage.getItem('rangsan_shop_tab') || 'orders'; }catch(e){ t0 = 'orders'; }
   if(!SHOP_ORDERING && t0 === 'orders') t0 = 'products';
   show(t0);
 }
-function shopAdminLook(){
-  const body = document.getElementById('shopAdminBody');
-  const dirty = ()=>{ const o = document.getElementById('shopAdminOv'); if(o) o.dataset.dirty = '1'; };
-  body.innerHTML = `<p class="cl-hint">ตั้งค่าหน้าแรกของร้าน — ส่วน “เซ็ตโปรโมชั่น” จะขึ้นบนสุด ดึงสินค้าจากหมวด <b>เซ็ตโปรโมชั่น</b> อัตโนมัติ</p>
+function shopAdminLook(boxArg){
+  const body = boxArg || document.getElementById('shopAdminBody'); if(!body) return;
+  const dirty = shopMarkDirty;
+  body.innerHTML = `<h3 class="ic-h">🛍 หน้าร้านค้า</h3><p class="cl-hint">ตั้งค่าหน้าแรกของร้าน — ส่วน “เซ็ตโปรโมชั่น” จะขึ้นบนสุด ดึงสินค้าจากหมวด <b>เซ็ตโปรโมชั่น</b> อัตโนมัติ</p>
     <div class="rs-f" style="margin-top:8px;">ภาพพื้นหลังหน้าร้าน</div>
     <div class="sl-bg-prev ${cbImg.shopbg?'':'empty'}">${cbImg.shopbg?`<img src="${cbImg.shopbg}" alt="">`:'<span>ยังไม่มีภาพ — ใช้พื้นสีเขียวเข้มของแบรนด์</span>'}<div class="sl-bg-demo"><small>RANGSAN · PROMOTION</small><b>${cbEsc(cbImg.shopPromoT || 'เซ็ตโปรโมชั่น')}</b></div></div>
     <div class="cl-acts"><label class="btn small">${cbImg.shopbg?'เปลี่ยนภาพ':'ใส่ภาพพื้นหลัง'}<input type="file" accept="image/*" id="slBgFile" hidden></label>${cbImg.shopbg?'<button type="button" class="btn small ghost" id="slBgDel">ลบภาพ</button>':''}</div>
@@ -14193,17 +14194,25 @@ function shopAdminLook(){
     <label class="rs-f">คำอธิบายสั้น<input id="slS" maxlength="90" placeholder="ชุดคุ้มที่คัดมาให้แล้ว ทั้งเปิดร้านและบาร์ที่บ้าน" value="${cbEsc(cbImg.shopPromoS||'')}"></label>
     <div class="cl-acts" style="margin-top:10px;"><button type="button" class="btn small" id="slSave">บันทึกข้อความ</button></div>`;
   body.querySelector('#slBgFile').onchange = async e=>{ const f = e.target.files[0]; if(!f) return;
-    try{ const img = await resizeImageFile(f, 1800, 0.82); await window.storage.set('shared_cbimg_shopbg', img, true); cbImg.shopbg = img; dirty(); flashSaved(); shopAdminLook(); }
+    try{ const img = await resizeImageFile(f, 1800, 0.82); await window.storage.set('shared_cbimg_shopbg', img, true); cbImg.shopbg = img; dirty(); flashSaved(); shopAdminLook(body); }
     catch(err){ console.error(err); alert('อัปโหลดภาพไม่สำเร็จ ลองใหม่อีกครั้ง'); } };
-  const del = body.querySelector('#slBgDel'); if(del) del.onclick = async ()=>{ if(!confirm('ลบภาพพื้นหลังหน้าร้าน?')) return; await window.storage.set('shared_cbimg_shopbg', '', true); cbImg.shopbg = ''; dirty(); shopAdminLook(); };
+  const del = body.querySelector('#slBgDel'); if(del) del.onclick = async ()=>{ if(!confirm('ลบภาพพื้นหลังหน้าร้าน?')) return; await window.storage.set('shared_cbimg_shopbg', '', true); cbImg.shopbg = ''; dirty(); shopAdminLook(body); };
   body.querySelector('#slSave').onclick = async ()=>{ const t = body.querySelector('#slT').value.trim(), sv = body.querySelector('#slS').value.trim();
-    await Promise.all([window.storage.set('shared_cbimg_shopPromoT', t, true), window.storage.set('shared_cbimg_shopPromoS', sv, true)]); cbImg.shopPromoT = t; cbImg.shopPromoS = sv; dirty(); flashSaved(); shopAdminLook(); };
+    await Promise.all([window.storage.set('shared_cbimg_shopPromoT', t, true), window.storage.set('shared_cbimg_shopPromoS', sv, true)]); cbImg.shopPromoT = t; cbImg.shopPromoS = sv; dirty(); flashSaved(); shopAdminLook(body); };
+}
+function shopMarkDirty(){ const o = document.getElementById('shopAdminOv'); if(o) o.dataset.dirty = '1'; }
+async function renderImgCenter(host){
+  if(!host) return;
+  host.innerHTML = `<p class="cl-hint ic-top">รวมรูปภาพและพื้นหลังทั้งหมดไว้ที่นี่ — ทั้งหน้าร้านค้า และฟอร์มจองคอร์ส</p><div class="ic-sec ic-shop"><p class="cl-hint">กำลังโหลด...</p></div><div class="ic-sec ic-form"></div>`;
+  await loadCbImages(['shopbg','shopPromoT','shopPromoS']);
+  shopAdminLook(host.querySelector('.ic-shop'));
+  renderCbImgAdmin(host.querySelector('.ic-form'));
 }
 function shopAdminLink(){
   const body = document.getElementById('shopAdminBody'); const url = shopUrl();
   body.innerHTML = `<p class="cl-hint">${SHOP_ORDERING ? 'ส่งลิงค์นี้ให้ลูกค้าเลือกสินค้า ใส่ตะกร้า และสั่งซื้อเอง ออเดอร์จะเข้าแท็บ 📦 ออเดอร์ และแจ้งเข้ากลุ่ม LINE' : 'ส่งลิงค์นี้ให้ลูกค้าดูแคตตาล็อกสินค้า (โหมดดูอย่างเดียว ยังไม่เปิดสั่งซื้อ)'}</p>
     <div class="hold-url">${cbEsc(url)}</div><div class="cl-acts"><button type="button" class="btn small" id="shLinkCopy">คัดลอก</button><button type="button" class="btn small ghost" id="shLinkLine">ส่ง LINE</button><a class="btn small ghost" href="${url}" target="_blank" rel="noopener">เปิดดู</a></div>
-    <p class="cl-hint" style="margin-top:12px;">QR / ข้อความบัญชี และภาพพื้นหลัง ใช้ชุดเดียวกับฟอร์มจองคอร์ส (ตั้งได้ที่ 🔗 → 🖼 รูปในฟอร์ม)</p>`;
+    <p class="cl-hint" style="margin-top:12px;">QR / ข้อความบัญชี และภาพพื้นหลังทั้งหมด ตั้งได้ที่แท็บ 🖼 รูป & พื้นหลัง</p>`;
   body.querySelector('#shLinkCopy').onclick = e=> navigator.clipboard.writeText(url).then(()=> e.target.textContent = 'คัดลอกแล้ว ✓').catch(()=> prompt('คัดลอกลิงค์นี้', url));
   body.querySelector('#shLinkLine').onclick = ()=> sendTextToLine(`🛍 RANGSAN SHOP — เครื่องชง อุปกรณ์ และวัตถุดิบ\n${SHOP_ORDERING ? 'เลือกสินค้าและสั่งซื้อได้ที่ลิงค์นี้เลยครั' : 'ดูแคตตาล็อกสินค้าได้ที่ลิงค์นี้เลยครั'}บ 👇\n${url}`);
 }
