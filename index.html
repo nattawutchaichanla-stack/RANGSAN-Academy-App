@@ -2048,8 +2048,10 @@
   .shop-staff button{ all:unset; cursor:pointer; position:relative; color:#F3EDE0; font-size:12.5px; font-weight:600; padding:8px 12px; border-radius:999px; white-space:nowrap; }
   .shop-staff button:hover{ background:rgba(255,255,255,.12); }
   .shop-staff i{ font-style:normal; position:absolute; top:-4px; right:-2px; min-width:17px; height:17px; border-radius:9px; background:#C8452D; color:#fff; font-size:10.5px; display:grid; place-items:center; padding:0 4px; }
+  .sh-cat-note{ margin:16px 0 4px; padding:12px 14px; border-radius:12px; background:#F3EDE0; color:#165028; font-size:14px; font-weight:600; text-align:center; }
   @media (max-width:700px){ .shop-staff span{ display:none; } .shop-staff button{ font-size:16px; padding:8px 11px; } }
   #custBook.is-embed .rw-tabs a{ display:none; }
+  #custBook.is-embed .sh-sheet-b{ padding-bottom:80px; }
   #custBook.is-embed .sh-fab{ bottom:76px; }
   #custBook.is-embed .sh-wrap{ padding-bottom:150px; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
@@ -13965,6 +13967,7 @@ function shopRunwayInit(root, onPick, onOpenCat){
 }
 
 // ---------- customer page ----------
+const SHOP_ORDERING = false; // false = แคตตาล็อกดูอย่างเดียว (ไม่มีตะกร้า/สั่งซื้อ)
 async function startShop(){
   document.body.classList.add('cust-mode');
   const root = document.createElement('div'); root.id = 'custBook'; root.classList.add('is-shop'); if(/[?&]embed/.test(location.search)) root.classList.add('is-embed'); document.body.appendChild(root);
@@ -13973,7 +13976,7 @@ async function startShop(){
   loadSharedLineRelayUrl().catch(()=>{});
   await Promise.all([loadShopProducts(), loadCbImages(['qr','qrNote','bg'])]).catch(()=>{});
   const list = ()=> shopProducts.filter(p=> p.active !== false);
-  let cart = []; try{ cart = JSON.parse(localStorage.getItem('rangsan_shop_cart')||'[]'); }catch(e){}
+  let cart = []; if(SHOP_ORDERING){ try{ cart = JSON.parse(localStorage.getItem('rangsan_shop_cart')||'[]'); }catch(e){} } else root.classList.add('is-catalog');
   const saveCart = ()=>{ try{ localStorage.setItem('rangsan_shop_cart', JSON.stringify(cart)); }catch(e){} };
   const st = { cat:'ทั้งหมด', q:'', view:'list', pid:null, done:null };
   const cartQty = ()=> cart.reduce((a,x)=> a + x.qty, 0);
@@ -13981,7 +13984,7 @@ async function startShop(){
   Object.keys(SHOP_BUILTIN_IMG).forEach(id=>{ if(!shopImg[id]) shopImg[id] = SHOP_CUTS[SHOP_BUILTIN_IMG[id]]; });
   const head = `<header class="rw-head"><div class="rs-logo rw-logo" role="img" aria-label="RANGSAN"></div>
     <nav class="rw-tabs"><button type="button" class="on">SHOP</button><a href="${location.pathname}?book=all">คอร์สเรียน</a></nav>
-    <div class="rw-util"><button type="button" id="shSearchBtn" aria-label="ค้นหา">⌕</button><button type="button" id="shHeadCart" aria-label="ตะกร้า">🛒${cartQty()?`<i class="rw-badge">${cartQty()}</i>`:''}</button></div></header>`;
+    <div class="rw-util"><button type="button" id="shSearchBtn" aria-label="ค้นหา">⌕</button>${SHOP_ORDERING ? `<button type="button" id="shHeadCart" aria-label="ตะกร้า">🛒${cartQty()?`<i class="rw-badge">${cartQty()}</i>`:''}</button>` : ''}</div></header>`;
   const render = ()=>{
     if(cbImg.bg){ root.classList.add('has-bg'); if(!root.querySelector('#cbBg')){ const bg = document.createElement('div'); bg.id = 'cbBg'; bg.style.backgroundImage = `url("${cbImg.bg}")`; root.prepend(bg); } }
     const keepBg = root.querySelector('#cbBg');
@@ -14021,8 +14024,8 @@ async function startShop(){
       <div class="sh-price big">${shopMoney(shopPrice(p))}${p.sale && Number(p.sale)<Number(p.price) ? ` <s>${shopMoney(p.price)}</s>` : ''}${p.unit?`<small> / ${cbEsc(p.unit)}</small>`:''}</div>
       ${p.desc ? `<p class="sh-desc">${cbEsc(p.desc).replace(/\n/g,'<br>')}</p>` : ''}
       ${opts.length ? `<div class="cb-ql" style="margin-top:12px;">ตัวเลือก</div><div class="sh-opts">${opts.map((o,i)=>`<button type="button" class="sh-opt ${i===0?'on':''}" data-o="${cbEsc(o)}">${cbEsc(o)}</button>`).join('')}</div>` : ''}
-      <div class="sh-qtyrow"><div class="sh-qty"><button type="button" data-q="-1">−</button><span id="shQty">1</span><button type="button" data-q="1">+</button></div>
-        <button type="button" class="cb-submit is-ready" id="shAdd">ใส่ตะกร้า</button></div></div></div>`;
+      ${SHOP_ORDERING ? `<div class="sh-qtyrow"><div class="sh-qty"><button type="button" data-q="-1">−</button><span id="shQty">1</span><button type="button" data-q="1">+</button></div>
+        <button type="button" class="cb-submit is-ready" id="shAdd">ใส่ตะกร้า</button></div>` : `<p class="sh-cat-note">สนใจสินค้า สอบถามทีมงาน RANGSAN ได้เลย</p>`}</div></div>`;
     root.appendChild(sh);
     let qty = 1, opt = opts[0] || '';
     const close = ()=>{ sh.remove(); st.pid = null; };
@@ -14030,7 +14033,7 @@ async function startShop(){
     sh.querySelector('.sh-x').onclick = close;
     sh.querySelectorAll('.sh-opt').forEach(b=> b.onclick = ()=>{ opt = b.dataset.o; sh.querySelectorAll('.sh-opt').forEach(x=> x.classList.toggle('on', x === b)); });
     sh.querySelectorAll('[data-q]').forEach(b=> b.onclick = ()=>{ qty = Math.max(1, Math.min(99, qty + Number(b.dataset.q))); sh.querySelector('#shQty').textContent = qty; });
-    sh.querySelector('#shAdd').onclick = ()=>{
+    if(sh.querySelector('#shAdd')) sh.querySelector('#shAdd').onclick = ()=>{
       const ex = cart.find(x=> x.id === p.id && (x.opt||'') === opt);
       if(ex) ex.qty += qty; else cart.push({ id:p.id, opt, qty });
       saveCart(); st.pid = null; sh.remove(); render(); rsToast && rsToast(`🛒 เพิ่ม ${cbEsc(p.name)} แล้ว`, 1800);
@@ -14111,7 +14114,7 @@ function renderShopTab(){
   const host = document.getElementById('tab-shop'); if(!host) return;
   if(!host.querySelector('#shopFrame')){
     host.innerHTML = `<div class="shop-frame-wrap"><iframe id="shopFrame" title="ร้านค้า RANGSAN" src="${location.pathname}?shop&embed=1"></iframe></div>
-      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน"><button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button><button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
+      <div class="shop-staff" role="toolbar" aria-label="จัดการร้าน">${SHOP_ORDERING ? `<button type="button" data-sa="orders" aria-label="ออเดอร์">📦<span> ออเดอร์</span><i id="shopStaffN"></i></button>` : ''}<button type="button" data-sa="products" aria-label="สินค้า">🏷<span> สินค้า</span></button><button type="button" data-sa="link" aria-label="ลิงค์ร้าน">🔗<span> ลิงค์</span></button><button type="button" data-sa="reload" aria-label="รีเฟรชหน้าร้าน">↻</button></div>`;
     host.querySelectorAll('[data-sa]').forEach(b=> b.onclick = ()=>{ if(b.dataset.sa === 'reload'){ document.getElementById('shopFrame').contentWindow.location.reload(); return; } openShopAdmin(b.dataset.sa); });
   }
   shopStaffBadge();
@@ -14121,7 +14124,7 @@ function openShopAdmin(tab, host){
   let ov = host;
   if(!ov){ ov = document.getElementById('shopAdminOv'); if(!ov){ ov = document.createElement('div'); ov.id = 'shopAdminOv'; ov.className = 'cl-ov'; document.body.appendChild(ov); } }
   ov.innerHTML = `<div class="cl-box ${host?'shop-page':''}">${host?'':'<button type="button" class="cl-x" aria-label="ปิด">✕</button>'}<h3>🛍 ร้านค้าออนไลน์</h3>
-    <div class="cl-tabs"><button type="button" data-st="orders">📦 ออเดอร์</button><button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
+    <div class="cl-tabs">${SHOP_ORDERING ? '<button type="button" data-st="orders">📦 ออเดอร์</button>' : ''}<button type="button" data-st="products">🏷 สินค้า</button><button type="button" data-st="link">🔗 ลิงค์ร้าน</button></div>
     <div id="shopAdminBody"><p class="cl-hint">กำลังโหลด...</p></div></div>`;
   if(!host){ ov.style.display = 'flex'; const close = ()=>{ ov.style.display = 'none'; if(ov.dataset.dirty){ delete ov.dataset.dirty; const f = document.getElementById('shopFrame'); if(f) f.contentWindow.location.reload(); } shopStaffBadge(); }; ov.onclick = e=>{ if(e.target === ov) close(); }; ov.querySelector('.cl-x').onclick = close; }
   const show = async t=>{ ov.querySelectorAll('[data-st]').forEach(b=> b.classList.toggle('on', b.dataset.st === t)); try{ localStorage.setItem('rangsan_shop_tab', t); }catch(e){}
@@ -14129,15 +14132,16 @@ function openShopAdmin(tab, host){
     if(t === 'products') shopAdminProducts(); else if(t === 'link') shopAdminLink(); else shopAdminOrders(); };
   ov.querySelectorAll('[data-st]').forEach(b=> b.onclick = ()=> show(b.dataset.st));
   let t0 = tab; try{ t0 = t0 || localStorage.getItem('rangsan_shop_tab') || 'orders'; }catch(e){ t0 = 'orders'; }
+  if(!SHOP_ORDERING && t0 === 'orders') t0 = 'products';
   show(t0);
 }
 function shopAdminLink(){
   const body = document.getElementById('shopAdminBody'); const url = shopUrl();
-  body.innerHTML = `<p class="cl-hint">ส่งลิงค์นี้ให้ลูกค้าเลือกสินค้า ใส่ตะกร้า และสั่งซื้อเอง ออเดอร์จะเข้าแท็บ 📦 ออเดอร์ และแจ้งเข้ากลุ่ม LINE</p>
+  body.innerHTML = `<p class="cl-hint">${SHOP_ORDERING ? 'ส่งลิงค์นี้ให้ลูกค้าเลือกสินค้า ใส่ตะกร้า และสั่งซื้อเอง ออเดอร์จะเข้าแท็บ 📦 ออเดอร์ และแจ้งเข้ากลุ่ม LINE' : 'ส่งลิงค์นี้ให้ลูกค้าดูแคตตาล็อกสินค้า (โหมดดูอย่างเดียว ยังไม่เปิดสั่งซื้อ)'}</p>
     <div class="hold-url">${cbEsc(url)}</div><div class="cl-acts"><button type="button" class="btn small" id="shLinkCopy">คัดลอก</button><button type="button" class="btn small ghost" id="shLinkLine">ส่ง LINE</button><a class="btn small ghost" href="${url}" target="_blank" rel="noopener">เปิดดู</a></div>
     <p class="cl-hint" style="margin-top:12px;">QR / ข้อความบัญชี และภาพพื้นหลัง ใช้ชุดเดียวกับฟอร์มจองคอร์ส (ตั้งได้ที่ 🔗 → 🖼 รูปในฟอร์ม)</p>`;
   body.querySelector('#shLinkCopy').onclick = e=> navigator.clipboard.writeText(url).then(()=> e.target.textContent = 'คัดลอกแล้ว ✓').catch(()=> prompt('คัดลอกลิงค์นี้', url));
-  body.querySelector('#shLinkLine').onclick = ()=> sendTextToLine(`🛍 RANGSAN SHOP — เครื่องชง อุปกรณ์ และวัตถุดิบ\nเลือกสินค้าและสั่งซื้อได้ที่ลิงค์นี้เลยครับ 👇\n${url}`);
+  body.querySelector('#shLinkLine').onclick = ()=> sendTextToLine(`🛍 RANGSAN SHOP — เครื่องชง อุปกรณ์ และวัตถุดิบ\n${SHOP_ORDERING ? 'เลือกสินค้าและสั่งซื้อได้ที่ลิงค์นี้เลยครั' : 'ดูแคตตาล็อกสินค้าได้ที่ลิงค์นี้เลยครั'}บ 👇\n${url}`);
 }
 const SHOP_STATUS = { new:['🆕 ใหม่','#DCA73D'], confirmed:['✓ ยืนยันแล้ว','#7FC79A'], shipped:['🚚 ส่งแล้ว','#8FB8E8'], done:['✅ เสร็จ','#A8D5B5'], cancelled:['✕ ยกเลิก','#E0705A'] };
 function shopAdminOrders(){
@@ -14224,7 +14228,7 @@ async function watchShopOrders(){
   try{ await loadShopOrders(); }catch(e){ return; }
   const ids = shopOrders.map(o=> o.id);
   try{ localStorage.setItem('rangsan_shop_seen', JSON.stringify(ids.slice(-300))); }catch(e){}
-  const btn = document.querySelector('#shopAdminBtn .ic'); if(btn){ const n = shopOrders.filter(o=> o.status === 'new').length; btn.dataset.n = n || ''; } shopStaffBadge();
+  const btn = document.querySelector('#shopAdminBtn .ic'); if(btn){ const n = SHOP_ORDERING ? shopOrders.filter(o=> o.status === 'new').length : 0; btn.dataset.n = n || ''; } shopStaffBadge();
   if(!seen) return;
   const fresh = shopOrders.filter(o=> !seen.includes(o.id));
   if(fresh.length) rsToast(`🛍 <b>ออเดอร์ใหม่ ${fresh.length} รายการ</b><br>${fresh.slice(0,3).map(o=> `${cbEsc(o.name)} · ${shopMoney(o.total)}`).join('<br>')}`, 9000);
