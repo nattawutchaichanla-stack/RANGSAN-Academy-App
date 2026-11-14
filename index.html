@@ -2018,8 +2018,8 @@
   .sl-bg-demo{ position:absolute; left:16px; bottom:14px; z-index:1; color:#F3EDE0; display:flex; flex-direction:column; gap:2px; } .sl-bg-demo small{ font-size:9.5px; letter-spacing:.28em; color:#DCA73D; font-weight:700; } .sl-bg-demo b{ font-family:'FC Jong Jaroen','FC Krung Thep',sans-serif; font-weight:400; font-size:26px; }
   .rw-track{ position:relative; }
   html:has(#custBook.is-shop), html:has(#custBook.is-shop) body{ overflow:visible !important; overflow-x:clip !important; height:auto !important; }
-  .rw-pin{ position:sticky; top:52px; display:flex; overflow:hidden; background:#F3EDE0; }
-  .rw-stage{ position:relative; flex:1; min-width:0; overflow:hidden; background:linear-gradient(90deg, #F1EADB 0%, #E7DDC6 62%, #EEE5D2 100%); }
+  .rw-pin{ position:relative; display:flex; overflow:hidden; background:#F3EDE0; }
+  .rw-stage{ position:relative; flex:1; min-width:0; overflow:hidden; touch-action:pan-y; user-select:none; -webkit-user-select:none; background:linear-gradient(90deg, #F1EADB 0%, #E7DDC6 62%, #EEE5D2 100%); }
   .rw-floor{ position:absolute; left:-10%; right:-10%; bottom:0; height:22%; background:linear-gradient(180deg, rgba(11,42,21,0) 0%, rgba(11,42,21,.06) 100%); }
   .rw-copy{ position:absolute; left:clamp(16px,4vw,48px); top:clamp(16px,4vh,40px); z-index:120; max-width:300px; }
   .rw-title{ margin:0 0 10px; font-family:'Fraunces',serif; font-weight:300; font-size:clamp(15px,1.6vw,22px); letter-spacing:.28em; color:#0B2A15; }
@@ -2039,8 +2039,11 @@
   .rw-dots button{ all:unset; cursor:pointer; width:8px; height:8px; border-radius:50%; background:rgba(11,42,21,.2); transition:all .3s; } .rw-dots button.on{ height:22px; border-radius:6px; background:#165028; }
   .rw-hint{ position:absolute; left:50%; transform:translateX(-50%); bottom:8px; z-index:120; font-size:12px; color:#7A6F5E; transition:opacity .4s; white-space:nowrap; }
   .rw-rail{ position:relative; flex:none; width:26%; min-width:220px; max-width:330px; overflow:hidden; background:#FBF8F1; border-left:1px solid #E7DECB; }
-  .rw-rail-in{ will-change:transform; padding:14px 14px 40vh; }
-  .rw-group{ padding-bottom:22px; } .rw-gh{ font-size:11px; letter-spacing:.2em; font-weight:700; color:#B07F1E; margin:4px 2px 10px; }
+  .rw-rail-in{ padding:14px; } .rw-group{ display:none; } .rw-group.on{ display:block; animation:rwIn .35s ease; }
+  .rw-arr{ all:unset; cursor:pointer; position:absolute; top:46%; z-index:130; width:42px; height:42px; border-radius:50%; display:grid; place-items:center; font-size:26px; line-height:1; color:#0B2A15; background:rgba(251,248,241,.85); box-shadow:0 4px 14px rgba(11,42,21,.15); }
+  .rw-arr.prev{ left:12px; } .rw-arr.next{ right:44px; }
+  @media (max-width:759px){ .rw-arr{ width:36px; height:36px; font-size:22px; top:40%; } .rw-arr.next{ right:34px; } }
+  .rw-gh{ font-size:11px; letter-spacing:.2em; font-weight:700; color:#B07F1E; margin:4px 2px 10px; }
   .rw-card{ all:unset; cursor:pointer; display:flex; gap:10px; align-items:center; width:100%; box-sizing:border-box; padding:8px; border-radius:14px; margin-bottom:8px; background:#fff; border:1px solid #EFE7D6; transition:border-color .2s; }
   .rw-card:hover{ border-color:#DCA73D; }
   .rw-pic{ flex:none; width:58px; height:58px; border-radius:10px; background:#F3EDE0; display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden; } .rw-pic img{ max-width:88%; max-height:88%; object-fit:contain; }
@@ -2049,7 +2052,7 @@
   @media (max-width:759px){
     .rw-rail{ display:none; } .rw-dots{ right:10px; } .rw-copy{ max-width:62%; } .rw-blurb{ font-size:12.5px; min-height:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
     .rw-tabs{ gap:12px; font-size:11.5px; } .rw-logo{ width:92px !important; }
-    .rw-pin{ flex-direction:column; } .rw-mob{ display:block; flex:none; padding:10px 16px 8px; background:#FBF8F1; border-top:1px solid #E7DECB; } .rw-mob-row{ display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; padding-bottom:6px; } .rw-mob-row::-webkit-scrollbar{ display:none; }
+    .rw-pin{ flex-direction:column; } .rw-stage{ flex:none; } .rw-fig{ bottom:32%; } .rw-mob{ display:block; flex:none; padding:10px 16px 8px; background:#FBF8F1; border-top:1px solid #E7DECB; } .rw-mob-row{ display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; padding-bottom:6px; } .rw-mob-row::-webkit-scrollbar{ display:none; }
     .rw-mob .rw-card{ flex:0 0 74%; margin:0; }
   }
   /* grid refresh */
@@ -2075,7 +2078,7 @@
   body.shop-tab-open #shopLayer{ display:block; }
   body.shop-tab-open main, body.shop-tab-open #pullRefreshIndicator{ visibility:hidden; }
   body.shop-tab-open{ overflow:hidden; }
-  .shop-frame-wrap{ position:absolute; inset:0; bottom:calc(70px + env(safe-area-inset-bottom)); }
+  .shop-frame-wrap{ position:absolute; inset:0; bottom:calc(70px + env(safe-area-inset-bottom)); overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .shop-frame-wrap iframe{ width:100%; height:100%; border:0; display:block; background:#F3EDE0; }
   .shop-staff{ position:absolute; right:12px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:2; display:flex; gap:4px; padding:5px; border-radius:999px; background:rgba(22,20,16,.86); backdrop-filter:blur(8px); box-shadow:0 6px 20px rgba(0,0,0,.25); }
   .shop-staff button{ all:unset; cursor:pointer; position:relative; color:#F3EDE0; font-size:12.5px; font-weight:600; padding:8px 12px; border-radius:999px; white-space:nowrap; }
@@ -2084,6 +2087,7 @@
   .sh-cat-note{ margin:16px 0 4px; padding:12px 14px; border-radius:12px; background:#F3EDE0; color:#165028; font-size:14px; font-weight:600; text-align:center; }
   @media (max-width:700px){ .shop-staff span{ display:none; } .shop-staff button{ font-size:16px; padding:8px 11px; } }
   #custBook.is-embed .rw-tabs a{ display:none; }
+  #custBook.is-catalog .sh-plus{ display:none; }
   #custBook.is-embed .sh-sheet-b{ padding-bottom:80px; }
   #custBook.is-embed .sh-fab{ bottom:76px; }
   #custBook.is-embed .sh-wrap{ padding-bottom:150px; }
@@ -13933,86 +13937,91 @@ function shopRunwayHTML(){
         <button type="button" class="rw-shop" id="rwShop">ดูสินค้าในคอลเลกชันนี้ →</button>
       </div>
       <div class="rw-dots" id="rwDots">${L.map((_,i)=>`<button type="button" data-go="${i}" aria-label="คอลเลกชัน ${i+1}"></button>`).join('')}</div>
-      <div class="rw-hint" id="rwHint">เลื่อนลงเพื่อดูคอลเลกชันถัดไป ↓</div>
+      <div class="rw-hint" id="rwHint">ปัดซ้าย-ขวา เพื่อดูคอลเลกชันถัดไป</div><button type="button" class="rw-arr prev" id="rwPrev" aria-label="คอลเลกชันก่อนหน้า">‹</button><button type="button" class="rw-arr next" id="rwNext" aria-label="คอลเลกชันถัดไป">›</button>
     </div>
     <aside class="rw-rail" id="rwRail"><div class="rw-rail-in" id="rwRailIn">${L.map((l,i)=>`<div class="rw-group" data-g="${i}"><div class="rw-gh">${String(i+1).padStart(2,'0')} · ${cbEsc(l.en)}</div>${l.pick.map(card).join('')}</div>`).join('')}</div></aside>
     <div class="rw-mob" id="rwMob"></div>
   </div></section>`;
 }
 function shopRunwayInit(root, onPick, onOpenCat){
+  // swipe carousel — no scroll hijacking, works the same inside the app (iframe) and on the public link
   const track = root.querySelector('#rwTrack'); if(!track) return;
   const L = SHOP_LOOKS, n = L.length;
   const pin = track.querySelector('#rwPin'), stage = track.querySelector('#rwStage');
   const figs = [...track.querySelectorAll('.rw-fig')];
-  const roll = track.querySelector('#rwRoll'), railIn = track.querySelector('#rwRailIn'), groups = [...track.querySelectorAll('.rw-group')];
+  const roll = track.querySelector('#rwRoll'), groups = [...track.querySelectorAll('.rw-group')];
   const nameEl = track.querySelector('#rwName'), blurbEl = track.querySelector('#rwBlurb'), hint = track.querySelector('#rwHint');
   const dots = [...track.querySelectorAll('[data-go]')], mob = root.querySelector('#rwMob');
-  let H = 0, step = 0, cur = -1, raf = 0, gh = [], figH = 0, W = 0, wide = false;
+  let W = 0, H = 0, wide = false, p = 0, target = 0, cur = -1, anim = 0, auto = 0, drag = null, touched = false;
   const size = ()=>{
-    const vh = window.innerHeight;
-    const hd = (document.querySelector('.rw-head')||{}).offsetHeight || 52;
-    pin.style.top = hd + 'px';
-    H = Math.round(Math.max(vh - hd, 460));
-    step = Math.round(H * 0.72);
-    pin.style.height = H + 'px';
-    track.style.height = (H + step * (n - 1)) + 'px';
-    // measure once per resize (no layout reads while scrolling)
-    W = stage.clientWidth; wide = window.innerWidth >= 760;
-    const SH = stage.clientHeight || H; figH = Math.min(SH * (wide ? 0.6 : 0.5), wide ? 440 : 280);
+    wide = window.innerWidth >= 760;
+    H = wide ? 540 : 520;
+    stage.style.height = H + 'px';
+    W = stage.clientWidth;
+    const figH = Math.round(H * (wide ? 0.62 : 0.42));
     figs.forEach(f=> f.style.height = figH + 'px');
-    gh = groups.map(g=> g.offsetTop);
   };
-  const rawP = ()=>{ const r = track.getBoundingClientRect(); return Math.max(0, Math.min(n - 1, -r.top / step)); };
-  // each look rests for a band of scroll, then glides to the next — steady without auto-scrolling the page
-  const progress = ()=>{ const p = rawP(), i = Math.floor(p), t = p - i; if(i >= n - 1) return n - 1; const u = Math.max(0, Math.min(1, (t - 0.18) / 0.64)); return i + u * u * (3 - 2 * u); };
   const ease = t=> t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
-  const frame = ()=>{
-    raf = 0;
-    const p = progress();
+  const paint = ()=>{
     const baseX = W * (wide ? 0.56 : 0.5);
     figs.forEach((f, i)=>{
-      const d = i - p;                       // >0 waiting in the queue, <0 walked off
-      let x, y = 0, s, o;
-      if(d >= 0){
-        const k = Math.min(d, 4);
-        s = 1 - k * 0.2; x = baseX - k * W * (wide ? 0.17 : 0.18); y = -k * H * 0.035;
-        o = Math.max(0, 1 - k * 0.28);
-      } else {
-        const k = ease(Math.min(1, -d));
-        s = 1 + k * 0.06; x = baseX + k * W * 0.75; o = 1 - k;
-      }
-      f.style.transform = `translate3d(${x}px, ${y}px, 0) translateX(-50%) scale(${s})`;
+      const d = i - p; let x, y = 0, s, o;
+      if(d >= 0){ const k = Math.min(d, 4); s = 1 - k * 0.2; x = baseX - k * W * (wide ? 0.17 : 0.2); y = -k * H * 0.035; o = Math.max(0, 1 - k * 0.28); }
+      else { const k = ease(Math.min(1, -d)); s = 1 + k * 0.06; x = baseX + k * W * 0.75; o = 1 - k; }
+      f.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translateX(-50%) scale(${s.toFixed(3)})`;
       f.style.opacity = o.toFixed(3);
       const z = String(100 - Math.round(Math.max(0, d) * 10)); if(f.style.zIndex !== z) f.style.zIndex = z;
       const pe = Math.abs(d) < 0.5 ? 'auto' : 'none'; if(f.style.pointerEvents !== pe) f.style.pointerEvents = pe;
       f.classList.toggle('far', d >= 0.5);
     });
     roll.style.transform = `translateY(${-p}em)`;
-    if(railIn && gh.length){ const i0 = Math.floor(p), t = p - i0; const y = gh[i0] + ((gh[Math.min(n-1, i0+1)] - gh[i0]) * t); railIn.style.transform = `translateY(${-y}px)`; }
-    const idx = Math.round(p);
-    const ho = p < 0.15 ? '1' : '0'; if(hint.style.opacity !== ho) hint.style.opacity = ho;
+    const idx = Math.max(0, Math.min(n - 1, Math.round(p)));
     if(idx !== cur){
       cur = idx;
       nameEl.textContent = L[idx].t; blurbEl.textContent = L[idx].blurb;
       nameEl.classList.remove('in'); void nameEl.offsetWidth; nameEl.classList.add('in');
       dots.forEach((d,k)=> d.classList.toggle('on', k === idx));
+      groups.forEach((g,k)=> g.classList.toggle('on', k === idx));
       if(mob){ mob.innerHTML = `<div class="rw-gh">${String(idx+1).padStart(2,'0')} · ${cbEsc(L[idx].en)}</div><div class="rw-mob-row">${groups[idx] ? [...groups[idx].querySelectorAll('.rw-card')].map(c=> c.outerHTML).join('') : ''}</div>`;
         mob.querySelectorAll('[data-pid]').forEach(b=> b.onclick = ()=> onPick(b.dataset.pid)); }
     }
   };
-  const go = i=>{ const top = track.getBoundingClientRect().top + window.scrollY + i * step + (i < n - 1 ? step * 0.05 : 0); window.scrollTo({ top, behavior:'smooth' }); };
-  const onScroll = ()=>{
-    if(!document.body.contains(track)){ window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); return; }
-    if(!raf) raf = requestAnimationFrame(frame);
+  const tick = ()=>{
+    anim = 0;
+    if(!document.body.contains(track)){ clearInterval(auto); window.removeEventListener('resize', onResize); return; }
+    const dp = target - p;
+    if(Math.abs(dp) < 0.002){ p = target; paint(); return; }
+    p += dp * 0.16; paint(); anim = requestAnimationFrame(tick);
   };
-  let rz = 0; const onResize = ()=>{ clearTimeout(rz); rz = setTimeout(()=>{ size(); frame(); }, 120); };
-  window.addEventListener('scroll', onScroll, { passive:true });
+  const kick = ()=>{ if(!anim) anim = requestAnimationFrame(tick); };
+  const goTo = i=>{ target = ((i % n) + n) % n; kick(); };
+  const hold = ()=>{ touched = true; if(hint) hint.style.opacity = '0'; clearInterval(auto); auto = setInterval(()=>{ if(!drag) goTo(Math.round(target) + 1); }, 9000); };
+  // swipe (horizontal); vertical moves are left to the page
+  stage.addEventListener('pointerdown', e=>{ if(e.pointerType === 'mouse' && e.button !== 0) return; drag = { x:e.clientX, y:e.clientY, p0:target, t:performance.now(), on:false }; });
+  stage.addEventListener('pointermove', e=>{
+    if(!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if(!drag.on){ if(Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return; drag.on = true; hold(); try{ stage.setPointerCapture(e.pointerId); }catch(_){} }
+    target = Math.max(-0.35, Math.min(n - 0.65, drag.p0 - dx / (W * 0.55))); p = target; paint();
+  });
+  const end = e=>{
+    if(!drag) return; const d = drag; drag = null; if(!d.on) return;
+    const dx = (e && e.clientX != null ? e.clientX : d.x) - d.x, v = dx / Math.max(1, performance.now() - d.t);
+    let to = Math.round(target); if(Math.abs(v) > 0.35 && Math.round(target) === Math.round(d.p0)) to = Math.round(d.p0) + (dx < 0 ? 1 : -1);
+    target = Math.max(0, Math.min(n - 1, to)); kick();
+    stage.dataset.dragged = '1'; setTimeout(()=>{ delete stage.dataset.dragged; }, 60);
+  };
+  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+  let rz = 0; const onResize = ()=>{ clearTimeout(rz); rz = setTimeout(()=>{ size(); paint(); }, 120); };
   window.addEventListener('resize', onResize);
-  figs.forEach((f,i)=> f.onclick = ()=> onOpenCat(L[i].cat));
-  dots.forEach(d=> d.onclick = ()=> go(+d.dataset.go));
+  figs.forEach((f,i)=> f.onclick = ()=>{ if(stage.dataset.dragged) return; onOpenCat(L[i].cat); });
+  dots.forEach(d=> d.onclick = ()=>{ hold(); goTo(+d.dataset.go); });
+  const pv = track.querySelector('#rwPrev'), nx = track.querySelector('#rwNext');
+  if(pv) pv.onclick = ()=>{ hold(); goTo(Math.round(target) - 1); };
+  if(nx) nx.onclick = ()=>{ hold(); goTo(Math.round(target) + 1); };
   track.querySelector('#rwShop').onclick = ()=> onOpenCat(L[Math.max(0,cur)].cat);
   track.querySelectorAll('.rw-rail [data-pid]').forEach(b=> b.onclick = ()=> onPick(b.dataset.pid));
-  size(); frame();
+  size(); paint();
+  auto = setInterval(()=>{ if(!drag && !touched) goTo(Math.round(target) + 1); }, 6000);
 }
 
 // ---------- customer page ----------
