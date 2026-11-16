@@ -2191,6 +2191,8 @@
   #custBook.is-shop .sh-x{ background:#fff; color:#0B0A08; }
   #custBook.is-shop .rw-head{ border-bottom:1px solid rgba(255,255,255,.14); }
 
+  .rf-warn{ border:1.5px solid #E0A33A !important; margin-bottom:10px; } .rf-um{ padding:10px 0; border-top:1px dashed rgba(150,120,60,.35); } .rf-um small{ opacity:.7; font-weight:400; }
+  .rf-um-f{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; } .rf-um-f input, .rf-um-f select{ font:inherit; font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid #CFC4AE; background:#fff; color:#2A241A; max-width:100%; } .rf-um-f select{ flex:1; min-width:160px; }
   .tap-busy{ opacity:.55 !important; transition:opacity .15s; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
@@ -4698,6 +4700,31 @@ function extractGid(url){
   const m = url.match(/[#&]gid=(\d+)/);
   return m ? m[1] : null;
 }
+function noCacheUrl(u){ return u + (u.includes('?') ? '&' : '?') + '_ts=' + Date.now(); } // Google caches published CSVs — ask for a fresh copy
+// Forms with a separate section per course write the same question into several columns
+// (e.g. one "วันที่เข้าร่วม" column per course). Merge them so each row's first column of that kind
+// holds whichever one the person actually filled — otherwise people who answered in a later section were silently skipped.
+function parseFormCSV(text){
+  const rows = parseCSV(text);
+  if(rows.length < 2) return rows;
+  const H = rows[0];
+  const groups = [
+    h=> h.includes('วันที่คุณจะเข้าร่วม') || h.includes('วันที่เข้าร่วม') || /วันที่.*(เรียน|อบรม|จอง)/.test(h),
+    h=> h.includes('คอร์ส') && !h.includes('วันที่'),
+    h=> h.includes('เบอร์โทร'),
+    h=> h.includes('LINE'),
+    h=> h.includes('ชื่อ - นามสกุล (ภาษาไทย)'),
+  ];
+  groups.forEach(test=>{
+    const idx = H.map((h,i)=> test(h||'') ? i : -1).filter(i=> i >= 0);
+    if(idx.length < 2) return;
+    for(let r=1; r<rows.length; r++){
+      const row = rows[r]; if((row[idx[0]]||'').trim()) continue;
+      const k = idx.find(i=> (row[i]||'').trim()); if(k != null) row[idx[0]] = row[k];
+    }
+  });
+  return rows;
+}
 function buildSheetCsvUrl(url){
   if(!url) return null;
   // "Publish to web" links (contain /d/e/<longid>/pub) are the most CORS-reliable — use as-is, just force CSV output
@@ -4744,11 +4771,11 @@ async function loadRegistrationList(filterRowId, listBoxId){
     return;
   }
   try{
-    const res = await fetch(csvUrl);
+    const res = await fetch(noCacheUrl(csvUrl), { cache:'no-store' });
     if(!res.ok) throw new Error('status ' + res.status);
     const text = await res.text();
     if(text.trim().startsWith('<')) throw new Error('sheet not public');
-    const rows = parseCSV(text);
+    const rows = parseFormCSV(text);
     if(rows.length < 2){
       box.innerHTML = `<div style="text-align:center; color:#948a78; padding:16px; font-size:12.5px;">ยังไม่มีข้อมูลผู้ลงทะเบียน</div>`;
       return;
@@ -5207,7 +5234,11 @@ function matchCourseIdFromText(text){
   if(t.includes('specialty')) return state.courses.find(c=> c.name.includes('Specialty'))?.id || null;
   if(t.includes('workshop') || t.includes('group')) return state.courses.find(c=> c.name.includes('Workshop') || c.name.includes('Group'))?.id || null;
   if(t.includes('latte art')) return state.courses.find(c=> c.name.includes('Latte Art'))?.id || state.courses[0]?.id || null;
-  return null;
+  // last resort: the course whose name shares the most words with the form answer
+  const words = c=> c.name.replace(/^คอร์ส\s*\d+\s*:\s*/,'').toLowerCase().split(/[\s+&()\/—–\-·,]+/).filter(w=> w.length >= 3);
+  let best = null, bestScore = 0;
+  (state.courses||[]).forEach(c=>{ const sc = words(c).filter(w=> t.includes(w)).length; if(sc > bestScore){ best = c; bestScore = sc; } });
+  return bestScore >= 2 ? best.id : null;
 }
 // age from the registration form — works with an "อายุ" answer (25 / 25 ปี / 25-34 ปี)
 // or a birth date / birth year (Thai Buddhist years like 2540 are converted automatically)
@@ -5238,13 +5269,31 @@ function ageFromRow(r, cols){
   }
   return '';
 }
+const TH_MONTHS = ['ม.ค','ก.พ','มี.ค','เม.ย','พ.ค','มิ.ย','ก.ค','ส.ค','ก.ย','ต.ค','พ.ย','ธ.ค'];
+const TH_MONTHS_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const EN_MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 function parseThaiFormDate(text){
-  // expects formats like "10/7/2026" (D/M/YYYY, Gregorian year as entered by Google Forms date field)
+  // accepts what Google Forms/Sheets produce in different locales:
+  // 17/11/2026 · 17-11-2026 · 11/17/2026 (US) · 2026-11-17 · 17/11/2569 (พ.ศ.) · 17 พ.ย. 2569 · 17 พฤศจิกายน 2026 · Nov 17, 2026
   if(!text) return null;
-  const m = text.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(!m) return null;
-  const [, d, mo, y] = m;
-  return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  const t = String(text).trim();
+  const out = (y, mo, d)=>{
+    y = +y; mo = +mo; d = +d;
+    if(y < 100) y += 2000;
+    if(y > 2400) y -= 543;                       // Buddhist year
+    if(mo > 12 && d <= 12){ const x = mo; mo = d; d = x; } // US order (M/D/YYYY)
+    const dt = new Date(y, mo - 1, d);
+    if(!(mo >= 1 && mo <= 12 && d >= 1 && d <= 31) || dt.getMonth() !== mo - 1) return null;
+    return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  };
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return out(m[1], m[2], m[3]);
+  m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){ const a = +m[1], b = +m[2]; return a <= 12 && b > 12 ? out(m[3], a, b) : out(m[3], b, a); }
+  m = t.match(/(\d{1,2})\s*([ก-๙.]+)\s*(\d{4})/);
+  if(m){ const w = m[2].replace(/\.$/,''); let mi = TH_MONTHS_FULL.findIndex(x=> w.startsWith(x)); if(mi < 0) mi = TH_MONTHS.findIndex(x=> w.replace(/\./g,'') === x.replace(/\./g,'')); if(mi >= 0) return out(m[3], mi + 1, m[1]); }
+  m = t.toLowerCase().match(/([a-z]{3})[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})/); if(m){ const mi = EN_MONTHS.indexOf(m[1]); if(mi >= 0) return out(m[3], mi + 1, m[2]); }
+  m = t.toLowerCase().match(/(\d{1,2})\s+([a-z]{3})[a-z]*\.?,?\s+(\d{4})/); if(m){ const mi = EN_MONTHS.indexOf(m[2]); if(mi >= 0) return out(m[3], mi + 1, m[1]); }
+  return null;
 }
 let ageBackfillDone = false;
 async function backfillAgesFromForm(){
@@ -5257,9 +5306,9 @@ async function backfillAgesFromForm(){
   try{
     const csvUrl = buildSheetCsvUrl(sharedEvalFormUrl);
     if(!csvUrl) return;
-    const res = await fetch(csvUrl); if(!res.ok) return;
+    const res = await fetch(noCacheUrl(csvUrl), { cache:'no-store' }); if(!res.ok) return;
     const text = await res.text(); if(text.trim().startsWith('<')) return;
-    const rows = parseCSV(text); if(rows.length < 2) return;
+    const rows = parseFormCSV(text); if(rows.length < 2) return;
     const headers = rows[0];
     const ageCols = findAgeCols(headers);
     if(ageCols.ageIdx < 0 && ageCols.birthIdx < 0) return; // the form doesn't ask for age
@@ -5409,7 +5458,8 @@ function startFormLiveSync(){
 function renderRegFeed(){
   const box = document.getElementById('regFeedSection');
   if(!box) return;
-  if(!regFeedCache || !regFeedCache.rows.length){ box.innerHTML = ''; return; }
+  const umHTML = regUnmatchedHTML();
+  if(!regFeedCache || !regFeedCache.rows.length){ box.innerHTML = umHTML; if(umHTML) bindRegUnmatched(box); return; }
   const rows = regFeedCache.rows;
   const now = new Date(), startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const week = new Date(now.getTime() - 7*86400000);
@@ -5432,7 +5482,7 @@ function renderRegFeed(){
   const expanded = box.dataset.expanded === '1';
   const list = recent.slice(0, expanded ? 40 : 6);
   const issues = rows.filter(r=> flagsOf(r)).length;
-  box.innerHTML = `<div class="rf-card">
+  box.innerHTML = umHTML + `<div class="rf-card">
     <div class="rf-head">
       <div><div class="rf-title">📥 ผู้สมัครผ่านฟอร์ม</div>
         <div class="rf-sub">วันนี้ <b>+${today}</b> · 7 วัน <b>+${last7}</b> · ทั้งหมด ${rows.length} · อัปเดต ${regFeedCache.fetchedAt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} <span class="rf-live">● อัตโนมัติทุก 1 นาที</span></div></div>
@@ -5452,6 +5502,51 @@ function renderRegFeed(){
   </div>`;
   const more = document.getElementById('rfMoreBtn');
   if(more) more.onclick = ()=>{ box.dataset.expanded = expanded ? '' : '1'; renderRegFeed(); };
+  if(umHTML) bindRegUnmatched(box);
+}
+let regUnmatchedCache = [];
+function formRowSig(name, phone, rawDate, courseText, ts){ return [name, phone, rawDate, courseText, ts].map(x=> String(x||'').trim()).join('|'); }
+function regUnmatchedHTML(){
+  const list = (regUnmatchedCache||[]).filter(u=> !sharedBookings.some(b=> b.formRowSig === u.sig));
+  if(!list.length) return '';
+  const opts = sel=> state.courses.map(c=> `<option value="${c.id}" ${c.id===sel?'selected':''}>${cbEsc(c.name.replace(/^คอร์ส\s*\d+:\s*/,''))}</option>`).join('');
+  return `<div class="rf-card rf-warn"><div class="rf-title">⚠️ กรอกฟอร์มมาแล้ว แต่ยังไม่เข้าแอพ ${list.length} รายการ</div>
+    <div class="rf-sub">ระบบอ่านวันที่หรือคอร์สจากคำตอบไม่ได้ — เลือกให้ถูกแล้วกด “นำเข้า” ได้เลย</div>
+    ${list.map((u,i)=> `<div class="rf-um" data-i="${i}">
+      <div class="rf-name">${cbEsc(u.name || '(ไม่มีชื่อ)')}${u.phone ? ` <small>${cbEsc(u.phone)}</small>` : ''} <span class="rf-flag">${u.reason}</span></div>
+      <div class="rf-meta">คำตอบในฟอร์ม: วันที่ “${cbEsc(u.rawDate||'-')}” · คอร์ส “${cbEsc((u.courseText||'-').slice(0,60))}”${u.submitted ? ` · กรอกเมื่อ ${fmtTimeTH(u.submitted)}` : ''}</div>
+      <div class="rf-um-f"><input type="date" class="rf-um-d" value="${u.iso||''}"><select class="rf-um-c"><option value="">— เลือกคอร์ส —</option>${opts(u.courseId)}</select><button type="button" class="btn small rf-um-go">นำเข้า</button></div>
+    </div>`).join('')}</div>`;
+}
+function bindRegUnmatched(box){
+  const list = (regUnmatchedCache||[]).filter(u=> !sharedBookings.some(b=> b.formRowSig === u.sig));
+  box.querySelectorAll('.rf-um').forEach(el=>{
+    const u = list[+el.dataset.i]; if(!u) return;
+    el.querySelector('.rf-um-go').onclick = async ()=>{
+      const iso = el.querySelector('.rf-um-d').value, courseId = el.querySelector('.rf-um-c').value;
+      if(!iso || !courseId){ alert('เลือกวันที่และคอร์สก่อนครับ'); return; }
+      if(!u.name){ alert('รายการนี้ไม่มีชื่อในฟอร์ม'); return; }
+      const syncKey = `form_${u.name}_${iso}_${courseId}`;
+      criticalOpInProgress = true;
+      try{
+        await loadSharedBookings();
+        if(!sharedBookings.some(b=> b.syncKey === syncKey)){
+          const x = u.extra || {};
+          sharedBookings.push({ date: iso, courseId, instructor:'ยังไม่ระบุ',
+            note:`จากฟอร์มลงทะเบียน: ${u.name}${u.phone ? ' · '+u.phone : ''}${u.line ? ' · LINE: '+u.line : ''}`,
+            allergy:x.allergy||'', occupation:x.occupation||'', income:x.income||'', province:x.province||'', basicKnowledge:x.basicKnowledge||'', equipment:x.equipment||'', goal:x.goal||'', topics:x.topics||'', photoConsent:x.photoConsent||'', age:x.age||'',
+            customerName:u.name, customerNameEn:x.nameEn||'', customerPhone:u.phone||'', customerLine:u.line||'',
+            source:'google_form_manual', formRowSig:u.sig, syncKey, taught:false });
+          await saveSharedBookings();
+        } else {
+          const b = sharedBookings.find(b=> b.syncKey === syncKey); if(b && !b.formRowSig){ b.formRowSig = u.sig; await saveSharedBookings(); }
+        }
+        flashSaved('นำเข้าแล้ว ✓');
+      }catch(e){ console.error(e); alert('นำเข้าไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+      finally{ criticalOpInProgress = false; }
+      try{ renderRegFeed(); renderLogTab(); }catch(e){}
+    };
+  });
 }
 async function syncBookingsFromGoogleForm(){
   if(!sharedEvalFormUrl) return { error: 'ยังไม่ได้ตั้งค่าลิงก์ชีทลงทะเบียน' };
@@ -5461,11 +5556,11 @@ async function syncBookingsFromGoogleForm(){
   try{
     // work from the freshest shared list, so another device's recent change isn't overwritten
     try{ await loadSharedBookings(); }catch(e){}
-    const res = await fetch(csvUrl);
+    const res = await fetch(noCacheUrl(csvUrl), { cache:'no-store' });
     if(!res.ok) throw new Error('status ' + res.status);
     const text = await res.text();
     if(text.trim().startsWith('<')) throw new Error('sheet not public');
-    const rows = parseCSV(text);
+    const rows = parseFormCSV(text);
     if(rows.length < 2) return { added:0, skipped:0, unmatched:0 };
     const headers = rows[0];
     const dataRows = rows.slice(1).filter(r=> r.some(c=>c && c.trim()));
@@ -5490,7 +5585,7 @@ async function syncBookingsFromGoogleForm(){
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
     let added = 0, skipped = 0, unmatched = 0, enriched = 0;
-    const addedList = [], liveKeys = new Set(), feedRows = [];
+    const addedList = [], liveKeys = new Set(), feedRows = [], unmatchedRows = [];
 
     dataRows.forEach(r=>{
       const courseText = courseIdx>=0 ? r[courseIdx] : '';
@@ -5516,7 +5611,16 @@ async function syncBookingsFromGoogleForm(){
       const nameEn = enNameIdx>=0 ? (r[enNameIdx]||'').trim() : '';
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
-      if(!isoDate || !courseId || !name){ if(courseText || name) unmatched++; return; }
+      if(!isoDate || !courseId || !name){
+        if(courseText || name){
+          unmatched++;
+          const sig = formRowSig(name, phone, rawDate, courseText, r[0]);
+          if(!sharedBookings.some(b=> b.formRowSig === sig)) unmatchedRows.push({ sig, name:(name||'').trim(), phone, line, rawDate, courseText, iso:isoDate, courseId, submitted: parseFormTimestamp(r[0]),
+            reason: !name ? 'ไม่มีชื่อ' : !isoDate ? 'อ่านวันที่ไม่ออก' : 'จับคู่คอร์สไม่ได้',
+            extra:{ allergy, occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent, age, nameEn } });
+        }
+        return;
+      }
 
       const syncKey = `form_${name.trim()}_${isoDate}_${courseId}`;
       liveKeys.add(syncKey);
@@ -5580,6 +5684,7 @@ async function syncBookingsFromGoogleForm(){
     }
 
     regFeedCache = { rows: feedRows, fetchedAt: new Date() };
+    regUnmatchedCache = unmatchedRows;
     if(added > 0 || enriched > 0 || removedList.length) await saveSharedBookings();
     return { added, skipped, unmatched, enriched, addedList, removedList, removalSkipped };
   }catch(err){
@@ -6146,6 +6251,7 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden && saveTi
 const TAP_GUARD_RE = /ยืนยัน|บันทึก|ตกลง|ส่ง|สร้าง|ลบ|อนุมัติ|ชำระ|ปิดคลาส|เช็คอิน|นำเข้า|Save|Confirm/i;
 document.addEventListener('click', e=>{
   const b = e.target.closest && e.target.closest('button, .btn, .btn-arrow, .cb-submit, [role="button"]'); if(!b) return;
+  if(b.closest('.bottomnav, .tabs, .cl-tabs, [data-tab], [data-st], [data-cltab]')) return; // tab switches aren't saves
   const label = (b.textContent || '').replace(/\s+/g,' ').trim();
   if(!label || label.length > 48 || !TAP_GUARD_RE.test(label)) return;
   const now = Date.now();
