@@ -4855,12 +4855,13 @@ function renderRegistrationList(listBoxId){
     const inp = box.querySelector('.reg-daypick input'); if(inp) inp.onchange = ()=>{ if(inp.value) go(inp.value); };
     const al = box.querySelector('.reg-dayall'); if(al) al.onclick = ()=> go(selDay === 'all' ? null : 'all');
   };
+  const umTop = regUnmatchedHTML();
   if(!rows.length){
-    box.innerHTML = dayBar + `<div style="text-align:center; color:#948a78; padding:16px; font-size:13px;">${selDay==='all' ? 'ไม่มีรายการที่ยังไม่ยืนยันสอน ✓' : 'ไม่มีผู้เรียนที่ยังไม่ยืนยันในวันนี้'}</div>`;
-    bindDayBar();
+    box.innerHTML = umTop + dayBar + `<div style="text-align:center; color:#948a78; padding:16px; font-size:13px;">${selDay==='all' ? 'ไม่มีรายการที่ยังไม่ยืนยันสอน ✓' : 'ไม่มีผู้เรียนที่ยังไม่ยืนยันในวันนี้'}</div>`;
+    bindDayBar(); if(umTop) bindRegUnmatched(box);
     return;
   }
-  box.innerHTML = dayBar + `
+  box.innerHTML = umTop + dayBar + `
     <p class="hint" style="margin-bottom:8px;">${selDay==='all' ? 'ทุกวัน · ' : ''}ยังไม่ยืนยันสอน ${pendingTotal} คน${pendingTotal>rows.length?` (แสดง ${rows.length} ล่าสุด)`:''} · เรียงจากสมัครล่าสุด${sharedCancelled.length?` · <button type="button" class="reg-link" data-reg-cancelled>ดูที่ยกเลิก (${sharedCancelled.length})</button>`:''}</p>
     ${rows.map(r=>{
       const name = nameIdx>=0 ? r[nameIdx] : '-';
@@ -4885,7 +4886,7 @@ function renderRegistrationList(listBoxId){
           <span class="reg-name" style="font-weight:700; font-size:13px;">${name||'-'}${(()=>{ const en = regRowsCache.enNameIdx>=0 ? (r[regRowsCache.enNameIdx]||'').trim() : ''; return en ? `<span class="name-en">${en}</span>` : ''; })()}</span>
           <span style="font-size:11px; color:var(--gold); font-weight:700; flex:none; text-align:right;">${bk && bk.dateMovedFrom
             ? `🗓️ ${rsThDate(bk.date)}${bk.startTime?` ${bk.startTime}`:''}<span class="reg-moved">เลื่อนจาก ${joinDate || rsThDate(bk.dateMovedFrom)}</span>`
-            : (joinDate ? `🗓️ ${joinDate}` : 'ไม่ระบุวันเข้าร่วม')}</span>
+            : (joinDate ? `🗓️ ${joinDate}` : bk && bk.date ? `🗓️ ${rsThDate(bk.date)}${bk.startTime?` ${bk.startTime}`:''}` : 'ไม่ระบุวันเข้าร่วม')}</span>
         </div>
         ${vip}
         <div class="reg-course" style="font-size:11.5px; margin-top:2px;">${course||'-'}${(()=>{ const a = ageFromRow(r, regRowsCache.ageCols); return a ? ` · <span class="reg-age">อายุ ${a}</span>` : ''; })()}</div>
@@ -4900,6 +4901,7 @@ function renderRegistrationList(listBoxId){
     btn.onclick = ()=> confirmTaughtFromRegistration(regRowsCache.dataRows[+btn.dataset.row], btn, box.id);
   });
   bindDayBar();
+  if(umTop) bindRegUnmatched(box);
   box.querySelectorAll('[data-reg-cancel]').forEach(btn=> btn.onclick = ()=> regCancel(regRowsCache.dataRows[+btn.dataset.regCancel], btn, box.id));
   const cl = box.querySelector('[data-reg-cancelled]'); if(cl) cl.onclick = ()=> openCancelledList(box.id);
   box.querySelectorAll('[data-reg-edit]').forEach(btn=> btn.onclick = ()=> regEditDate(regRowsCache.dataRows[+btn.dataset.regEdit], btn, box.id));
@@ -5177,7 +5179,8 @@ function regKeyForRow(r){
   const name = nameIdx>=0 ? (r[nameIdx]||'').trim() : '';
   const iso = dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null;
   const courseId = matchCourseIdFromText(courseIdx>=0 ? r[courseIdx] : '');
-  return (name && iso && courseId) ? `form_${name}_${iso}_${courseId}` : null;
+  if(name && iso && courseId) return `form_${name}_${iso}_${courseId}`;
+  const b = regBookingForRow(r); return b ? b.syncKey : null;
 }
 function regBookingForRow(r){
   if(!regRowsCache || !r) return null;
@@ -5185,9 +5188,10 @@ function regBookingForRow(r){
   const name = nameIdx>=0 ? (r[nameIdx]||'').trim() : '';
   const iso = dateIdx>=0 ? parseThaiFormDate(r[dateIdx]) : null;
   const courseId = matchCourseIdFromText(courseIdx>=0 ? r[courseIdx] : '');
-  if(!name || !iso || !courseId) return null;
+  const bySig = ()=>{ const { phoneIdx } = regRowsCache; const sig = formRowSig(name, phoneIdx>=0 ? r[phoneIdx] : '', dateIdx>=0 ? r[dateIdx] : '', courseIdx>=0 ? r[courseIdx] : '', r[0]); return sharedBookings.find(b=> b.formRowSig === sig) || null; };
+  if(!name || !iso || !courseId) return name ? bySig() : null; // rows imported by hand (no date / unknown course in the form)
   const key = `form_${name}_${iso}_${courseId}`;
-  return sharedBookings.find(b=> b.syncKey === key) || null;
+  return sharedBookings.find(b=> b.syncKey === key) || bySig();
 }
 async function confirmTaughtFromRegistration(r, btn, boxId){
   if(!r) return;
@@ -5427,10 +5431,14 @@ function rsToast(html, ms){
   clearTimeout(t._h); t._h = setTimeout(()=> t.classList.remove('show'), ms || 9000);
 }
 const fmtTimeTH = d => d ? d.toLocaleString('th-TH',{day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : '-';
+let formSyncRetry = 0;
 async function runFormLiveSync(){
   if(document.hidden || !currentUser) return;
-  if(typeof isUserBusy === 'function' && isUserBusy()) return;
-  if(criticalOpInProgress) return;
+  // the form sync reloads the shared list itself before merging, so a save that just finished isn't a reason to wait —
+  // only an upload still in flight / open dialog / typing is. If busy, try again in a few seconds instead of a whole minute.
+  isUserBusy.lite = true; const busy = isUserBusy() || criticalOpInProgress; isUserBusy.lite = false;
+  if(busy){ if(formSyncRetry++ < 10) setTimeout(runFormLiveSync, 4000); return; }
+  formSyncRetry = 0;
   if(!sharedEvalFormUrl){ try{ const r = await window.storage.get('shared_eval_form_url', true); sharedEvalFormUrl = (r && r.value) || ''; }catch(e){} }
   if(!sharedEvalFormUrl) return;
   const res = await syncBookingsFromGoogleForm();
@@ -5545,6 +5553,7 @@ function bindRegUnmatched(box){
       }catch(e){ console.error(e); alert('นำเข้าไม่สำเร็จ ลองใหม่อีกครั้ง'); }
       finally{ criticalOpInProgress = false; }
       try{ renderRegFeed(); renderLogTab(); }catch(e){}
+      try{ ['regListBox','profileRegListBox'].forEach(id=>{ if(document.getElementById(id)) renderRegistrationList(id); }); }catch(e){}
     };
   });
 }
@@ -11120,7 +11129,8 @@ function renderLogTab(){
     } else {
       banner.style.background = 'var(--sage-soft)';
       banner.style.color = 'var(--ink)';
-      banner.innerHTML = `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ${result.removedList && result.removedList.length ? ` · ลบตามฟอร์ม <b>${result.removedList.length}</b> รายการ` : ''} · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.enriched ? ` · เติมข้อมูลเพิ่มให้ ${result.enriched} รายการเดิม` : ''}${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
+      try{ renderRegFeed(); }catch(e){}
+      banner.innerHTML = (regUnmatchedHTML() ? `⚠️ มี <b>${(regUnmatchedCache||[]).filter(u=> !sharedBookings.some(b=> b.formRowSig === u.sig)).length}</b> รายการที่ต้องใส่วันเรียน/คอร์สเอง (กล่องสีส้มด้านล่าง) · ` : '') + `✓ ซิงค์เสร็จแล้ว — เพิ่มคิวใหม่ <b>${result.added}</b> รายการ${result.removedList && result.removedList.length ? ` · ลบตามฟอร์ม <b>${result.removedList.length}</b> รายการ` : ''} · ข้าม (มีอยู่แล้ว) ${result.skipped} รายการ${result.enriched ? ` · เติมข้อมูลเพิ่มให้ ${result.enriched} รายการเดิม` : ''}${result.unmatched ? ` · จับคู่คอร์สไม่ได้ ${result.unmatched} รายการ` : ''}`;
     }
   };
 
@@ -13239,7 +13249,8 @@ function isUserBusy(){
   // don't yank the screen out from under someone mid-typing, mid-modal, or mid-save
   if(criticalOpInProgress) return true;
   // a save is queued / uploading / just finished — pulling from the server now could undo it on screen
-  if(saveTimer || saveInFlight || __pendingWrites > 0 || Date.now() - __lastWriteAt < 6000) return true;
+  if(saveTimer || saveInFlight || __pendingWrites > 0) return true;
+  if(!isUserBusy.lite && Date.now() - __lastWriteAt < 6000) return true;
   if(document.querySelector('.modal-overlay.open')) return true;
   const el = document.activeElement;
   if(el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.tagName==='SELECT')) return true;
