@@ -4718,9 +4718,9 @@ function parseFormCSV(text){
   groups.forEach(test=>{
     const idx = H.map((h,i)=> test(h||'') ? i : -1).filter(i=> i >= 0);
     if(idx.length < 2) return;
-    for(let r=1; r<rows.length; r++){
-      const row = rows[r]; if((row[idx[0]]||'').trim()) continue;
-      const k = idx.find(i=> (row[i]||'').trim()); if(k != null) row[idx[0]] = row[k];
+    for(let r=1; r<rows.length; r++){ // copy the answer into every empty column of the group, so whichever column the app reads has it
+      const row = rows[r]; const k = idx.find(i=> (row[i]||'').trim()); if(k == null) continue;
+      idx.forEach(i=>{ if(!(row[i]||'').trim()) row[i] = row[k]; });
     }
   });
   return rows;
@@ -5511,7 +5511,7 @@ function regUnmatchedHTML(){
   if(!list.length) return '';
   const opts = sel=> state.courses.map(c=> `<option value="${c.id}" ${c.id===sel?'selected':''}>${cbEsc(c.name.replace(/^คอร์ส\s*\d+:\s*/,''))}</option>`).join('');
   return `<div class="rf-card rf-warn"><div class="rf-title">⚠️ กรอกฟอร์มมาแล้ว แต่ยังไม่เข้าแอพ ${list.length} รายการ</div>
-    <div class="rf-sub">ระบบอ่านวันที่หรือคอร์สจากคำตอบไม่ได้ — เลือกให้ถูกแล้วกด “นำเข้า” ได้เลย</div>
+    <div class="rf-sub">ระบบหาวันเรียนหรือคอร์สจากคำตอบไม่เจอ (เช่น คอร์ส Private ที่นัดวันกันทีหลัง) — ใส่วันเรียน/เลือกคอร์สแล้วกด “นำเข้า” ได้เลย</div>
     ${list.map((u,i)=> `<div class="rf-um" data-i="${i}">
       <div class="rf-name">${cbEsc(u.name || '(ไม่มีชื่อ)')}${u.phone ? ` <small>${cbEsc(u.phone)}</small>` : ''} <span class="rf-flag">${u.reason}</span></div>
       <div class="rf-meta">คำตอบในฟอร์ม: วันที่ “${cbEsc(u.rawDate||'-')}” · คอร์ส “${cbEsc((u.courseText||'-').slice(0,60))}”${u.submitted ? ` · กรอกเมื่อ ${fmtTimeTH(u.submitted)}` : ''}</div>
@@ -5616,7 +5616,7 @@ async function syncBookingsFromGoogleForm(){
           unmatched++;
           const sig = formRowSig(name, phone, rawDate, courseText, r[0]);
           if(!sharedBookings.some(b=> b.formRowSig === sig)) unmatchedRows.push({ sig, name:(name||'').trim(), phone, line, rawDate, courseText, iso:isoDate, courseId, submitted: parseFormTimestamp(r[0]),
-            reason: !name ? 'ไม่มีชื่อ' : !isoDate ? 'อ่านวันที่ไม่ออก' : 'จับคู่คอร์สไม่ได้',
+            reason: !name ? 'ไม่มีชื่อ' : !isoDate ? ((rawDate||'').trim() ? 'อ่านวันที่ไม่ออก' : 'ไม่ได้เลือกวันเรียนในฟอร์ม') : 'จับคู่คอร์สไม่ได้',
             extra:{ allergy, occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent, age, nameEn } });
         }
         return;
