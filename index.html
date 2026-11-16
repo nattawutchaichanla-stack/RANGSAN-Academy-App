@@ -2191,6 +2191,7 @@
   #custBook.is-shop .sh-x{ background:#fff; color:#0B0A08; }
   #custBook.is-shop .rw-head{ border-bottom:1px solid rgba(255,255,255,.14); }
 
+  .tap-busy{ opacity:.55 !important; transition:opacity .15s; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
   .reg-moved{ display:block; font-size:10px; font-weight:500; color:#948a78; }
@@ -6058,7 +6059,11 @@ async function loadState(){
       mergeMissingCourses(loaded);
       return loaded;
     }
-  }catch(e){ /* first run */ }
+  }catch(e){
+    // a failed read (offline / timeout) must never turn into "empty data" once the app is running —
+    // otherwise the next save would overwrite everyone's real data with defaults
+    if(state) throw e;
+  }
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
 }
 function migrateCourseNames(loaded){
@@ -6112,16 +6117,41 @@ function mergeMissingCourses(loaded){
     if(DEFAULT_STATE.menuSelection[course.id]) loaded.menuSelection[course.id] = JSON.parse(JSON.stringify(DEFAULT_STATE.menuSelection[course.id]));
   });
 }
-let saveTimer=null;
+let saveTimer=null, saveInFlight=false, saveAgain=false, saveRetry=0;
+let __stateRawApplied = null; // the academy_state text this device last saved/applied
 function scheduleSave(){
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(async ()=>{
-    try{
-      await window.storage.set('academy_state', JSON.stringify(state), false);
-      flashSaved();
-    }catch(e){ console.error('save failed', e); }
-  }, 350);
+  saveTimer=setTimeout(runStateSave, 350);
 }
+// one save at a time: taps during an upload are folded into a single follow-up save instead of piling up requests
+async function runStateSave(){
+  clearTimeout(saveTimer); saveTimer=null;
+  if(saveInFlight){ saveAgain=true; return; }
+  saveInFlight=true;
+  try{
+    const json = JSON.stringify(state);
+    if(json !== __stateRawApplied){ await window.storage.set('academy_state', json, false); __stateRawApplied = json; }
+    saveRetry=0; flashSaved();
+  }catch(e){
+    console.error('save failed', e);
+    if(saveRetry < 5){ saveRetry++; flashSaved('เน็ตช้า — กำลังลองบันทึกใหม่...'); setTimeout(scheduleSave, 2500 * saveRetry); }
+    else { saveRetry=0; flashSaved('บันทึกไม่สำเร็จ ⚠️ เช็คอินเทอร์เน็ตแล้วกดบันทึกอีกครั้ง'); }
+  }finally{
+    saveInFlight=false;
+    if(saveAgain){ saveAgain=false; runStateSave(); }
+  }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && saveTimer) runStateSave(); }); // app sent to background → save right away
+// ---- double-tap guard: confirm/save buttons ignore a second tap for a moment and show they're working ----
+const TAP_GUARD_RE = /ยืนยัน|บันทึก|ตกลง|ส่ง|สร้าง|ลบ|อนุมัติ|ชำระ|ปิดคลาส|เช็คอิน|นำเข้า|Save|Confirm/i;
+document.addEventListener('click', e=>{
+  const b = e.target.closest && e.target.closest('button, .btn, .btn-arrow, .cb-submit, [role="button"]'); if(!b) return;
+  const label = (b.textContent || '').replace(/\s+/g,' ').trim();
+  if(!label || label.length > 48 || !TAP_GUARD_RE.test(label)) return;
+  const now = Date.now();
+  if(b.__lastTap && now - b.__lastTap < 1500){ e.stopImmediatePropagation(); e.preventDefault(); return; }
+  b.__lastTap = now; b.classList.add('tap-busy'); setTimeout(()=> b.classList.remove('tap-busy'), 1000);
+}, true);
 function flashSaved(msg){
   const bar=document.getElementById('savebar');
   if(msg) bar.textContent = msg;
@@ -13076,8 +13106,9 @@ function playInstructorShowcase(){
 
 /* ============================= INIT ============================= */
 async function refreshAllSharedData(){
+  if(saveTimer || saveInFlight) await runStateSave(); // push local edits first so a refresh can't undo them
   await Promise.all([
-    loadState().then(s=> state = s),
+    loadState().then(s=>{ state = s; __stateRawApplied = __lastRaw.get('academy_state') ?? null; }),
     loadSharedBookings(),
     loadInstructorPhotos(),
     loadInstructorPins(),
@@ -13101,6 +13132,8 @@ let criticalOpInProgress = false; // set true around any multi-step read→modif
 function isUserBusy(){
   // don't yank the screen out from under someone mid-typing, mid-modal, or mid-save
   if(criticalOpInProgress) return true;
+  // a save is queued / uploading / just finished — pulling from the server now could undo it on screen
+  if(saveTimer || saveInFlight || __pendingWrites > 0 || Date.now() - __lastWriteAt < 6000) return true;
   if(document.querySelector('.modal-overlay.open')) return true;
   const el = document.activeElement;
   if(el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.tagName==='SELECT')) return true;
@@ -13111,9 +13144,14 @@ async function silentBackgroundSync(){
   if(!currentUser) return;          // not logged in yet
   if(isUserBusy()) return;          // don't disturb active input/modal
   __syncChanged = false;
+  const g0 = __writeGen;
   try{
     await Promise.all([
-      loadState().then(s=> state = s), // courses/pricing/recipes/menu — now synced live like everything else
+      loadState().then(s=>{ // courses/pricing/recipes/menu — only swap in when it really changed on another device
+        const raw = __lastRaw.get('academy_state');
+        if(__writeGen !== g0 || raw == null || raw === __stateRawApplied) return;
+        state = s; __stateRawApplied = raw;
+      }),
       loadSharedBookings(),
       loadInstructorPhotos(),
       loadInstructorPins(),
@@ -13126,6 +13164,7 @@ async function silentBackgroundSync(){
       loadQcLots(),
       loadCustomCategories(),
     ]);
+    if(__writeGen !== g0 || isUserBusy()){ __syncChanged = false; return; } // a save happened meanwhile — try again next tick
     if(!__syncChanged) return; // nothing new from other devices — skip the full redraw entirely
     __syncChanged = false;
     whenScrollIdle(()=>{ if(!isUserBusy()) renderAll(); }); // re-check in case typing started while awaiting
@@ -13201,6 +13240,7 @@ try{ const cachedSplash = localStorage.getItem('rangsan_bg_splash'); if(cachedSp
 
 // ---- smooth scrolling: background sync only redraws when shared data actually changed, and never mid-scroll ----
 let __syncChanged = false;
+let __pendingWrites = 0, __lastWriteAt = 0, __writeGen = 0;
 const __lastRaw = new Map();
 function trackStorageReads(){
   if(!window.storage || window.storage.__tracked) return;
@@ -13213,7 +13253,11 @@ function trackStorageReads(){
     __lastRaw.set(k, v);
     return res;
   };
-  window.storage.set = async (k, v, ...rest)=>{ const r = await origSet(k, v, ...rest); __lastRaw.set(k, v); return r; }; // our own saves aren't "remote changes"
+  window.storage.set = async (k, v, ...rest)=>{ // our own saves aren't "remote changes"
+    __pendingWrites++; __writeGen++;
+    try{ const r = await origSet(k, v, ...rest); __lastRaw.set(k, v); return r; }
+    finally{ __pendingWrites--; __lastWriteAt = Date.now(); __writeGen++; }
+  };
   window.storage.__tracked = true;
 }
 let __lastScrollAt = 0;
@@ -14573,7 +14617,7 @@ async function watchShopOrders(){
     loadSharedEvalFormUrl(),
     loadCurrentUser(),
   ]);
-  state = loadedState;
+  state = loadedState; __stateRawApplied = __lastRaw.get('academy_state') ?? null;
   applyCustomBackgrounds();
   await loadSharedLineRelayUrl();
   renderShell();
