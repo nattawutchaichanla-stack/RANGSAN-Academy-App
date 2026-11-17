@@ -5514,7 +5514,8 @@ function renderRegFeed(){
     const f = [];
     if(dupCount[idOf(r)] > 1) f.push(`<span class="rf-flag">⚠️ กรอกซ้ำ ${dupCount[idOf(r)]} ครั้ง</span>`);
     const c = courseById(r.courseId), n = classCount[r.classDate+'|'+r.courseId];
-    if(c && c.students && n > c.students) f.push(`<span class="rf-flag">⚠️ เกินที่รับ ${n}/${c.students}</span>`);
+    const capN = c ? classCapacity(r.courseId) : 0;
+    if(capN && n > capN) f.push(`<span class="rf-flag">⚠️ เกินที่รับ ${n}/${capN}</span>`);
     return f.join('');
   };
   const recent = rows.filter(r=> r.submitted).sort((a,b)=> b.submitted - a.submitted);
@@ -6433,6 +6434,9 @@ function isManualPricedCourse(courseId){
 // how a course is charged when a class is confirmed:
 //  • workshop / group class → per person (price per head × students who came)
 //  • private / semi-private  → one flat price for the whole class, however many people came
+const WORKSHOP_MAX_SEATS = 6; // Workshop / Group Class: at most 6 people per class (per round for timed classes)
+// how many people one class can take — Workshops are capped at WORKSHOP_MAX_SEATS; private classes use the course's own number
+function classCapacity(cid){ if(isPerPersonCourse(cid)) return WORKSHOP_MAX_SEATS; const c = courseById(cid); return Number(c && c.students) || 0; }
 function isPerPersonCourse(courseId){
   const c = courseById(courseId);
   if(!c) return false;
@@ -10850,7 +10854,7 @@ function renderLogTab(){
             <select data-assign-course="${b._idx}" class="select-light" style="flex:1; min-width:0; max-width:100%;">
               ${state.courses.map(c=>`<option value="${c.id}" ${c.id===b.courseId?'selected':''}>${c.name}</option>`).join('')}
             </select>
-            ${(()=>{ const n=bookings.filter(x=>x.courseId===b.courseId && (x.startTime||'')===(b.startTime||'')).length; const c=state.courses.find(c=>c.id===b.courseId); const cap=Number(c&&c.students)||0; const st=cap? (n>cap?'is-over':(n===cap?'is-full':'')) : ''; return `<span class="tk-head ${st}" title="จำนวนผู้จองคอร์สนี้ในวันนี้">👥 ${n}${cap?`/${cap}`:''} คน</span>`; })()}
+            ${(()=>{ const n=bookings.filter(x=>x.courseId===b.courseId && (x.startTime||'')===(b.startTime||'')).length; const c=state.courses.find(c=>c.id===b.courseId); const cap=classCapacity(b.courseId); const st=cap? (n>cap?'is-over':(n===cap?'is-full':'')) : ''; return `<span class="tk-head ${st}" title="จำนวนผู้จองคอร์สนี้ในวันนี้">👥 ${n}${cap?`/${cap}`:''} คน</span>`; })()}
           </div>
           ${b.note ? `<div class="ac-field"><b>หมายเหตุ</b> ${b.note}</div>` : ''}
           ${b.allergy ? `<div class="ac-field" style="color:#B8452F;"><b style="color:#B8452F;">⚠️ พิเศษ</b> ${b.allergy}</div>` : ''}
@@ -11213,6 +11217,10 @@ function renderLogTab(){
       const st = document.getElementById('newBookingTime').value;
       if(!/^\d{1,2}:\d{2}$/.test(st)){ alert('กรุณาระบุเวลาเริ่มสอน'); return; }
       newBooking.startTime = st.padStart(5,'0');
+    }
+    if(isPerPersonCourse(courseId)){ // Workshop: max WORKSHOP_MAX_SEATS people per class/round
+      const taken = sharedBookings.filter(x=> x.date === date && x.courseId === courseId && (x.startTime||'') === (newBooking.startTime||'')).length;
+      if(taken >= WORKSHOP_MAX_SEATS){ alert(`Workshop รอบนี้เต็มแล้ว (${taken}/${WORKSHOP_MAX_SEATS} ท่าน)\nรับได้สูงสุด ${WORKSHOP_MAX_SEATS} ท่านต่อรอบ`); return; }
     }
     sharedBookings.push(newBooking);
     saveSharedBookings();
@@ -13537,7 +13545,7 @@ const CB_LEAD_DAYS = 1;          // จองล่วงหน้าอย่�
 const CB_RANGE_DAYS = 90;        // เปิดให้เลือกล่วงหน้า 90 วัน
 const CB_TIMED = { c6: ['10:00','14:00'] };
 function cbIsWorkshop(cid){ return isPerPersonCourse(cid); }
-function cbSeats(cid){ const c = courseById(cid); return Math.max(1, Number(c && c.students) || 1); }
+function cbSeats(cid){ return Math.max(1, classCapacity(cid) || 1); }
 // availability of one course on one date → { ok, reason, rounds:[{time, left}] , left }
 // Google Form answers that the app hasn't imported yet (nobody opened the app since) still close their date on the link
 let cbFormBlocks = [], cbFormBlocksAt = 0;
