@@ -5174,11 +5174,27 @@ function markNotified(b){ b.notifiedAt = new Date().toISOString(); b.notifiedBy 
 // matched by phone number (last 9 digits) or, if no phone, by full name
 function rsNormPhone(p){ const d = String(p||'').replace(/\D/g,''); return d.length >= 9 ? d.slice(-9) : ''; }
 function rsNormName(n){ return String(n||'').replace(/\s+/g,' ').trim().toLowerCase(); }
+// index of past classes by phone / name — rebuilt only when the bookings list changes (it was a full scan per card)
+let __chIdx = null;
+function customerIndex(){
+  const arr = sharedBookings || [];
+  const today = new Date().toISOString().slice(0,10);
+  if(__chIdx && __chIdx.arr === arr && __chIdx.len === arr.length && __chIdx.today === today && __chIdx.ver === __bkVer) return __chIdx;
+  const byPh = new Map(), byNm = new Map();
+  arr.forEach(b=>{ if(!b || !(b.taught || (b.date && b.date < today))) return;
+    const ph = rsNormPhone(b.customerPhone), nm = rsNormName(b.customerName);
+    if(ph) (byPh.get(ph) || byPh.set(ph, []).get(ph)).push(b);
+    if(nm) (byNm.get(nm) || byNm.set(nm, []).get(nm)).push(b); });
+  return (__chIdx = { arr, len: arr.length, today, ver: __bkVer, byPh, byNm });
+}
+let __bkVer = 0;
 function customerHistory(name, phone, beforeDate, excludeKey){
   const ph = rsNormPhone(phone), nm = rsNormName(name);
   if(!ph && !nm) return [];
   const today = new Date().toISOString().slice(0,10);
-  return (sharedBookings||[]).filter(b=>{
+  const ix = customerIndex();
+  const cand = new Set([...(ph ? ix.byPh.get(ph) || [] : []), ...(nm ? ix.byNm.get(nm) || [] : [])]);
+  return [...cand].filter(b=>{
     if(!b || (excludeKey && b.syncKey === excludeKey)) return false;
     if(beforeDate && b.date && b.date >= beforeDate) return false;   // only classes before this one
     if(!(b.taught || (b.date && b.date < today))) return false;      // must have actually happened
@@ -5201,8 +5217,8 @@ function vipBadgeHTML(hist){
 // each form row is matched to its booking by the same key the form-sync uses (name + class date + course)
 // cancelled form registrations — kept by key so the form sync never brings them back
 let sharedCancelled = [];
-async function loadSharedCancelled(){ try{ const r = await window.storage.get('shared_cancelled_bookings', true); sharedCancelled = r && r.value ? JSON.parse(r.value) : []; }catch(e){} return sharedCancelled; }
-async function saveSharedCancelled(){ await window.storage.set('shared_cancelled_bookings', JSON.stringify(sharedCancelled), true); }
+async function loadSharedCancelled(){ try{ const okToApply = loadGuard('shared_cancelled_bookings'); const r = await window.storage.get('shared_cancelled_bookings', true); if(!okToApply()) return sharedCancelled; sharedCancelled = r && r.value ? JSON.parse(r.value) : []; rememberBase('shared_cancelled_bookings', r && r.value); }catch(e){} return sharedCancelled; }
+async function saveSharedCancelled(){ await queueArraySave('shared_cancelled_bookings', ()=> sharedCancelled, v=> sharedCancelled = v, x=> x.key || null); }
 const isCancelledKey = k=> !!k && sharedCancelled.some(x=> x.key === k);
 function regKeyForRow(r){
   if(!regRowsCache || !r) return null;
@@ -5546,6 +5562,18 @@ function renderRegFeed(){
 }
 let regUnmatchedCache = [];
 let bkFilter = { q:'', date:'' };
+let __bkRenderRefs = [];
+// a card stores the booking's position from when it was drawn; if the list was refreshed or merged since,
+// find the same booking again (same object, same key, or same content) instead of acting on whatever is there now
+function bkAt(i){
+  const ref = __bkRenderRefs[i];
+  if(!ref) return sharedBookings[i];
+  if(sharedBookings[i] === ref) return ref;
+  const same = sharedBookings.find(b=> b === ref); if(same) return same;
+  const k = bookingKeyOf(ref); if(k){ const byKey = sharedBookings.find(b=> bookingKeyOf(b) === k); if(byKey) return byKey; }
+  const j = JSON.stringify(ref); return sharedBookings.find(b=> JSON.stringify(b) === j) || null;
+}
+let bkUpShown = 0, bkHistShown = 0; // how many day-cards are drawn (grows with “ดูเพิ่ม”)
 // ---------- RANGSAN date picker (input + calendar popup with day / month / year views) ----------
 const RDP_IC = {
   cal:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
@@ -6344,8 +6372,24 @@ async function runStateSave(){
   if(saveInFlight){ saveAgain=true; return; }
   saveInFlight=true;
   try{
-    const json = JSON.stringify(state);
-    if(json !== __stateRawApplied){ await window.storage.set('academy_state', json, false); __stateRawApplied = json; }
+    let json = JSON.stringify(state);
+    if(json !== __stateRawApplied){
+      // another device may have saved settings meanwhile: keep their sections, overwrite only the sections changed here
+      try{
+        const r = await window.storage.get('academy_state', false);
+        const remoteRaw = r && r.value;
+        if(remoteRaw && __stateRawApplied && remoteRaw !== __stateRawApplied && remoteRaw !== json){
+          const base = JSON.parse(__stateRawApplied), remote = JSON.parse(remoteRaw), mine = JSON.parse(json);
+          const merged = Object.assign({}, remote);
+          Object.keys(mine).forEach(k=>{ if(JSON.stringify(mine[k]) !== JSON.stringify(base[k])) merged[k] = mine[k]; });
+          Object.keys(base).forEach(k=>{ if(!(k in mine) && JSON.stringify(remote[k]) === JSON.stringify(base[k])) delete merged[k]; });
+          Object.keys(merged).forEach(k=>{ if(JSON.stringify(merged[k]) !== JSON.stringify(state[k])) state[k] = merged[k]; }); // show their changes too
+          json = JSON.stringify(state);
+          scheduleMergedRedraw();
+        }
+      }catch(e){ /* couldn't read — just save ours */ }
+      await window.storage.set('academy_state', json, false); __stateRawApplied = json;
+    }
     saveRetry=0; flashSaved();
   }catch(e){
     console.error('save failed', e);
@@ -6379,7 +6423,8 @@ function flashSaved(msg){
 }
 
 /* ============================= HELPERS ============================= */
-const fmt = n => (Math.round(n*100)/100).toLocaleString('th-TH',{maximumFractionDigits:2});
+const __fmtNF = new Intl.NumberFormat('th-TH',{maximumFractionDigits:2}); // one formatter reused (building one per number was slow)
+const fmt = n => __fmtNF.format(Math.round(n*100)/100);
 const CUP_ICON = '<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/></svg>';
 const BEAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="12" rx="8" ry="10"/><path d="M12 2 C9 6,15 8,10.5 12 C7 15.5,15 18,12 22" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
 const MILK_ICON = '<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l1 4-1 2v12a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V8L8 6Z"/><path d="M9 10h6"/></svg>';
@@ -6631,6 +6676,9 @@ function openInstructorProfile(name, booking){
 
 /* ============================= RENDER: TABS ============================= */
 const MORE_NAV_TABS = ['dashboard','menu','materials','schedule']; // tabs tucked under the "เพิ่มเติม" sheet
+// switching tabs re-reads the lists the tab shows — but not again within 20 s (the background sync keeps them fresh)
+const __tabLoadAt = new Map();
+function freshLoad(fn){ const t = __tabLoadAt.get(fn) || 0; if(Date.now() - t < 20000) return Promise.resolve(); __tabLoadAt.set(fn, Date.now()); return Promise.resolve(fn()).catch(()=>{ __tabLoadAt.delete(fn); }); }
 function switchTab(tab){
   document.querySelectorAll('#tabs button[data-tab]').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   const moreBtn = document.getElementById('moreNavBtn');
@@ -6643,17 +6691,17 @@ function switchTab(tab){
   }
   document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+tab));
   if(tab==='log'){
-    Promise.all([loadSharedBookings(), loadInstructorPhotos(), loadSharedAdminPin(), loadRetailProducts(), loadSharedEvalFormUrl(), loadStandaloneSales()]).then(()=>{ if(document.getElementById('bookingCardGrid')) renderLogTab(); });
+    Promise.all([loadSharedBookings, loadInstructorPhotos, loadSharedAdminPin, loadRetailProducts, loadSharedEvalFormUrl, loadStandaloneSales].map(freshLoad)).then(()=>{ if(document.getElementById('bookingCardGrid')) renderLogTab(); });
   }
   if(tab==='dashboard'){
-    Promise.all([loadSharedBookings(), loadStandaloneSales(), loadRetailProducts()]).then(()=>{ if(document.getElementById('tab-dashboard')) renderDashboard(); });
+    Promise.all([loadSharedBookings, loadStandaloneSales, loadRetailProducts].map(freshLoad)).then(()=>{ if(document.getElementById('tab-dashboard')) renderDashboard(); });
   }
   if(tab==='stock'){
-    Promise.all([loadRetailProducts(), loadSharedBookings(), loadStandaloneSales(), loadStockMovements(), loadCustomCategories()]).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
+    Promise.all([loadRetailProducts, loadSharedBookings, loadStandaloneSales, loadStockMovements, loadCustomCategories].map(freshLoad)).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
   }
   if(tab==='shop') renderShopTab(); document.body.classList.toggle('shop-tab-open', tab==='shop');
   if(tab==='sell'){
-    loadRetailProducts().then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
+    freshLoad(loadRetailProducts).then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
   }
 }
 document.getElementById('tabs').addEventListener('click', e=>{
@@ -6973,7 +7021,7 @@ function profitChartSVG(rows){
 
   let bars = '';
   rows.forEach((r,i)=>{
-    const h = chartH * (r.pl.profit/maxVal);
+    const h = Math.max(0, chartH * (r.pl.profit/maxVal)); // a loss-making course draws an empty bar instead of a broken one
     const x = padL + gap*i + (gap-barW)/2;
     const y = padT + chartH - h;
     const shortName = r.c.name.split(':')[0];
@@ -8354,10 +8402,17 @@ function confirmBookingTaught(bookingGroup, students, soldProducts, soldProducts
   // so per-instructor stats that sum taughtStudents/soldProducts across bookings aren't double-counted
   const bookings = Array.isArray(bookingGroup) ? bookingGroup : [bookingGroup];
   const booking = bookings[0];
+  // the payment-slip photo goes to its own key; the booking keeps just that key (only used as proof of payment)
+  if(soldProductsSlip && String(soldProductsSlip).startsWith('data:')){
+    const key = SLIP_KEY_PREFIX + 'bk_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    const data = soldProductsSlip; slipCache.set(key, data);
+    window.storage.set(key, data, true).catch(e=> console.warn('class slip upload failed', e));
+    soldProductsSlip = key;
+  }
 
   bookings.forEach((b, i)=>{
     const idx = sharedBookings.findIndex(sb=>
-      sb.date===b.date && sb.courseId===b.courseId && sb.instructor===b.instructor && sb.note===b.note && !sb.taught
+      sb.date===b.date && sb.courseId===b.courseId && sb.instructor===b.instructor && (sb.note||'')===(b.note||'') && !sb.taught /* a booking saved without a note field counts as an empty note */
     );
     if(idx>=0){
       sharedBookings[idx].taught = true;
@@ -9148,14 +9203,16 @@ let sharedBookings = [];
 let sharedBusy = [];
 async function loadSharedBusy(){
   try{
+    const okToApply = loadGuard('shared_busy_days');
     const res = await window.storage.get('shared_busy_days', true);
+    if(!okToApply()) return;
     sharedBusy = (res && res.value) ? JSON.parse(res.value) : [];
+    rememberBase('shared_busy_days', res && res.value);
   }catch(e){ console.error('load busy days failed, keeping existing data', e); }
 }
 async function saveSharedBusy(){
   try{
-    await backupBeforeSave('shared_busy_days');
-    await window.storage.set('shared_busy_days', JSON.stringify(sharedBusy), true);
+    await queueArraySave('shared_busy_days', ()=> sharedBusy, v=> sharedBusy = v, x=> x.id || null);
     flashSaved();
   }catch(e){ console.error('save busy days failed', e); alert('บันทึกวันไม่ว่างไม่สำเร็จ ลองใหม่อีกครั้ง'); }
 }
@@ -9223,11 +9280,107 @@ async function loadSharedBookings(){
   loadSharedBusy(); // runs alongside — every place that reloads bookings also picks up busy days
   loadSharedCancelled();
   try{
+    const okToApply = loadGuard('shared_teaching_bookings');
     const res = await window.storage.get('shared_teaching_bookings', true);
+    if(!okToApply()) return; // this device saved meanwhile — its copy is newer
     if(res && res.value) sharedBookings = JSON.parse(res.value);
     else sharedBookings = [];
+    __bkVer++;
+    rememberBase('shared_teaching_bookings', res && res.value);
+    if(currentUser && !document.body.classList.contains('cust-mode') && res && res.value && res.value.includes('"soldProductsSlip":"data:')) setTimeout(migrateBookingSlips, 15000 + Math.random()*20000);
   }catch(e){ console.error('load shared bookings failed, keeping existing data', e); }
 }
+// ===================== SAFE SHARED LISTS =====================
+// Several iPads write the same shared lists (bookings, sales, stock…). Saving used to upload this device's
+// whole copy, so an item another device added a moment earlier could be wiped out. Now every save:
+//   1) re-reads the list on the server, 2) applies only what changed on THIS device since it last loaded
+//   (added / edited / removed items), 3) writes the result. Saves of the same list never overlap, and
+//   taps that arrive while one is uploading are folded into a single follow-up save.
+const __sharedBase = new Map();          // key → the server text this device last read or wrote
+function rememberBase(key, raw){ __sharedBase.set(key, raw == null || raw === '' ? '[]' : raw); }
+function mergeArrays(base, local, remote, keyOf){
+  // apply "what this device changed since base" onto the server copy; idempotent (re-applying the same change does nothing)
+  const J = x=> JSON.stringify(x);
+  const cnt = arr=>{ const m = new Map(); arr.forEach(x=>{ const j = J(x); m.set(j, (m.get(j)||0) + 1); }); return m; };
+  const bm = cnt(base), lm = cnt(local);
+  const out = remote.slice(), outJ = out.map(J);
+  const om = cnt(remote);
+  bm.forEach((bc, j)=>{ const lc = lm.get(j)||0; if(bc <= lc) return;          // removed (or edited) here
+    let n = Math.min(bc - lc, (om.get(j)||0) - lc);
+    while(n-- > 0){ const i = outJ.indexOf(j); if(i < 0) break; out.splice(i,1); outJ.splice(i,1); om.set(j, om.get(j) - 1); } });
+  const done = new Map();
+  local.forEach(x=>{ const j = J(x); const lc = lm.get(j), bc = bm.get(j)||0; if(lc <= bc) return; // added (or edited) here
+    const k = done.get(j)||0, want = lc - bc; if(k >= want) return; done.set(j, k + 1);
+    if((om.get(j)||0) >= lc) return;                                          // server already has it
+    const key = keyOf ? keyOf(x) : null;
+    if(key){ const i = out.findIndex(y=> keyOf(y) === key); if(i >= 0){ const oj = outJ[i]; om.set(oj, (om.get(oj)||1) - 1); out[i] = x; outJ[i] = j; om.set(j, (om.get(j)||0) + 1); return; } }
+    out.push(x); outJ.push(j); om.set(j, (om.get(j)||0) + 1);
+  });
+  return out;
+}
+const __keyGen = {};   // bumps whenever this device writes a list — a slower read started earlier must not overwrite it
+function loadGuard(key){ const g = __keyGen[key]||0; return ()=> !(__arrSaves[key] && __arrSaves[key].running) && (__keyGen[key]||0) === g; }
+const __lastBackupAt = {};
+async function mergeSaveArray(key, getLocal, setLocal, keyOf){
+  const snapRaw = JSON.stringify(getLocal());
+  const snap = JSON.parse(snapRaw);
+  const baseRaw = __sharedBase.get(key);
+  let remoteRaw;
+  try{ const r = await window.storage.get(key, true); remoteRaw = (r && r.value) || '[]'; }catch(e){ remoteRaw = undefined; } // offline read → just write ours
+  let out = snap, outRaw = snapRaw;
+  if(remoteRaw !== undefined && remoteRaw !== snapRaw && (baseRaw === undefined ? remoteRaw !== '[]' : remoteRaw !== baseRaw)){
+    let remote = null; try{ remote = JSON.parse(remoteRaw); }catch(e){}
+    if(Array.isArray(remote)){ let base = []; try{ base = baseRaw ? JSON.parse(baseRaw) : []; }catch(e){} out = mergeArrays(base, snap, remote, keyOf); outRaw = JSON.stringify(out); }
+  }
+  // keep a recovery copy, but at most every 10 minutes per list (it used to download + upload the whole list again on every save)
+  if(remoteRaw && remoteRaw !== '[]' && Date.now() - (__lastBackupAt[key]||0) > 600000){ __lastBackupAt[key] = Date.now(); window.storage.set(key + '_backup', remoteRaw, true).catch(()=>{}); }
+  let written = remoteRaw;
+  for(let attempt = 0; attempt < 3; attempt++){
+    if(outRaw !== written){ __keyGen[key] = (__keyGen[key]||0) + 1; await window.storage.set(key, outRaw, true); __keyGen[key]++; }
+    // another iPad may have saved in the same second — read back once; if our write was overwritten, merge again
+    if(outRaw.length > 3000000) break;
+    await new Promise(r=> setTimeout(r, 250 + Math.random()*250));
+    let back; try{ const r = await window.storage.get(key, true); back = (r && r.value) || '[]'; }catch(e){ break; }
+    if(back === outRaw) break;
+    let other = null; try{ other = JSON.parse(back); }catch(e){}
+    if(!Array.isArray(other)) break;
+    let base0 = []; try{ base0 = baseRaw ? JSON.parse(baseRaw) : []; }catch(e){}
+    out = mergeArrays(base0, snap, other, keyOf); written = back; outRaw = JSON.stringify(out);
+    if(outRaw === back) break;
+  }
+  __sharedBase.set(key, outRaw);
+  const nowLocal = getLocal(), nowRaw = JSON.stringify(nowLocal);
+  if(outRaw === snapRaw && nowRaw === snapRaw) return false;            // nothing to fold back — keep the same objects on screen
+  const merged = nowRaw === snapRaw ? out : mergeArrays(snap, nowLocal, out, keyOf);
+  // reuse this device's objects wherever they didn't change, so open dialogs keep pointing at live items
+  const pool = new Map(); nowLocal.forEach(x=>{ const j = JSON.stringify(x); (pool.get(j) || pool.set(j, []).get(j)).push(x); });
+  setLocal(merged.map(x=>{ const l = pool.get(JSON.stringify(x)); return l && l.length ? l.shift() : x; }));
+  if(outRaw !== snapRaw) scheduleMergedRedraw(); // another device's changes came in with this save — show them
+  return nowRaw !== snapRaw; // more edits arrived while uploading
+}
+let __mergeRedrawT = 0;
+function scheduleMergedRedraw(){
+  if(typeof renderAll !== 'function' || !currentUser || document.body.classList.contains('cust-mode')) return;
+  clearTimeout(__mergeRedrawT);
+  __mergeRedrawT = setTimeout(()=> whenScrollIdle(()=>{ if(!isUserBusy()) renderAll(); else scheduleMergedRedraw(); }), 1200);
+}
+const __arrSaves = {};
+function queueArraySave(key, getLocal, setLocal, keyOf){
+  const st = __arrSaves[key] || (__arrSaves[key] = { running:false, again:false, done:null });
+  if(st.running){ st.again = true; return st.done; }
+  st.running = true;
+  st.done = (async()=>{
+    let ok = true;
+    try{
+      do{ st.again = false; if(await mergeSaveArray(key, getLocal, setLocal, keyOf)) st.again = true; }while(st.again);
+    }catch(e){ ok = false; console.error('save failed', key, e); }
+    finally{ st.running = false; }
+    if(!ok) throw new Error('save failed: ' + key);
+    return ok;
+  })();
+  return st.done;
+}
+const bookingKeyOf = b=> b.syncKey || (b.linkId ? b.linkId + '|' + (b.customerName||'') : null);
 // snapshot the previous stored state before overwriting it, so data can be recovered if a bad write ever happens
 async function backupBeforeSave(storageKey){
   try{
@@ -9344,11 +9497,11 @@ async function importAllData(file){
 }
 
 async function saveSharedBookings(){
+  __bkVer++;
   try{
-    await backupBeforeSave('shared_teaching_bookings');
-    await window.storage.set('shared_teaching_bookings', JSON.stringify(sharedBookings), true);
+    await queueArraySave('shared_teaching_bookings', ()=> sharedBookings, v=> sharedBookings = v, bookingKeyOf);
     flashSaved();
-  }catch(e){ console.error('shared save failed', e); }
+  }catch(e){ console.error('shared save failed', e); flashSaved('บันทึกคิวไม่สำเร็จ ⚠️ เช็คอินเทอร์เน็ตแล้วลองอีกครั้ง'); }
 }
 
 let instructorPhotos = {}; // { "อาจารย์ตั้ม": "data:image/jpeg;base64,..." }
@@ -9423,8 +9576,11 @@ const DEFAULT_RETAIL_PRODUCTS = [
 ];
 async function loadRetailProducts(){
   try{
+    const okToApply = loadGuard('shared_retail_products');
     const res = await window.storage.get('shared_retail_products', true);
+    if(!okToApply()) return;
     retailProducts = (res && res.value) ? JSON.parse(res.value) : [];
+    rememberBase('shared_retail_products', res && res.value);
   }catch(e){ console.error('load retail products failed, keeping existing data', e); return; }
 
   let changed = false;
@@ -9453,23 +9609,119 @@ async function loadRetailProducts(){
 }
 async function saveRetailProducts(){
   try{
-    await backupBeforeSave('shared_retail_products');
-    await window.storage.set('shared_retail_products', JSON.stringify(retailProducts), true);
+    await queueArraySave('shared_retail_products', ()=> retailProducts, v=> retailProducts = v, p=> p.id || null);
     flashSaved();
   }catch(e){ console.error('shared retail product save failed', e); }
 }
 
-let standaloneSales = []; // [{ date, seller, items:[{name,price,qty}], total }] — walk-in sales not tied to a class
+let standaloneSales = []; // [{ id, date, time, seller, items:[{name,price,qty}], total, slipKey }] — walk-in sales not tied to a class
+const saleIdOf = s=> s.id || (s.time ? 's_' + s.time + '_' + (s.seller||'') : null);
+// ---- payment slips live in their own storage keys (not inside the sales list) ----
+// The sales list used to carry every slip photo inline, so it grew by ~50 KB per sale and every save,
+// sync and tab switch moved the whole thing (often 10+ MB) → the app froze. Now a sale only keeps slipKey.
+const SLIP_KEY_PREFIX = 'shared_saleslip_';
+const BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+const slipCache = new Map();
+{ const _set = slipCache.set.bind(slipCache); // keep at most 80 photos in memory (iPad memory is limited); oldest go first
+  slipCache.set = (k, v)=>{ if(slipCache.has(k)) slipCache.delete(k); _set(k, v); while(slipCache.size > 80) slipCache.delete(slipCache.keys().next().value); return slipCache; }; }
+const hasSlip = s=> !!(s && (s.slip || s.slipKey));
+const slipSrc = s=> (s && (s.slip || (s.slipKey && slipCache.get(s.slipKey)))) || BLANK_IMG;
+const slipSigOf = data=> data ? data.length + ':' + data.slice(-64) : '';
+const __slipWaiting = new Map();
+function fetchSlip(key){
+  if(slipCache.has(key)) return Promise.resolve(slipCache.get(key));
+  if(__slipWaiting.has(key)) return __slipWaiting.get(key);
+  const pr = window.storage.get(key, true).then(r=>{ const v = (r && r.value) || ''; if(v) slipCache.set(key, v); return v; }).catch(()=> '').finally(()=> __slipWaiting.delete(key));
+  __slipWaiting.set(key, pr); return pr;
+}
+let __hydrating = false;
+async function hydrateSlips(){
+  if(__hydrating) return; __hydrating = true;
+  try{
+    for(;;){
+      const imgs = [...document.querySelectorAll('img[data-slipkey]:not([data-hyd])')].filter(i=> i.dataset.slipkey);
+      if(!imgs.length) break;
+      const keys = [...new Set(imgs.map(i=> i.dataset.slipkey))];
+      imgs.forEach(i=> i.setAttribute('data-hyd', '1'));
+      for(let k = 0; k < keys.length; k += 4){ // 4 at a time — never floods the connection
+        await Promise.all(keys.slice(k, k+4).map(async key=>{
+          const v = await fetchSlip(key); if(!v) return;
+          document.querySelectorAll(`img[data-slipkey="${key}"]`).forEach(i=>{ i.src = v; i.dataset.slip = v; });
+        }));
+      }
+    }
+  }finally{ __hydrating = false; }
+}
+if('MutationObserver' in window){
+  let t = 0;
+  new MutationObserver(()=>{ clearTimeout(t); t = setTimeout(()=>{ if(document.querySelector('img[data-slipkey]:not([data-hyd])')) hydrateSlips(); }, 60); })
+    .observe(document.documentElement, { childList:true, subtree:true });
+}
+let __evMigrating = false;
+async function migrateInlineEvidence(){ // same idea for old stock-adjustment photos in the movement log
+  if(__evMigrating || document.hidden || !currentUser || !stockMovements.some(m=> m.evidencePhoto)) return;
+  __evMigrating = true;
+  try{
+    await loadStockMovements(); if(!stockMovements.some(m=> m.evidencePhoto)) return;
+    const batch = stockMovements.filter(m=> m.evidencePhoto).slice(0, 25);
+    for(const m of batch){
+      const key = 'shared_stockphoto_' + String(m.date||'').replace(/[^0-9]/g,'') + '_' + slipSigOf(m.evidencePhoto).replace(/[^0-9A-Za-z]/g,'').slice(-8);
+      await window.storage.set(key, m.evidencePhoto, true); slipCache.set(key, m.evidencePhoto);
+      m.evidenceKey = key; delete m.evidencePhoto;
+    }
+    await saveStockMovements();
+    if(stockMovements.some(m=> m.evidencePhoto)) setTimeout(migrateInlineEvidence, 4000);
+  }catch(e){ console.warn('photo move paused', e); setTimeout(migrateInlineEvidence, 60000); }
+  finally{ __evMigrating = false; }
+}
+async function migrateBookingSlips(){ // old class-product slips stored inside the bookings list
+  if(document.hidden || !currentUser) return;
+  const todo = sharedBookings.filter(b=> b.soldProductsSlip && String(b.soldProductsSlip).startsWith('data:'));
+  if(!todo.length) return;
+  try{
+    for(const b of todo){
+      const key = SLIP_KEY_PREFIX + 'bk_' + String(b.date||'').replace(/-/g,'') + '_' + slipSigOf(b.soldProductsSlip).replace(/[^0-9A-Za-z]/g,'').slice(-10);
+      await window.storage.set(key, b.soldProductsSlip, true);
+      b.soldProductsSlip = key;
+    }
+    await saveSharedBookings();
+  }catch(e){ console.warn('class slip move paused', e); }
+}
+// one-time move of old inline slips into their own keys (runs quietly in the background, a few at a time)
+let __slipMigrating = false;
+async function migrateInlineSlips(){
+  if(__slipMigrating || document.hidden || !currentUser) return;
+  if(!standaloneSales.some(x=> x.slip)) return;
+  __slipMigrating = true;
+  try{
+    await loadStandaloneSales(); // another iPad may have done it already
+    if(!standaloneSales.some(x=> x.slip)) return;
+    // 1) copy every inline slip into its own key (3 at a time; keys are fixed per sale, so a re-run just overwrites)
+    const todo = standaloneSales.filter(x=> x.slip).map(sale=> ({ sale, data: sale.slip,
+      id: sale.id || ('s_' + String(sale.time || sale.date || '').replace(/[^0-9A-Za-z]/g,'') + '_' + slipSigOf(sale.slip).replace(/[^0-9A-Za-z]/g,'').slice(-10)) }));
+    for(let k = 0; k < todo.length; k += 3){
+      if(document.hidden) throw new Error('paused (app in background)');
+      await Promise.all(todo.slice(k, k+3).map(t=> window.storage.set(SLIP_KEY_PREFIX + t.id, t.data, true).then(()=> slipCache.set(SLIP_KEY_PREFIX + t.id, t.data))));
+    }
+    // 2) one save of the (now small) sales list
+    todo.forEach(t=>{ if(t.sale.slip !== t.data) return; t.sale.slipSig = slipSigOf(t.data); t.sale.id = t.sale.id || t.id; t.sale.slipKey = SLIP_KEY_PREFIX + t.id; delete t.sale.slip; });
+    await saveStandaloneSales();
+  }catch(e){ console.warn('slip move paused', e); setTimeout(migrateInlineSlips, 60000); }
+  finally{ __slipMigrating = false; }
+}
 async function loadStandaloneSales(){
   try{
+    const okToApply = loadGuard('shared_standalone_sales');
     const res = await window.storage.get('shared_standalone_sales', true);
+    if(!okToApply()) return;
     standaloneSales = (res && res.value) ? JSON.parse(res.value) : [];
+    rememberBase('shared_standalone_sales', res && res.value);
+    if(standaloneSales.some(x=> x.slip) && !__slipMigrating) setTimeout(migrateInlineSlips, 8000 + Math.random()*30000);
   }catch(e){ console.error('load standalone sales failed, keeping existing data', e); }
 }
 async function saveStandaloneSales(){
   try{
-    await backupBeforeSave('shared_standalone_sales');
-    await window.storage.set('shared_standalone_sales', JSON.stringify(standaloneSales), true);
+    await queueArraySave('shared_standalone_sales', ()=> standaloneSales, v=> standaloneSales = v, saleIdOf);
     flashSaved();
     return true;
   }catch(e){ console.error('shared standalone sales save failed', e); return false; }
@@ -9478,12 +9730,17 @@ async function saveStandaloneSales(){
 let stockMovements = []; // [{ date, productName, type:'in'|'out'|'sale', qty, note, who }]
 async function loadStockMovements(){
   try{
+    const okToApply = loadGuard('shared_stock_movements');
     const res = await window.storage.get('shared_stock_movements', true);
+    if(!okToApply()) return;
     stockMovements = (res && res.value) ? JSON.parse(res.value) : [];
+    rememberBase('shared_stock_movements', res && res.value);
+    if(stockMovements.some(m=> m.evidencePhoto) && !__evMigrating) setTimeout(migrateInlineEvidence, 12000 + Math.random()*30000);
   }catch(e){ console.error('load stock movements failed, keeping existing data', e); }
 }
 async function saveStockMovements(){
-  try{ await window.storage.set('shared_stock_movements', JSON.stringify(stockMovements), true); }catch(e){ console.error('shared stock movements save failed', e); }
+  // a sale logs one movement per item — saves are queued, so a 5-item sale uploads once or twice instead of 5 times
+  try{ await queueArraySave('shared_stock_movements', ()=> stockMovements, v=> stockMovements = v, null /* append-only log: no edit key — two lines can share a millisecond */); }catch(e){ console.error('shared stock movements save failed', e); }
 }
 // deducts a sold product's linked raw material (e.g. selling 1 cup of latte deducts 18g of coffee
 // beans from state.stock) — grams are converted to the material's own unit only for the common
@@ -9500,6 +9757,14 @@ function deductLinkedRawMaterial(productName, qtySold){
   mat.stock = Math.max(0, (mat.stock||0) - deduction);
 }
 function logStockMovement(productName, type, qty, note, evidencePhoto){
+  if(evidencePhoto && evidencePhoto.startsWith('data:')){ // photo goes to its own key so the movement log stays small
+    const key = 'shared_stockphoto_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    slipCache.set(key, evidencePhoto);
+    stockMovements.push({ date: new Date().toISOString(), productName, type, qty, note: note || '', who: currentUser || '-', evidenceKey: key });
+    window.storage.set(key, evidencePhoto, true).then(()=> saveStockMovements()).catch(e=>{ // upload failed → keep the photo inline
+      const m = stockMovements.find(x=> x.evidenceKey === key); if(m){ delete m.evidenceKey; m.evidencePhoto = evidencePhoto; } saveStockMovements(); });
+    return;
+  }
   stockMovements.push({
     date: new Date().toISOString(),
     productName, type, qty,
@@ -9720,12 +9985,15 @@ const QC_DEFECTS = [
 let qcLots = [];
 async function loadQcLots(){
   try{
+    const okToApply = loadGuard('shared_qc_lots');
     const res = await window.storage.get('shared_qc_lots', true);
+    if(!okToApply()) return;
     qcLots = (res && res.value) ? JSON.parse(res.value) : [];
+    rememberBase('shared_qc_lots', res && res.value);
   }catch(e){ console.error('load qc lots failed, keeping existing data', e); }
 }
 async function saveQcLots(){
-  try{ await window.storage.set('shared_qc_lots', JSON.stringify(qcLots), true); flashSaved(); }catch(e){ console.error('shared qc lots save failed', e); }
+  try{ await queueArraySave('shared_qc_lots', ()=> qcLots, v=> qcLots = v, l=> l.id || null); flashSaved(); }catch(e){ console.error('shared qc lots save failed', e); }
 }
 function qcTotalScore(scores){
   return QC_CRITERIA.reduce((s,c)=> s + (Number(scores[c.key])||0), 0);
@@ -9825,8 +10093,11 @@ function hideLoginScreen(){
   setTimeout(()=>{ backfillAgesFromForm(); }, 4000);
   startFormLiveSync();
   setTimeout(remindCallsDue, 7000);
-  setTimeout(watchLinkBookings, 9000); setInterval(watchLinkBookings, 60000);
-  setTimeout(watchShopOrders, 11000); setInterval(watchShopOrders, 60000);
+  if(!window.__watchersOn){ // start the minute-by-minute watchers once — logging in again used to stack another copy each time
+    window.__watchersOn = true;
+    setTimeout(watchLinkBookings, 9000); setInterval(watchLinkBookings, 60000);
+    setTimeout(watchShopOrders, 11000); setInterval(watchShopOrders, 60000);
+  }
 }
 
 // ---------- reminder: classes that already ended but were never confirmed as taught ----------
@@ -10935,7 +11206,7 @@ function renderLogTab(){
     container.querySelectorAll('[data-del-booking]').forEach(btn=>{
       btn.onclick = (e)=>{
         e.stopPropagation();
-        const bk = sharedBookings[Number(btn.dataset.delBooking)];
+        const bk = bkAt(Number(btn.dataset.delBooking));
         if(!bk) return;
         cancelBookingDialog(bk, ()=>{ renderBookingCards(); renderCalendar(); });
       };
@@ -10951,7 +11222,7 @@ function renderLogTab(){
     container.querySelectorAll('[data-called]').forEach(chk=>{
       chk.onclick = (e)=>e.stopPropagation();
       chk.onchange = ()=>{
-        const bk = sharedBookings[Number(chk.dataset.called)];
+        const bk = bkAt(Number(chk.dataset.called));
         if(!bk) return;
         if(chk.checked){ bk.calledAt = new Date().toISOString(); bk.calledBy = currentUser || ''; }
         else { if(!confirm('ยกเลิกสถานะ "โทรแจ้งแล้ว" ?')){ chk.checked = true; return; } delete bk.calledAt; delete bk.calledBy; }
@@ -10962,7 +11233,7 @@ function renderLogTab(){
     container.querySelectorAll('[data-en-name]').forEach(btn=>{
       btn.onclick = (e)=>{
         e.stopPropagation();
-        const bk = sharedBookings[Number(btn.dataset.enName)];
+        const bk = bkAt(Number(btn.dataset.enName));
         if(!bk) return;
         const v = prompt(`ชื่อ-นามสกุลภาษาอังกฤษของ ${bk.customerName || 'ผู้เรียน'}\n(ระบบสะกดให้เบื้องต้น ตรวจตามที่ลูกค้าสะกดจริง)`, bk.customerNameEn || thaiRomanize(bk.customerName));
         if(v === null) return;
@@ -10973,9 +11244,9 @@ function renderLogTab(){
     });
     container.querySelectorAll('[data-assign-instructor]').forEach(sel=>{
       sel.onchange = ()=>{
-        const idx = Number(sel.dataset.assignInstructor);
-        if(!sel.value) return;
-        sharedBookings[idx].instructor = sel.value;
+        const bk = bkAt(Number(sel.dataset.assignInstructor));
+        if(!sel.value || !bk) return;
+        bk.instructor = sel.value;
         saveSharedBookings();
         renderBookingCards();
         renderCalendar();
@@ -10983,9 +11254,9 @@ function renderLogTab(){
     });
     container.querySelectorAll('[data-assign-course]').forEach(sel=>{
       sel.onchange = ()=>{
-        const idx = Number(sel.dataset.assignCourse);
-        if(!sel.value) return;
-        sharedBookings[idx].courseId = sel.value;
+        const bk = bkAt(Number(sel.dataset.assignCourse));
+        if(!sel.value || !bk) return;
+        bk.courseId = sel.value;
         saveSharedBookings();
         renderBookingCards();
         renderCalendar();
@@ -11006,6 +11277,7 @@ function renderLogTab(){
       return false;
     };
     const filtering = !!(fq || fDate);
+    __bkRenderRefs = sharedBookings.slice(); // what each card's number pointed to when it was drawn
     const sorted = sharedBookings.map((b,i)=>({...b, _idx:i})).filter(b=> !filtering || (!b.busy && !b.holiday && hit(b))).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
     const info = document.getElementById('bkfInfo'), ttl = document.getElementById('bkfTitle');
     if(info){ info.textContent = filtering ? (sorted.length ? `พบ ${sorted.length} คิว${fDate ? ' · '+new Date(fDate+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short', year:'numeric'}) : ''}${fq ? ` · “${bkFilter.q.trim()}”` : ''}` : 'ไม่พบคิวที่ตรงกับที่ค้นหา') : ''; info.style.display = filtering ? '' : 'none'; }
@@ -11026,10 +11298,15 @@ function renderLogTab(){
     const upcomingGroups = groupByDate(upcoming);
     const historyGroups = groupByDate(history);
 
+    // draw the first 14 days with classes right away; the rest only when asked (a long list used to block the screen)
+    const UP_STEP = 14;
+    const upShown = filtering ? upcomingGroups.length : Math.min(upcomingGroups.length, bkUpShown || UP_STEP);
     grid.innerHTML = upcomingGroups.length
-      ? upcomingGroups.map(g=> dayGroupCardHTML(g.key, g.bookings)).join('')
+      ? upcomingGroups.slice(0, upShown).map(g=> dayGroupCardHTML(g.key, g.bookings)).join('')
+        + (upShown < upcomingGroups.length ? `<button type="button" class="btn ghost bk-more" id="bkUpMore" style="grid-column:1/-1;">ดูคิวถัดไปอีก (${upcomingGroups.length - upShown} วัน) ▼</button>` : '')
       : `<div style="grid-column:1/-1; text-align:center; color:#948a78; padding:26px 10px;">ยังไม่มีการจองที่กำลังจะถึง — กด "+" เพื่อเริ่มลงตาราง</div>`;
     wireCardButtons(grid);
+    { const more = document.getElementById('bkUpMore'); if(more) more.onclick = ()=>{ bkUpShown = upShown + UP_STEP; renderBookingCards(); }; }
 
     if(filtering && !upcomingGroups.length){ grid.innerHTML = ''; }
     if(history.length){
@@ -11037,8 +11314,13 @@ function renderLogTab(){
       historySection.style.display = 'block';
       toggleHistoryBtn.textContent = `${historyOpen?'ซ่อน':'ดู'}ประวัติการสอนย้อนหลัง (${history.length}) ${historyOpen?'▲':'▼'}`;
       historyGrid.style.display = historyOpen ? 'grid' : 'none';
-      historyGrid.innerHTML = historyGroups.map(g=> dayGroupCardHTML(g.key, g.bookings)).join('');
-      wireCardButtons(historyGrid);
+      if(historyOpen){ // past classes are only drawn while the history is open (and 20 days at a time)
+        const hShown = filtering ? historyGroups.length : Math.min(historyGroups.length, bkHistShown || 20);
+        historyGrid.innerHTML = historyGroups.slice(0, hShown).map(g=> dayGroupCardHTML(g.key, g.bookings)).join('')
+          + (hShown < historyGroups.length ? `<button type="button" class="btn ghost bk-more" id="bkHistMore" style="grid-column:1/-1;">ดูย้อนหลังเพิ่ม (${historyGroups.length - hShown} วัน) ▼</button>` : '');
+        wireCardButtons(historyGrid);
+        const hm = document.getElementById('bkHistMore'); if(hm) hm.onclick = ()=>{ bkHistShown = hShown + 20; renderBookingCards(); };
+      } else historyGrid.innerHTML = '';
       toggleHistoryBtn.onclick = ()=>{
         historyOpen = !historyOpen;
         renderBookingCards();
@@ -11369,7 +11651,7 @@ function renderStockTab(){
       const dateStr = isNaN(d) ? '-' : d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
       return `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-          ${m.evidencePhoto ? `<img src="${m.evidencePhoto}" class="stock-evidence-thumb" data-evidence="${m.evidencePhoto}" style="width:34px; height:34px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer; border:1px solid var(--line);">` : ''}
+          ${m.evidencePhoto || m.evidenceKey ? `<img src="${m.evidencePhoto || slipCache.get(m.evidenceKey) || BLANK_IMG}" data-slipkey="${m.evidenceKey||''}" class="stock-evidence-thumb" data-evidence="${m.evidencePhoto || slipCache.get(m.evidenceKey) || ''}" style="width:34px; height:34px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer; border:1px solid var(--line);">` : ''}
           <div style="min-width:0;">
             <div style="font-weight:600;">${m.productName}
               <span class="badge" style="background:${typeColor[m.type]}22; color:${typeColor[m.type]};">${typeLabel[m.type]||m.type}</span>
@@ -11384,7 +11666,7 @@ function renderStockTab(){
       img.onclick = ()=>{
         document.getElementById('reportModalBody').innerHTML = `
           <h3>📎 รูปหลักฐานการปรับสต๊อก</h3>
-          <div style="text-align:center; margin-top:10px;"><img src="${img.dataset.evidence}" style="max-width:100%; border-radius:12px;"></div>
+          <div style="text-align:center; margin-top:10px;"><img src="${img.dataset.evidence || img.src}" data-slipkey="${img.dataset.slipkey||''}" style="max-width:100%; border-radius:12px;"></div>
         `;
         openModal('reportModalOverlay');
       };
@@ -11724,7 +12006,9 @@ function renderStockTab(){
         <div class="kpi"><div class="label">ยอดขายสินค้าสะสม</div><div class="value" style="font-size:18px;">${fmt(grandTotal)}</div></div>
         <div class="kpi"><div class="label">จำนวนชิ้นขายสะสม</div><div class="value">${grandQty}</div></div>
       </div>`;
-    listEl.innerHTML = rows.map(r=>{
+    const RS_MAX = 150; // newest 150 lines — the full history kept growing without limit
+    const rowsAll = rows.length;
+    listEl.innerHTML = rows.slice(0, RS_MAX).map(r=>{
       const dateStr = r.date ? new Date(r.date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
       return `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px;">
         <div>
@@ -11733,7 +12017,7 @@ function renderStockTab(){
         </div>
         <div class="mono" style="font-weight:700; color:var(--gold);">${fmt(r.total)}</div>
       </div>`;
-    }).join('');
+    }).join('') + (rowsAll > RS_MAX ? `<div style="text-align:center; color:#948a78; font-size:11.5px; padding:8px;">แสดง ${RS_MAX} รายการล่าสุด จากทั้งหมด ${rowsAll} รายการ (ยอดรวมด้านบนนับครบทุกรายการ)</div>` : '');
   })();
 
 }
@@ -12460,8 +12744,12 @@ async function openPaymentModal(items){
         seller: currentUser || '-',
         items,
         total,
-        slip: pendingSlipDataUrl || ''
       };
+      saleRecord.id = 's_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+      if(pendingSlipDataUrl){ // slip goes to its own key; if that upload fails, keep it inline so nothing is lost
+        try{ const key = SLIP_KEY_PREFIX + saleRecord.id; await window.storage.set(key, pendingSlipDataUrl, true); slipCache.set(key, pendingSlipDataUrl); saleRecord.slipKey = key; saleRecord.slipSig = slipSigOf(pendingSlipDataUrl); }
+        catch(e){ console.warn('slip upload failed, keeping it in the sale', e); saleRecord.slip = pendingSlipDataUrl; }
+      }
       saleRecordRef = saleRecord;
       standaloneSales.push(saleRecord);
       const savedOk = await saveStandaloneSales();
@@ -12502,7 +12790,7 @@ async function openPaymentModal(items){
 // same total, same slip, within 2 minutes of each other — the first one is kept, the rest are flagged
 function saleSignature(sale){
   const items = (sale.items||[]).map(it=> `${it.name}|${it.qty}|${it.price}`).sort().join(';');
-  const slip = sale.slip ? sale.slip.length+':'+sale.slip.slice(-64) : '';
+  const slip = sale.slip ? slipSigOf(sale.slip) : (sale.slipSig || '');
   return `${sale.seller}#${sale.total}#${items}#${slip}`;
 }
 function findDuplicateSales(){
@@ -12582,7 +12870,7 @@ function renderTodaySalesList(){
         </div>
       </div>
       <div style="font-size:11.5px; color:#5A4433; margin-top:2px;">${itemsStr}</div>
-      ${s.slip ? `<div style="margin-top:4px;"><img src="${s.slip}" class="slip-thumb" data-slip="${s.slip}" style="width:32px; height:32px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid var(--line);"></div>` : ''}
+      ${hasSlip(s) ? `<div style="margin-top:4px;"><img src="${slipSrc(s)}" data-slipkey="${s.slipKey||''}" class="slip-thumb" data-slip="${slipSrc(s)}" style="width:32px; height:32px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid var(--line);"></div>` : ''}
     </div>`;
   };
 
@@ -12629,7 +12917,7 @@ function renderTodaySalesList(){
       e.stopPropagation();
       document.getElementById('reportModalBody').innerHTML = `
         <h3>📎 สลิปการโอน</h3>
-        <div style="text-align:center; margin-top:10px;"><img src="${img.dataset.slip}" style="max-width:100%; border-radius:12px;"></div>
+        <div style="text-align:center; margin-top:10px;"><img src="${img.dataset.slip}" data-slipkey="${img.dataset.slipkey||''}" style="max-width:100%; border-radius:12px;"></div>
       `;
       openModal('reportModalOverlay');
     };
@@ -12690,7 +12978,7 @@ function slipMonthDashboardHTML(byDay, days, monthTotal, txnCount){
 }
 
 function renderSlipGalleryCompare4(box){
-  const withSlips = standaloneSales.filter(s=> s.slip);
+  const withSlips = standaloneSales.filter(s=> hasSlip(s));
   const monthNamesShort = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   if(typeof window._slipGalleryCompareCount === 'undefined') window._slipGalleryCompareCount = 4;
   const N = window._slipGalleryCompareCount;
@@ -12784,7 +13072,7 @@ function renderSlipGalleryCompare4(box){
 
 let slipCombinedOpenDay = null; // currently expanded day within the combined view
 function renderSlipGalleryCombined(box){
-  const withSlips = standaloneSales.filter(s=> s.slip);
+  const withSlips = standaloneSales.filter(s=> hasSlip(s));
   const monthNamesShort = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   if(typeof window._slipGalleryCombinedCount === 'undefined') window._slipGalleryCombinedCount = 3;
   const N = window._slipGalleryCombinedCount;
@@ -12855,7 +13143,7 @@ function renderSlipGalleryCombined(box){
             const timeStr = t && !isNaN(t) ? t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
             const itemsStr = (s.items||[]).map(it=> `${it.name} x${it.qty}`).join(', ');
             return `<div style="display:flex; gap:10px; background:#fffefc; border-radius:10px; padding:8px; border:1px solid var(--line);">
-              <img class="slip-combined-item" data-slip="${s.slip}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" src="${s.slip}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
+              <img class="slip-combined-item" data-slipkey="${s.slipKey||''}" data-slip="${slipSrc(s)}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" src="${slipSrc(s)}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
               <div style="flex:1; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline; gap:6px;">
                   <span class="mono" style="font-weight:700; font-size:13px;">฿${fmt(s.total)}</span>
@@ -12914,7 +13202,7 @@ function renderSlipGalleryCombined(box){
         <h3>📎 สลิปการโอน</h3>
         <p class="hint">${item.dataset.date} · ฿${fmt(item.dataset.total)} · ${item.dataset.seller}</p>
         ${item.dataset.items ? `<div style="font-size:12.5px; color:#5A4433; background:var(--cream); border-radius:10px; padding:8px 12px; margin-top:8px;">${item.dataset.items}</div>` : ''}
-        <div style="text-align:center; margin-top:10px;"><img src="${item.dataset.slip}" style="max-width:100%; border-radius:12px;"></div>
+        <div style="text-align:center; margin-top:10px;"><img src="${item.dataset.slip}" data-slipkey="${item.dataset.slipkey||''}" style="max-width:100%; border-radius:12px;"></div>
       `;
       openModal('reportModalOverlay');
     };
@@ -12937,7 +13225,7 @@ function renderSlipGallery(){
 
   const withSlips = standaloneSales
     .map((s,i)=>({...s, _idx:i}))
-    .filter(s=> s.slip);
+    .filter(s=> hasSlip(s));
 
   const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const y = window._slipGalleryYear, m = window._slipGalleryMonth;
@@ -12998,7 +13286,7 @@ function renderSlipGallery(){
             const timeStr = t && !isNaN(t) ? t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
             const itemsStr = (s.items||[]).map(it=> `${it.name} x${it.qty}`).join(', ');
             return `<div style="display:flex; gap:10px; background:#fffefc; border-radius:10px; padding:8px; border:1px solid var(--line);">
-              <img class="slip-gallery-item" data-slip="${s.slip}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" data-sale-time="${s.time||''}" src="${s.slip}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
+              <img class="slip-gallery-item" data-slipkey="${s.slipKey||''}" data-slip="${slipSrc(s)}" data-total="${s.total}" data-date="${d} ${timeStr}" data-seller="${s.seller||''}" data-items="${itemsStr.replace(/"/g,'&quot;')}" data-sale-time="${s.time||''}" src="${slipSrc(s)}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;">
               <div style="flex:1; min-width:0;">
                 <div style="display:flex; justify-content:space-between; align-items:baseline; gap:6px;">
                   <span class="mono" style="font-weight:700; font-size:13px;">฿${fmt(s.total)}</span>
@@ -13066,7 +13354,7 @@ function renderSlipGallery(){
         <h3>📎 สลิปการโอน</h3>
         <p class="hint">${item.dataset.date} · ฿${fmt(item.dataset.total)} · ${item.dataset.seller}</p>
         ${item.dataset.items ? `<div style="font-size:12.5px; color:#5A4433; background:var(--cream); border-radius:10px; padding:8px 12px; margin-top:8px;">${item.dataset.items}</div>` : ''}
-        <div style="text-align:center; margin-top:10px;"><img src="${item.dataset.slip}" style="max-width:100%; border-radius:12px;"></div>
+        <div style="text-align:center; margin-top:10px;"><img src="${item.dataset.slip}" data-slipkey="${item.dataset.slipkey||''}" style="max-width:100%; border-radius:12px;"></div>
         ${currentUser === ADMIN_NAME ? `<button class="btn ghost" id="deleteSlipBtn" style="width:100%; margin-top:14px; color:var(--alert);">🗑️ ลบสลิปนี้</button>` : ''}
       `;
       const delBtn = document.getElementById('deleteSlipBtn');
@@ -13077,6 +13365,7 @@ function renderSlipGallery(){
         if(!confirm('ลบรูปสลิปนี้ใช่หรือไม่? รายการขายยังอยู่เหมือนเดิม แค่เอารูปสลิปออก')) return;
         const sale = standaloneSales.find(x=> saleTime && x.time === saleTime);
         if(!sale){ alert('ไม่พบรายการขายนี้ อาจถูกลบไปแล้ว'); return; }
+        if(sale.slipKey){ window.storage.set(sale.slipKey, '', true).catch(()=>{}); slipCache.delete(sale.slipKey); delete sale.slipKey; delete sale.slipSig; }
         sale.slip = '';
         await saveStandaloneSales();
         closeModal('reportModalOverlay');
@@ -13088,8 +13377,11 @@ function renderSlipGallery(){
 }
 
 function openEditSaleModal(idx){
-  const sale = standaloneSales[idx];
+  let sale = standaloneSales[idx];
   if(!sale) return;
+  const saleKey = saleIdOf(sale);
+  // the list may be refreshed while this window is open — always act on the live copy of THIS sale
+  const liveSale = ()=>{ const x = standaloneSales.find(y=> saleIdOf(y) === saleKey); if(x) sale = x; return x; };
   const rows = sale.items.map((it,i)=>`
     <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line);">
       <div style="flex:1; min-width:0;">
@@ -13175,6 +13467,7 @@ function openEditSaleModal(idx){
 
       sale.items = newItems;
       sale.total = newItems.reduce((s,it)=> s + it.price*it.qty, 0);
+      { const live = liveSale(); if(live && live !== sale){ live.items = sale.items; live.total = sale.total; } }
       await saveStandaloneSales();
 
       closeModal('reportModalOverlay');
@@ -13199,7 +13492,8 @@ function openEditSaleModal(idx){
       });
       scheduleSave();
       await saveRetailProducts();
-      standaloneSales.splice(idx,1);
+      { const ix = standaloneSales.findIndex(y=> saleIdOf(y) === saleKey); if(ix >= 0) standaloneSales.splice(ix,1); } // by id, not by position
+      if(sale.slipKey) window.storage.set(sale.slipKey, '', true).catch(()=>{});
       await saveStandaloneSales();
       closeModal('reportModalOverlay');
       renderTodaySalesList();
@@ -13232,9 +13526,9 @@ function openSaleReceipt(sale){
       ${itemLines}
       <hr>
       <div class="line total"><span>ยอดรวม</span><span>${fmt(sale.total)}</span></div>
-      <div class="foot">✓ บันทึกแล้ว${sale.slip ? ' · แนบสลิปแล้ว 📎' : ''}</div>
+      <div class="foot">✓ บันทึกแล้ว${hasSlip(sale) ? ' · แนบสลิปแล้ว 📎' : ''}</div>
     </div>
-    ${sale.slip ? `<div style="text-align:center; margin-top:6px;"><img src="${sale.slip}" style="max-width:160px; border-radius:10px;"></div>` : ''}
+    ${hasSlip(sale) ? `<div style="text-align:center; margin-top:6px;"><img src="${slipSrc(sale)}" data-slipkey="${sale.slipKey||''}" style="max-width:160px; border-radius:10px;"></div>` : ''}
     <button class="btn-arrow" id="saleReceiptOkBtn" style="justify-content:center; width:100%; margin-top:8px;">เรียบร้อย<span class="circ">✓</span></button>
   `;
   const okBtn = document.getElementById('saleReceiptOkBtn');
@@ -13408,6 +13702,9 @@ async function silentBackgroundSync(){
   if(isUserBusy()) return;          // don't disturb active input/modal
   __syncChanged = false;
   const g0 = __writeGen;
+  const slowRound = (++__syncRound % 4 === 0) || Date.now() - __lastSlowSync > 120000;
+  if(slowRound) __lastSlowSync = Date.now();
+  if(__syncRunning) return; __syncRunning = true; // never two syncs at once (a slow connection used to stack them up)
   try{
     await Promise.all([
       loadState().then(s=>{ // courses/pricing/recipes/menu — only swap in when it really changed on another device
@@ -13416,23 +13713,28 @@ async function silentBackgroundSync(){
         state = s; __stateRawApplied = raw;
       }),
       loadSharedBookings(),
-      loadInstructorPhotos(),
-      loadInstructorPins(),
-      loadSharedAdminPin(),
-      loadRetailProducts(),
-      loadStandaloneSales(),
-      loadStockMovements(),
-      loadSharedEvalFormUrl(),
-      loadSharedLineRelayUrl(),
-      loadQcLots(),
-      loadCustomCategories(),
+      // the bigger / rarely-changing lists only every 4th round (~1 min) — they were re-downloaded every 15 s
+      ...(slowRound ? [
+        loadInstructorPhotos(),
+        loadInstructorPins(),
+        loadSharedAdminPin(),
+        loadRetailProducts(),
+        loadStandaloneSales(),
+        loadStockMovements(),
+        loadSharedEvalFormUrl(),
+        loadSharedLineRelayUrl(),
+        loadQcLots(),
+        loadCustomCategories(),
+      ] : []),
     ]);
     if(__writeGen !== g0 || isUserBusy()){ __syncChanged = false; return; } // a save happened meanwhile — try again next tick
     if(!__syncChanged) return; // nothing new from other devices — skip the full redraw entirely
     __syncChanged = false;
     whenScrollIdle(()=>{ if(!isUserBusy()) renderAll(); }); // re-check in case typing started while awaiting
   }catch(e){ /* silent — a failed background sync just tries again next tick */ }
+  finally{ __syncRunning = false; }
 }
+let __syncRound = 0, __lastSlowSync = Date.now(), __syncRunning = false;
 function startAutoSync(){
   if(autoSyncTimerId) return;
   autoSyncTimerId = setInterval(silentBackgroundSync, AUTO_SYNC_INTERVAL_MS);
@@ -13693,7 +13995,8 @@ function cbPassBind(form, root){
     const sb = form.querySelector('.cb-submit'); if(sb){ sb.classList.toggle('is-ready', done === req.length); sb.textContent = done === req.length ? 'ยืนยันการจอง' : `ยืนยันการจอง (เหลือ ${req.length-done} ข้อ)`; }
   };
   form.addEventListener('input', ()=>{ update(); requestAnimationFrame(()=> place(curKey)); }); form.addEventListener('change', ()=>{ update(); requestAnimationFrame(()=> place(curKey)); });
-  window.addEventListener('resize', ()=> place(curKey));
+  if(window.__cbPlaceRz) window.removeEventListener('resize', window.__cbPlaceRz); // one handler, even after the form re-draws
+  window.__cbPlaceRz = ()=> place(curKey); window.addEventListener('resize', window.__cbPlaceRz);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=> place(curKey));
   form.addEventListener('focusin', e=> place(target(e.target)));
   form.addEventListener('focusout', ()=> setTimeout(()=>{ if(!form.contains(document.activeElement)) place(null); }, 0));
@@ -13813,7 +14116,8 @@ function cbWizard(root, st, form){
     }, {passive:true});
     form.addEventListener('input', ()=> requestAnimationFrame(fit));
     form.addEventListener('change', ()=> requestAnimationFrame(fit));
-    window.addEventListener('resize', fit);
+    if(window.__cbFitRz) window.removeEventListener('resize', window.__cbFitRz);
+    window.__cbFitRz = fit; window.addEventListener('resize', fit);
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   }
   if(form.__restoreStep){ form.__step = form.__restoreStep; form.__maxStep = Math.max(form.__maxStep||1, form.__step+1); }
@@ -14066,8 +14370,30 @@ async function startCustomerBooking(param){
           }
           sharedBookings.push(b);
         }
-        await backupBeforeSave('shared_teaching_bookings');
-        await window.storage.set('shared_teaching_bookings', JSON.stringify(sharedBookings), true);
+        // merge-safe: keeps anything the team saved in the app while this customer was filling the form
+        await queueArraySave('shared_teaching_bookings', ()=> sharedBookings, v=> sharedBookings = v, bookingKeyOf);
+        // two customers can press "ยืนยัน" for the same day in the same second — re-check after saving.
+        // The earlier booking keeps the day; the later one is withdrawn and the customer picks another date.
+        if(!st.hold){
+          await new Promise(r=> setTimeout(r, 900));
+          await loadSharedBookings();
+          const mine = sharedBookings.filter(x=> x.linkId === linkId);
+          const myAt = base.createdAt;
+          const before = x=> x.linkId !== linkId && (x.source !== 'link' || !x.createdAt || x.createdAt < myAt || (x.createdAt === myAt && String(x.linkId) < linkId));
+          const day = sharedBookings.filter(x=> x.date === st.date && before(x));
+          let lost = false;
+          if(!cbIsWorkshop(st.cid)) lost = day.length > 0;
+          else {
+            const same = day.filter(x=> x.courseId === st.cid && (x.startTime||'') === (st.time||''));
+            lost = day.some(x=> x.courseId !== st.cid) || same.length + mine.length > cbSeats(st.cid);
+          }
+          if(lost && mine.length){
+            sharedBookings = sharedBookings.filter(x=> x.linkId !== linkId);
+            await queueArraySave('shared_teaching_bookings', ()=> sharedBookings, v=> sharedBookings = v, bookingKeyOf);
+            alert('ขออภัย มีลูกค้าอีกท่านเพิ่งจองวัน/รอบนี้ไปก่อนหน้าไม่กี่วินาที\nกรุณาเลือกวันเรียนใหม่อีกครั้ง');
+            st.date = ''; st.time = ''; st.step = 0; btn.disabled = false; btn.textContent = 'ยืนยันการจอง'; render(); return;
+          }
+        }
         const dTh = new Date(st.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
         try{ await postLineGroup(['📲 RANGSAN Academy — ลูกค้าจองผ่านลิงค์', '', `👤 ${[name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', ')}${n>1?` (${n} คน)`:''}`, `📞 ${phone}${extra.lineId?` · LINE: ${extra.lineId}`:''}`, `📚 ${cbShortName(c)}`, `🗓️ ${dTh}${st.time?` · ${st.time} น.`:''}`, base.allergy?`⚠️ แพ้: ${base.allergy}`:'' ].filter(Boolean).join('\n')); }catch(e){}
         st.done = `<div class="cb-card cb-done"><div class="cb-ok">✓</div><h2>จองเรียบร้อยแล้ว</h2>
@@ -14301,7 +14627,7 @@ async function watchLinkBookings(){
   if(document.hidden || !currentUser || criticalOpInProgress) return;
   let seen = []; try{ seen = JSON.parse(localStorage.getItem('rangsan_link_seen')||'[]'); }catch(e){}
   const first = !localStorage.getItem('rangsan_link_seen');
-  try{ await loadSharedBookings(); }catch(e){ return; }
+  if(!autoSyncTimerId){ try{ await loadSharedBookings(); }catch(e){ return; } } // background sync already refreshes the list every 15 s
   const link = sharedBookings.filter(b=> b.source === 'link' && b.linkId);
   const ids = [...new Set(link.map(b=> b.linkId))];
   const fresh = first ? [] : ids.filter(id=> !seen.includes(id));
@@ -14755,7 +15081,7 @@ function shopBulkImport(){
     close(); flashSaved(`เพิ่ม ${r.length} สินค้าแล้ว ✓`); shopAdminProducts(); };
 }
 async function watchShopOrders(){
-  if(document.hidden || !currentUser) return;
+  if(document.hidden || !currentUser || !SHOP_ORDERING) return; // catalog-only mode has no orders to watch
   let seen = null; try{ seen = JSON.parse(localStorage.getItem('rangsan_shop_seen')||'null'); }catch(e){}
   try{ await loadShopOrders(); }catch(e){ return; }
   const ids = shopOrders.map(o=> o.id);
