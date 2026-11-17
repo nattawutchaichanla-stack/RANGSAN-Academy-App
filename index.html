@@ -2193,6 +2193,13 @@
 
   .rf-warn{ border:1.5px solid #E0A33A !important; margin-bottom:10px; } .rf-um{ padding:10px 0; border-top:1px dashed rgba(150,120,60,.35); } .rf-um small{ opacity:.7; font-weight:400; }
   .rf-um-f{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; } .rf-um-f input, .rf-um-f select{ font:inherit; font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid #CFC4AE; background:#fff; color:#2A241A; max-width:100%; } .rf-um-f select{ flex:1; min-width:160px; }
+  .bkf-bar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 10px; }
+  .bkf-search{ flex:1 1 240px; display:flex; align-items:center; gap:6px; padding:0 12px; border:1px solid var(--line); border-radius:999px; background:#fff; }
+  .bkf-search input{ flex:1; min-width:0; border:none; outline:none; background:none; font:inherit; font-size:14px; padding:10px 0; color:var(--ink); }
+  .bkf-date{ display:flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:13px; }
+  .bkf-date input{ border:none; outline:none; background:none; font:inherit; font-size:13.5px; color:var(--ink); }
+  .bkf-clear{ all:unset; cursor:pointer; padding:8px 14px; border-radius:999px; background:var(--cream); font-size:12.5px; font-weight:700; color:var(--ink); }
+  .bkf-info{ margin:-2px 0 10px; font-size:12.5px; color:var(--gold); font-weight:700; }
   .tap-busy{ opacity:.55 !important; transition:opacity .15s; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
@@ -5513,6 +5520,7 @@ function renderRegFeed(){
   if(umHTML) bindRegUnmatched(box);
 }
 let regUnmatchedCache = [];
+let bkFilter = { q:'', date:'' }; // booking list search (kept across redraws)
 function formRowSig(name, phone, rawDate, courseText, ts){ return [name, phone, rawDate, courseText, ts].map(x=> String(x||'').trim()).join('|'); }
 function regUnmatchedHTML(){
   const list = (regUnmatchedCache||[]).filter(u=> !sharedBookings.some(b=> b.formRowSig === u.sig));
@@ -10156,7 +10164,13 @@ function renderLogTab(){
       </div>
       <div style="margin:14px 0; border-top:1px dashed var(--line);"></div>
       <div id="busyListSection"></div>
-      <h3 style="margin:0 0 10px; font-size:14px; color:var(--ink);">คิวที่กำลังจะถึง</h3>
+      <div class="bkf-bar">
+        <div class="bkf-search"><span>🔍</span><input type="search" id="bkfQ" placeholder="ค้นหาชื่อลูกค้า หรือเบอร์โทร" autocomplete="off" value="${cbEsc(bkFilter.q)}"></div>
+        <label class="bkf-date">📅 <input type="date" id="bkfDate" value="${bkFilter.date}"></label>
+        <button type="button" class="bkf-clear" id="bkfClear" ${bkFilter.q||bkFilter.date?'':'hidden'}>ล้าง ✕</button>
+      </div>
+      <div class="bkf-info" id="bkfInfo"></div>
+      <h3 id="bkfTitle" style="margin:0 0 10px; font-size:14px; color:var(--ink);">คิวที่กำลังจะถึง</h3>
       <div class="card-grid" id="bookingCardGrid"></div>
       <div id="historySection" style="margin-top:18px; display:none;">
         <button class="btn small ghost" id="toggleHistoryBtn" style="width:100%; text-align:center;"></button>
@@ -10884,7 +10898,21 @@ function renderLogTab(){
 
   const renderBookingCards = ()=>{
     const todayStr = new Date().toISOString().slice(0,10);
-    const sorted = sharedBookings.map((b,i)=>({...b, _idx:i})).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    // filter: date + name / phone / LINE
+    const fq = (bkFilter.q||'').trim().toLowerCase(), fDigits = fq.replace(/\D/g,''), fDate = bkFilter.date || '';
+    const hit = b=>{
+      if(fDate && b.date !== fDate) return false;
+      if(!fq) return true;
+      const text = [b.customerName, b.customerNameEn, b.customerLine, b.note, b.customerPhone].filter(Boolean).join(' ').toLowerCase();
+      if(text.includes(fq)) return true;
+      if(fDigits.length >= 3){ const ph = String(b.customerPhone||'').replace(/\D/g,'') + ' ' + String(b.note||'').replace(/\D/g,''); if(ph.includes(fDigits) || (fDigits[0]==='0' && ph.includes(fDigits.slice(1)))) return true; }
+      return false;
+    };
+    const filtering = !!(fq || fDate);
+    const sorted = sharedBookings.map((b,i)=>({...b, _idx:i})).filter(b=> !filtering || (!b.busy && !b.holiday && hit(b))).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    const info = document.getElementById('bkfInfo'), ttl = document.getElementById('bkfTitle');
+    if(info){ info.textContent = filtering ? (sorted.length ? `พบ ${sorted.length} คิว${fDate ? ' · วันที่ '+rsThDate(fDate) : ''}${fq ? ` · “${bkFilter.q.trim()}”` : ''}` : 'ไม่พบคิวที่ตรงกับที่ค้นหา') : ''; info.style.display = filtering ? '' : 'none'; }
+    if(ttl) ttl.textContent = filtering ? 'ผลการค้นหา' : 'คิวที่กำลังจะถึง';
     const upcoming = sorted.filter(b=> !b.date || b.date >= todayStr);
     const history = sorted.filter(b=> b.date && b.date < todayStr).sort((a,b)=> (b.date||'').localeCompare(a.date||'')); // newest-first
 
@@ -10906,7 +10934,9 @@ function renderLogTab(){
       : `<div style="grid-column:1/-1; text-align:center; color:#948a78; padding:26px 10px;">ยังไม่มีการจองที่กำลังจะถึง — กด "+" เพื่อเริ่มลงตาราง</div>`;
     wireCardButtons(grid);
 
+    if(filtering && !upcomingGroups.length){ grid.innerHTML = ''; }
     if(history.length){
+      if(filtering) historyOpen = true; // past matches stay visible while searching
       historySection.style.display = 'block';
       toggleHistoryBtn.textContent = `${historyOpen?'ซ่อน':'ดู'}ประวัติการสอนย้อนหลัง (${history.length}) ${historyOpen?'▲':'▼'}`;
       historyGrid.style.display = historyOpen ? 'grid' : 'none';
@@ -10917,11 +10947,20 @@ function renderLogTab(){
         renderBookingCards();
       };
     } else {
-      historySection.style.display = 'none';
+      historySection.style.display = 'none'; historyGrid.innerHTML = '';
     }
     setupRotatingAvatars();
   };
   renderBookingCards();
+  (()=>{ // search / date filter wiring
+    const q = document.getElementById('bkfQ'), d = document.getElementById('bkfDate'), clr = document.getElementById('bkfClear');
+    if(!q) return;
+    let t = 0;
+    const apply = ()=>{ clr.hidden = !(bkFilter.q || bkFilter.date); renderBookingCards(); };
+    q.oninput = ()=>{ bkFilter.q = q.value; clearTimeout(t); t = setTimeout(apply, 200); };
+    d.onchange = ()=>{ bkFilter.date = d.value; apply(); };
+    clr.onclick = ()=>{ bkFilter.q = ''; bkFilter.date = ''; q.value = ''; d.value = ''; apply(); };
+  })();
 
   const TIMED_COURSE_IDS = ['c6'];
   const TIME_CHIPS = ['10:00','14:00'];
