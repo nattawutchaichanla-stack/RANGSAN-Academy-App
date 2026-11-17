@@ -2196,9 +2196,33 @@
   .bkf-bar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 10px; }
   .bkf-search{ flex:1 1 240px; display:flex; align-items:center; gap:6px; padding:0 12px; border:1px solid var(--line); border-radius:999px; background:#fff; }
   .bkf-search input{ flex:1; min-width:0; border:none; outline:none; background:none; font:inherit; font-size:14px; padding:10px 0; color:var(--ink); }
+  .rdp{ position:relative; flex:0 1 230px; min-width:190px; }
+  .rdp-ctl{ display:flex; align-items:center; gap:2px; padding:3px 4px 3px 14px; border:1px solid var(--line); border-radius:999px; background:#fff; transition:box-shadow .15s, border-color .15s; }
+  .rdp.open .rdp-ctl, .rdp-ctl:focus-within{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,168,75,.22); }
+  .rdp-in{ flex:1; min-width:0; border:none; outline:none; background:none; font:inherit; font-size:14px; padding:7px 0; color:var(--ink); }
+  .rdp-trig, .rdp-clr, .rdp-nav{ all:unset; cursor:pointer; display:grid; place-items:center; width:34px; height:34px; border-radius:10px; color:var(--ink); }
+  .rdp-trig:hover, .rdp-nav:hover{ background:var(--cream); } .rdp-clr{ color:#C0392B; } .rdp-clr:hover{ background:#FBE9E7; } .rdp-clr[hidden]{ display:none; }
+  .rdp-pop{ position:absolute; top:calc(100% + 8px); left:0; z-index:60; width:300px; max-width:calc(100vw - 32px); box-sizing:border-box; padding:12px; border-radius:18px; border:1px solid var(--line); background:#fff; box-shadow:0 18px 40px rgba(20,16,8,.18); animation:rdpIn .16s ease; }
+  .rdp-pop.to-left{ left:auto; right:0; } .rdp-pop[hidden]{ display:none; }
+  @keyframes rdpIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+  .rdp-sel{ display:flex; gap:8px; margin-bottom:10px; } .rdp-sel select{ flex:1; font:inherit; font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink); }
+  .rdp-vc{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .rdp-vt{ all:unset; cursor:pointer; padding:4px 10px; border-radius:8px; font-size:14px; font-weight:700; color:var(--ink); } button.rdp-vt:hover{ background:var(--cream); }
+  .rdp-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; }
+  .rdp-grid b{ font-size:11.5px; font-weight:600; color:#948a78; padding:4px 0; }
+  .rdp-d{ all:unset; cursor:pointer; position:relative; height:36px; display:grid; place-items:center; border-radius:10px; font-size:13.5px; color:var(--ink); }
+  .rdp-d:hover{ background:var(--cream); } .rdp-d.today{ box-shadow:inset 0 0 0 1.5px var(--gold); font-weight:700; }
+  .rdp-d.on{ background:#0B2A15; color:#fff; font-weight:700; box-shadow:none; }
+  .rdp-d.mk::after{ content:''; position:absolute; bottom:4px; left:50%; width:4px; height:4px; margin-left:-2px; border-radius:50%; background:var(--gold); } .rdp-d.on.mk::after{ background:#fff; }
+  .rdp-grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .rdp-c{ all:unset; cursor:pointer; text-align:center; padding:10px 0; border-radius:10px; font-size:13px; color:var(--ink); } .rdp-c:hover{ background:var(--cream); } .rdp-c.on{ background:#0B2A15; color:#fff; font-weight:700; }
+  .rdp-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:12px; color:#948a78; }
+  .rdp-foot i{ display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--gold); vertical-align:middle; margin-right:2px; }
+  .rdp-today{ all:unset; cursor:pointer; padding:5px 12px; border-radius:999px; background:var(--cream); font-weight:700; color:var(--ink); font-size:12.5px; }
   .bkf-date{ display:flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:13px; }
   .bkf-date input{ border:none; outline:none; background:none; font:inherit; font-size:13.5px; color:var(--ink); }
   .bkf-clear{ all:unset; cursor:pointer; padding:8px 14px; border-radius:999px; background:var(--cream); font-size:12.5px; font-weight:700; color:var(--ink); }
+  .bkf-clear[hidden]{ display:none; }
   .bkf-info{ margin:-2px 0 10px; font-size:12.5px; color:var(--gold); font-weight:700; }
   .tap-busy{ opacity:.55 !important; transition:opacity .15s; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
@@ -5520,7 +5544,75 @@ function renderRegFeed(){
   if(umHTML) bindRegUnmatched(box);
 }
 let regUnmatchedCache = [];
-let bkFilter = { q:'', date:'' }; // booking list search (kept across redraws)
+let bkFilter = { q:'', date:'' };
+// ---------- RANGSAN date picker (input + calendar popup with day / month / year views) ----------
+const RDP_IC = {
+  cal:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  x:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  l:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  r:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>'
+};
+const RDP_M = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const RDP_MS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const RDP_W = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+function rsDatePicker(host, opt){
+  opt = opt || {};
+  const ymd = d=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const today = ymd(new Date());
+  let value = opt.value || '', view = 'day', cur = value ? new Date(value+'T00:00:00') : new Date(); cur.setDate(1);
+  const label = v=>{ if(!v) return ''; const d = new Date(v+'T00:00:00'); return `${d.getDate()} ${RDP_MS[d.getMonth()]} ${d.getFullYear()+543}`; };
+  host.classList.add('rdp');
+  host.innerHTML = `<div class="rdp-ctl"><input class="rdp-in" type="text" inputmode="numeric" placeholder="${opt.placeholder||'เลือกวันที่'}" aria-label="วันที่">
+    <button type="button" class="rdp-trig" aria-label="เปิดปฏิทิน">${RDP_IC.cal}</button><button type="button" class="rdp-clr" aria-label="ล้างวันที่">${RDP_IC.x}</button></div>
+    <div class="rdp-pop" role="dialog" aria-label="ปฏิทิน" hidden></div>`;
+  const inp = host.querySelector('.rdp-in'), pop = host.querySelector('.rdp-pop'), clr = host.querySelector('.rdp-clr');
+  if(window.matchMedia && matchMedia('(pointer:coarse)').matches){ inp.readOnly = true; inp.setAttribute('inputmode','none'); } // tablets/phones: tap opens the calendar, no keyboard covering it
+  const sync = ()=>{ inp.value = label(value); clr.hidden = !value; host.classList.toggle('has-val', !!value); };
+  const commit = v=>{ value = v || ''; sync(); if(opt.onChange) opt.onChange(value); };
+  const draw = ()=>{
+    const y = cur.getFullYear(), m = cur.getMonth();
+    const yOpts = (()=>{ let a = ''; for(let k = y - 6; k <= y + 4; k++) a += `<option value="${k}" ${k===y?'selected':''}>${k+543}</option>`; return a; })();
+    const head = `<div class="rdp-sel"><select class="rdp-ys" aria-label="ปี">${yOpts}</select><select class="rdp-ms" aria-label="เดือน">${RDP_M.map((n,i)=>`<option value="${i}" ${i===m?'selected':''}>${n}</option>`).join('')}</select></div>`;
+    let body = '';
+    if(view === 'day'){
+      const first = new Date(y, m, 1).getDay(), days = new Date(y, m+1, 0).getDate();
+      let cells = ''; for(let i=0;i<first;i++) cells += '<span></span>';
+      for(let d=1; d<=days; d++){ const v = ymd(new Date(y, m, d)); cells += `<button type="button" class="rdp-d${v===value?' on':''}${v===today?' today':''}${opt.marks && opt.marks.has(v)?' mk':''}" data-v="${v}">${d}</button>`; }
+      body = `<div class="rdp-vc"><button type="button" class="rdp-nav" data-mv="-1" aria-label="เดือนก่อน">${RDP_IC.l}</button><button type="button" class="rdp-vt" data-to="month">${RDP_M[m]} ${y+543}</button><button type="button" class="rdp-nav" data-mv="1" aria-label="เดือนถัดไป">${RDP_IC.r}</button></div>
+        <div class="rdp-grid">${RDP_W.map(w=>`<b>${w}</b>`).join('')}${cells}</div>`;
+    } else if(view === 'month'){
+      body = `<div class="rdp-vc"><button type="button" class="rdp-nav" data-my="-1">${RDP_IC.l}</button><button type="button" class="rdp-vt" data-to="year">${y+543}</button><button type="button" class="rdp-nav" data-my="1">${RDP_IC.r}</button></div>
+        <div class="rdp-grid4">${RDP_MS.map((n,i)=>`<button type="button" class="rdp-c${i===m?' on':''}" data-m="${i}">${n}</button>`).join('')}</div>`;
+    } else {
+      const y0 = y - (y % 12);
+      body = `<div class="rdp-vc"><button type="button" class="rdp-nav" data-my="-12">${RDP_IC.l}</button><span class="rdp-vt">${y0+543} – ${y0+11+543}</span><button type="button" class="rdp-nav" data-my="12">${RDP_IC.r}</button></div>
+        <div class="rdp-grid4">${Array.from({length:12},(_,i)=> y0+i).map(k=>`<button type="button" class="rdp-c${k===y?' on':''}" data-y="${k}">${k+543}</button>`).join('')}</div>`;
+    }
+    pop.innerHTML = head + body + `<div class="rdp-foot"><button type="button" class="rdp-today">วันนี้</button>${opt.marks ? '<span><i></i> มีคลาส</span>' : ''}</div>`;
+    pop.querySelector('.rdp-ys').onchange = e=>{ cur.setFullYear(+e.target.value); view = 'day'; draw(); };
+    pop.querySelector('.rdp-ms').onchange = e=>{ cur.setMonth(+e.target.value); view = 'day'; draw(); };
+    pop.querySelectorAll('[data-mv]').forEach(b=> b.onclick = ()=>{ cur.setMonth(cur.getMonth() + +b.dataset.mv); draw(); });
+    pop.querySelectorAll('[data-my]').forEach(b=> b.onclick = ()=>{ cur.setFullYear(cur.getFullYear() + +b.dataset.my); draw(); });
+    pop.querySelectorAll('[data-to]').forEach(b=> b.onclick = ()=>{ view = b.dataset.to; draw(); });
+    pop.querySelectorAll('[data-m]').forEach(b=> b.onclick = ()=>{ cur.setMonth(+b.dataset.m); view = 'day'; draw(); });
+    pop.querySelectorAll('[data-y]').forEach(b=> b.onclick = ()=>{ cur.setFullYear(+b.dataset.y); view = 'month'; draw(); });
+    pop.querySelectorAll('[data-v]').forEach(b=> b.onclick = ()=>{ commit(b.dataset.v); close(); });
+    pop.querySelector('.rdp-today').onclick = ()=>{ commit(today); close(); };
+  };
+  const outside = e=>{ if(!host.contains(e.target)) close(); };
+  const esc = e=>{ if(e.key === 'Escape') close(); };
+  const open = ()=>{ if(!pop.hidden) return; cur = value ? new Date(value+'T00:00:00') : new Date(); cur.setDate(1); view = 'day'; draw(); pop.hidden = false; host.classList.add('open');
+    const r = host.getBoundingClientRect(); pop.classList.toggle('to-left', r.left + 320 > window.innerWidth - 8);
+    setTimeout(()=>{ document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', esc); }); };
+  const close = ()=>{ pop.hidden = true; host.classList.remove('open'); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', esc); };
+  host.querySelector('.rdp-trig').onclick = ()=> pop.hidden ? open() : close();
+  inp.onfocus = open;
+  inp.onchange = ()=>{ const t = inp.value.trim(); if(!t){ commit(''); return; } const v = parseThaiFormDate(t); if(v) commit(v); else sync(); };
+  inp.onkeydown = e=>{ if(e.key === 'Enter'){ inp.blur(); inp.onchange(); close(); } };
+  clr.onclick = ()=>{ commit(''); close(); };
+  sync();
+  return { set: v=>{ value = v || ''; sync(); }, get: ()=> value, open, close };
+} // booking list search (kept across redraws)
 function formRowSig(name, phone, rawDate, courseText, ts){ return [name, phone, rawDate, courseText, ts].map(x=> String(x||'').trim()).join('|'); }
 function regUnmatchedHTML(){
   const list = (regUnmatchedCache||[]).filter(u=> !sharedBookings.some(b=> b.formRowSig === u.sig));
@@ -10166,7 +10258,7 @@ function renderLogTab(){
       <div id="busyListSection"></div>
       <div class="bkf-bar">
         <div class="bkf-search"><span>🔍</span><input type="search" id="bkfQ" placeholder="ค้นหาชื่อลูกค้า หรือเบอร์โทร" autocomplete="off" value="${cbEsc(bkFilter.q)}"></div>
-        <label class="bkf-date">📅 <input type="date" id="bkfDate" value="${bkFilter.date}"></label>
+        <div class="rdp" id="bkfDP"></div><input type="hidden" id="bkfDate" value="${bkFilter.date}">
         <button type="button" class="bkf-clear" id="bkfClear" ${bkFilter.q||bkFilter.date?'':'hidden'}>ล้าง ✕</button>
       </div>
       <div class="bkf-info" id="bkfInfo"></div>
@@ -10911,7 +11003,7 @@ function renderLogTab(){
     const filtering = !!(fq || fDate);
     const sorted = sharedBookings.map((b,i)=>({...b, _idx:i})).filter(b=> !filtering || (!b.busy && !b.holiday && hit(b))).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
     const info = document.getElementById('bkfInfo'), ttl = document.getElementById('bkfTitle');
-    if(info){ info.textContent = filtering ? (sorted.length ? `พบ ${sorted.length} คิว${fDate ? ' · วันที่ '+rsThDate(fDate) : ''}${fq ? ` · “${bkFilter.q.trim()}”` : ''}` : 'ไม่พบคิวที่ตรงกับที่ค้นหา') : ''; info.style.display = filtering ? '' : 'none'; }
+    if(info){ info.textContent = filtering ? (sorted.length ? `พบ ${sorted.length} คิว${fDate ? ' · '+new Date(fDate+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short', year:'numeric'}) : ''}${fq ? ` · “${bkFilter.q.trim()}”` : ''}` : 'ไม่พบคิวที่ตรงกับที่ค้นหา') : ''; info.style.display = filtering ? '' : 'none'; }
     if(ttl) ttl.textContent = filtering ? 'ผลการค้นหา' : 'คิวที่กำลังจะถึง';
     const upcoming = sorted.filter(b=> !b.date || b.date >= todayStr);
     const history = sorted.filter(b=> b.date && b.date < todayStr).sort((a,b)=> (b.date||'').localeCompare(a.date||'')); // newest-first
@@ -10958,8 +11050,10 @@ function renderLogTab(){
     let t = 0;
     const apply = ()=>{ clr.hidden = !(bkFilter.q || bkFilter.date); renderBookingCards(); };
     q.oninput = ()=>{ bkFilter.q = q.value; clearTimeout(t); t = setTimeout(apply, 200); };
-    d.onchange = ()=>{ bkFilter.date = d.value; apply(); };
-    clr.onclick = ()=>{ bkFilter.q = ''; bkFilter.date = ''; q.value = ''; d.value = ''; apply(); };
+    const marks = new Set(sharedBookings.map(b=> b.date).filter(Boolean)); // dot on days that have classes
+    const dp = rsDatePicker(document.getElementById('bkfDP'), { value: bkFilter.date, marks, placeholder:'เลือกวันที่',
+      onChange: v=>{ bkFilter.date = v || ''; d.value = bkFilter.date; apply(); } });
+    clr.onclick = ()=>{ bkFilter.q = ''; bkFilter.date = ''; q.value = ''; d.value = ''; dp.set(''); apply(); };
   })();
 
   const TIMED_COURSE_IDS = ['c6'];
