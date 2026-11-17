@@ -11218,6 +11218,10 @@ function renderLogTab(){
       if(!/^\d{1,2}:\d{2}$/.test(st)){ alert('กรุณาระบุเวลาเริ่มสอน'); return; }
       newBooking.startTime = st.padStart(5,'0');
     }
+    { // a customer already booked this day (often via the app link, instructor not chosen yet) — the day is taken
+      const waiting = sharedBookings.filter(x=> x.date === date && (!x.instructor || x.instructor === 'ยังไม่ระบุ') && !(isPerPersonCourse(courseId) && x.courseId === courseId));
+      if(waiting.length && !confirm(`วันนี้มีลูกค้าจองไว้แล้ว ${waiting.length} คิว (ยังไม่ระบุอาจารย์)\n${[...new Set(waiting.map(x=> courseShortName(x.courseId)))].join(', ')}\n\nยังต้องการลงคิวเพิ่มในวันนี้ไหม?`)) return;
+    }
     if(isPerPersonCourse(courseId)){ // Workshop: max WORKSHOP_MAX_SEATS people per class/round
       const taken = sharedBookings.filter(x=> x.date === date && x.courseId === courseId && (x.startTime||'') === (newBooking.startTime||'')).length;
       if(taken >= WORKSHOP_MAX_SEATS){ alert(`Workshop รอบนี้เต็มแล้ว (${taken}/${WORKSHOP_MAX_SEATS} ท่าน)\nรับได้สูงสุด ${WORKSHOP_MAX_SEATS} ท่านต่อรอบ`); return; }
