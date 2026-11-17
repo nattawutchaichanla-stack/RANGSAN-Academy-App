@@ -8909,13 +8909,14 @@ async function buildMonthInfographic(y, m){
   const firstDow = new Date(y, m, 1).getDay();
   const weeks = Math.ceil((firstDow + daysInMonth) / 7);
   const prefix = `${y}-${String(m+1).padStart(2,'0')}-`;
-  const monthBookings = sharedBookings.filter(b=> b.date && b.date.startsWith(prefix) && b.instructor && b.instructor !== 'ยังไม่ระบุ');
+  const monthBookings = sharedBookings.filter(b=> b.date && b.date.startsWith(prefix)); // booked days show as booked even before an instructor is chosen
   // one entry per class (same day + course + instructor + time), never customer details
   const classesByDate = {};
   monthBookings.forEach(b=>{
-    const k = [b.courseId, b.instructor, b.startTime||''].join('|');
+    const who = b.instructor && b.instructor !== 'ยังไม่ระบุ' ? b.instructor : '';
+    const k = [b.courseId, who, b.startTime||''].join('|');
     const list = classesByDate[b.date] = classesByDate[b.date] || [];
-    if(!list.some(c=> c.k === k)) list.push({ k, courseId:b.courseId, instructor:b.instructor, startTime:b.startTime });
+    if(!list.some(c=> c.k === k)) list.push({ k, courseId:b.courseId, instructor:who, startTime:b.startTime });
   });
   // days marked busy with a "show customers as booked" course appear as a normal booked class
   (sharedBusy||[]).filter(x=> x.decoy && x.date && x.date.startsWith(prefix) && courseById(x.decoy.courseId)).forEach(x=>{
@@ -8924,7 +8925,7 @@ async function buildMonthInfographic(y, m){
     if(!list.some(c=> c.k === k)) list.push({ k, courseId:x.decoy.courseId, instructor:x.decoy.instructor, startTime:x.from });
   });
   const decoyInstructors = (sharedBusy||[]).filter(x=> x.decoy && x.date && x.date.startsWith(prefix)).map(x=> x.decoy.instructor).filter(Boolean);
-  const teachers = [...new Set([...monthBookings.map(b=> b.instructor), ...decoyInstructors])];
+  const teachers = [...new Set([...monthBookings.map(b=> b.instructor).filter(n=> n && n !== 'ยังไม่ระบุ'), ...decoyInstructors])];
   const team = teachers.length ? teachers : (state.instructors||[]);
   const photos = {};
   await Promise.all(team.map(async n=>{ photos[n] = await loadImg(instructorPhotos[n]); }));
@@ -8977,7 +8978,7 @@ async function buildMonthInfographic(y, m){
     ctx.textAlign = 'left'; ctx.fillStyle = hasClass ? '#DCA73D' : (isMon ? '#A89A80' : '#0B2A15');
     ctx.font = '700 28px Fraunces, serif'; ctx.fillText(String(day), x+14, yy+38);
     if(hasClass){
-      const shown = classes.slice(0,2);
+      const shown = classes.filter(c=> c.instructor).slice(0,2);
       shown.slice().reverse().forEach((c,j)=>{ const i = shown.length-1-j; drawAvatar(ctx, photos[c.instructor], c.instructor, x + cellW - 30 - i*26, yy + 32, shown.length > 1 ? 20 : 24, 3); });
       if(classes.length > 2){ ctx.fillStyle = '#EFE8D6'; ctx.font = '700 18px "IBM Plex Sans Thai"'; ctx.textAlign = 'right'; ctx.fillText(`+${classes.length-2}`, x+cellW-12, yy+80); }
       ctx.textAlign = 'left'; ctx.fillStyle = '#EFE8D6'; ctx.font = `21px ${HEAD}`;
@@ -13538,6 +13539,30 @@ const CB_TIMED = { c6: ['10:00','14:00'] };
 function cbIsWorkshop(cid){ return isPerPersonCourse(cid); }
 function cbSeats(cid){ const c = courseById(cid); return Math.max(1, Number(c && c.students) || 1); }
 // availability of one course on one date → { ok, reason, rounds:[{time, left}] , left }
+// Google Form answers that the app hasn't imported yet (nobody opened the app since) still close their date on the link
+let cbFormBlocks = [], cbFormBlocksAt = 0;
+async function cbLoadFormBlocks(force){
+  if(!force && Date.now() - cbFormBlocksAt < 45000) return;
+  cbFormBlocksAt = Date.now();
+  try{
+    if(!sharedEvalFormUrl){ const r = await window.storage.get('shared_eval_form_url', true); sharedEvalFormUrl = (r && r.value) || ''; }
+    const csvUrl = sharedEvalFormUrl && buildSheetCsvUrl(sharedEvalFormUrl); if(!csvUrl) return;
+    const res = await fetch(noCacheUrl(csvUrl), { cache:'no-store' }); if(!res.ok) return;
+    const rows = parseFormCSV(await res.text()); if(rows.length < 2) return;
+    const H = rows[0], find = ks=> H.findIndex(h=> ks.some(k=> (h||'').includes(k)));
+    const courseIdx = find(['คอร์ส']), dateIdx = find(['วันที่คุณจะเข้าร่วม','วันที่เข้าร่วม']);
+    let nameIdx = H.findIndex(h=> (h||'').includes('ชื่อ - นามสกุล (ภาษาไทย)')); if(nameIdx < 0) nameIdx = find(['ชื่อ']);
+    if(dateIdx < 0) return;
+    const today = rsLocalYMD();
+    cbFormBlocks = rows.slice(1).map(r=>{
+      const iso = parseThaiFormDate(r[dateIdx]); if(!iso || iso < today) return null;
+      const cid = courseIdx >= 0 ? matchCourseIdFromText(r[courseIdx]||'') : null;
+      const name = nameIdx >= 0 ? (r[nameIdx]||'').trim() : '';
+      if(cid && name && isCancelledKey(`form_${name}_${iso}_${cid}`)) return null; // cancelled in the app → date opens again
+      return { date: iso, courseId: cid || '__form', source:'form_pending', key: cid && name ? `form_${name}_${iso}_${cid}` : '' };
+    }).filter(Boolean);
+  }catch(e){ /* sheet unreachable — the app's own bookings still apply */ }
+}
 function cbAvailability(cid, dateStr){
   const H = window.__cbHold;
   if(H && cid === H.cid && dateStr === H.date){ // date locked by staff for this customer
@@ -13552,7 +13577,10 @@ function cbAvailability(cid, dateStr){
   if(d.getDay() === 1) return { ok:false, reason:'closed' };
   // any activity / busy / holiday / decoy entered in the app closes the day for the link (the app is the source of truth)
   if((sharedBusy||[]).some(x=> x.date === dateStr)) return { ok:false, reason:'closed' };
+  // a booking closes the day whether or not an instructor has been chosen yet
   const day = (sharedBookings||[]).filter(b=> b.date === dateStr);
+  const keys = new Set(day.map(b=> b.syncKey).filter(Boolean));
+  cbFormBlocks.filter(b=> b.date === dateStr && !(b.key && keys.has(b.key))).forEach(b=> day.push(b)); // not imported into the app yet
   if(!cbIsWorkshop(cid)){
     return day.length ? { ok:false, reason:'full' } : { ok:true, left: cbSeats(cid) };
   }
@@ -13817,7 +13845,7 @@ async function startCustomerBooking(param){
   const bootOff = ()=>{ const bt = document.getElementById('cbBoot'); if(bt){ clearInterval(window.__cbBootTimer); bt.classList.add('out'); setTimeout(()=> bt.remove(), 400); } };
   state = JSON.parse(JSON.stringify(DEFAULT_STATE)); mergeMissingCourses(state);
   loadSharedLineRelayUrl().catch(()=>{}); // only needed when the form is sent
-  try{ await Promise.all([loadSharedBookings(), loadSharedBusy()]); }
+  try{ await Promise.all([loadSharedBookings(), loadSharedBusy(), cbLoadFormBlocks(true)]); }
   catch(e){ bootOff(); root.innerHTML = `<div class="cb-wrap"><div class="cb-card"><h2>โหลดตารางไม่สำเร็จ</h2><p>กรุณาลองเปิดลิงค์ใหม่อีกครั้ง</p></div></div>`; return; }
   const bookable = cbOpenCourses();
   const st = { step:0, cid: (param && param !== 'all' && bookable.some(c=> c.id === param)) ? param : '', date:'', time:'', ym:null, done:null };
@@ -13978,7 +14006,7 @@ async function startCustomerBooking(param){
       const slipFile = form.querySelector('input[name=slip]').files[0];
       const btn = form.querySelector('.cb-submit'); btn.disabled = true; btn.textContent = 'กำลังจอง...';
       try{
-        await loadSharedBookings(); await loadSharedBusy(); // ตรวจซ้ำกับข้อมูลล่าสุด กันจองชนกัน
+        await loadSharedBookings(); await loadSharedBusy(); await cbLoadFormBlocks(true); // ตรวจซ้ำกับข้อมูลล่าสุด กันจองชนกัน (รวมคนที่กรอก Google Form แล้ว)
         let holdRecs = [];
         if(st.hold){
           holdRecs = sharedBookings.filter(b=> b.holdId === st.hold.id && b.source === 'hold');
@@ -14044,11 +14072,11 @@ async function startCustomerBooking(param){
   };
   // live: re-read the app's bookings + activities every 20s (and when the page comes back), so the link follows the app
   let liveSig = '';
-  const sig = ()=> JSON.stringify([(sharedBookings||[]).map(b=> [b.date, b.courseId, b.startTime||''].join('|')).sort(), (sharedBusy||[]).map(x=> x.date).sort()]);
+  const sig = ()=> JSON.stringify([(sharedBookings||[]).map(b=> [b.date, b.courseId, b.startTime||''].join('|')).sort(), (sharedBusy||[]).map(x=> x.date).sort(), cbFormBlocks.map(b=> b.date+'|'+b.courseId).sort()]);
   const liveCheck = async ()=>{
     if(document.hidden || st.done) return;
     const f = root.querySelector('#cbForm'); if(f && f.querySelector('.cb-submit[disabled]')) return; // submitting
-    try{ await Promise.all([loadSharedBookings(), loadSharedBusy()]); }catch(e){ return; }
+    try{ await Promise.all([loadSharedBookings(), loadSharedBusy(), cbLoadFormBlocks()]); }catch(e){ return; }
     const now = sig(); if(now === liveSig) return; liveSig = now;
     if(st.hold){
       if(!(sharedBookings||[]).some(b=> b.holdId === st.hold.id && b.source === 'hold')){
