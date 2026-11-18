@@ -2493,6 +2493,7 @@
   .cb-submit:disabled{ opacity:.6; }
   .cb-note{ font-size:12px; color:#7A6F5E; text-align:center; margin:4px 0 0; }
   .cb-done{ text-align:center; }
+  .cb-pop{ animation:cbPop .45s cubic-bezier(.2,.9,.3,1.2); } @keyframes cbPop{ from{ opacity:0; transform:translateY(14px) scale(.97); } to{ opacity:1; transform:none; } }
   .cb-ok{ width:64px; height:64px; margin:6px auto 10px; border-radius:50%; background:#165028; color:#DCA73D; font-size:34px; line-height:64px; }
   .cl-ov{ position:fixed; inset:0; z-index:2000; background:rgba(11,42,21,.55); display:none; align-items:center; justify-content:center; padding:16px; }
   .cl-box{ position:relative; width:min(520px,100%); max-height:86vh; overflow:auto; background:#0B2A15; color:#EFE8D6; border-radius:22px; padding:20px 16px; }
@@ -10016,6 +10017,21 @@ async function bookingTicketPng(t){
   g.textAlign = 'center'; g.fillStyle = '#8A7F6C'; g.font = F(20,600); g.fillText('แสดงหน้านี้หรือแจ้งเลขที่การจองกับทีมงาน', W/2, H-70);
   return cv.toDataURL('image/png');
 }
+function ticketDoneHTML(t){
+  const lineTxt = `จองคอร์ส RANGSAN Academy เรียบร้อยแล้วครับ/ค่ะ\nเลขที่การจอง: ${t.no}\nชื่อ: ${t.names}\nคอร์ส: ${t.course}\nวันที่: ${t.date}${t.time ? `\nเวลา: ${t.time}` : ''}`;
+  return `<div class="cb-card cb-done cb-ticket"><div class="cb-ok">✓</div><h2>จองเสร็จสิ้น</h2>
+    <div class="tk-no-l">เลขที่การจอง</div>
+    <div class="tk-no" id="tkNo">${cbEsc(t.no)}</div>
+    <div class="tk-codes"><div class="tk-qr">${qrSvg(t.no, 168)}</div><div class="tk-bar">${barcodeSvg(t.no, 64)}<div class="tk-bar-t">${cbEsc(t.no)}</div></div></div>
+    <p><b>${cbEsc(t.names)}</b></p>
+    <div class="cb-sum">📚 ${cbEsc(t.course)}<br>📅 ${cbEsc(t.date)}${t.time ? `<br>⏰ ${cbEsc(t.time)}` : ''}</div>
+    <div class="tk-acts">
+      <button type="button" class="tk-btn" id="tkCopy">📋 คัดลอกเลขที่</button>
+      <button type="button" class="tk-btn" id="tkSave">🖼 บันทึกรูปใบจอง</button>
+      <a class="tk-btn tk-line" id="tkLine" target="_blank" rel="noopener" href="https://line.me/R/share?text=${encodeURIComponent(lineTxt)}">💬 ส่งเลขที่ให้ร้านทาง LINE</a>
+    </div>
+    <p class="cb-note">แคปหน้าจอนี้ หรือกด “บันทึกรูปใบจอง” เก็บไว้ได้เลย · วันเรียนแสดง QR / บาร์โค้ดนี้กับทีมงาน · ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน</p></div>`;
+}
 function bindTicket(t){
   if(!t) return;
   const cp = document.getElementById('tkCopy'), sv = document.getElementById('tkSave');
@@ -14323,8 +14339,16 @@ async function startCustomerBooking(param){
   if(holdId){
     const hs = (sharedBookings||[]).filter(b=> b.holdId === holdId && b.source === 'hold');
     if(!hs.length){
-      const used = (sharedBookings||[]).some(b=> b.holdRef === holdId);
+      const usedBk = (sharedBookings||[]).filter(b=> b.holdRef === holdId);
+      const used = usedBk.length > 0;
       bootOff();
+      if(used && usedBk[0].bookingNo){ // opened again after filling — show the same ticket (number + QR + barcode)
+        const b0 = usedBk[0], c0 = courseById(b0.courseId);
+        const tm = b0.startTime ? `${b0.startTime}–${addMinutesToTime(b0.startTime, courseDurationMin(b0.courseId)||90)} น.` : '';
+        st.ticket = { no: b0.bookingNo, names: usedBk.map(x=> x.customerName).join(', ') + (usedBk.length > 1 ? ` · ${usedBk.length} คน` : ''), course: c0 ? cbShortName(c0) : '', date: new Date(b0.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'}), time: tm };
+        root.innerHTML = `<div class="cb-wrap"><header class="cb-head"><div class="rs-logo" role="img" aria-label="RANGSAN"></div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>${ticketDoneHTML(st.ticket)}</div>`;
+        bindTicket(st.ticket); window.scrollTo(0,0); return;
+      }
       root.innerHTML = `<div class="cb-wrap"><header class="cb-head"><div class="rs-logo" role="img" aria-label="RANGSAN"></div><div class="cb-sub">ACADEMY · จองคอร์สเรียน</div></header>
         <div class="cb-card cb-done"><div class="cb-ok" style="${used?'':'background:#8A6416'}">${used?'✓':'!'}</div><h2>${used?'กรอกข้อมูลเรียบร้อยแล้ว':'ลิงค์นี้ใช้ไม่ได้แล้ว'}</h2>
         <p class="cb-note">${used?'การจองนี้กรอกข้อมูลครบแล้ว ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน':'ลิงค์อาจถูกยกเลิกหรือหมดอายุ กรุณาติดต่อทีมงาน 061 732 1346'}</p></div></div>`;
@@ -14349,7 +14373,15 @@ async function startCustomerBooking(param){
     } else if(bg){ bg.remove(); root.classList.remove('has-bg'); }
   };
   let render = ()=>{
-    if(st.done){ root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; bindTicket(st.ticket); return; }
+    if(st.done){
+      root.classList.remove('cb-mode-form'); // the form's layout mode hid every normal card — including the finished screen (blank page after booking)
+      root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; bindTicket(st.ticket);
+      // the form was scrolled down — jump back up so "จองเสร็จสิ้น" and the booking number are the first thing on screen
+      const toTop = ()=>{ window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; root.scrollTop = 0; };
+      toTop(); requestAnimationFrame(toTop); setTimeout(toTop, 120);
+      const card = root.querySelector('.cb-done'); if(card){ card.classList.add('cb-pop'); }
+      return;
+    }
     if(!st.cid){
       root.innerHTML = `<div class="cb-wrap">${head()}<div class="cb-card"><h2>เลือกคอร์สที่ต้องการเรียน</h2>
         <div class="cb-courses">${bookable.map(c=>`<button type="button" class="cb-course ${cbImg['course_'+c.id]?'has-img':''}" data-cid="${c.id}">${cbImg['course_'+c.id]?`<img src="${cbImg['course_'+c.id]}" alt="">`:''}<b>${cbEsc(cbShortName(c))}</b><span>${cbIsWorkshop(c.id)?`เวิร์คช็อป · ${(DEFAULT_PER_PERSON_PRICE[c.id]||c.price).toLocaleString()} บาท/คน`:(c.price?`${c.price.toLocaleString()} บาท`:'สอบถามราคา')}</span></button>`).join('')}</div></div></div>`;
@@ -14555,18 +14587,7 @@ async function startCustomerBooking(param){
         const timeTxt = st.time ? `${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)} น.` : '';
         const ticket = { no: base.bookingNo, names: allNames + (n>1 ? ` · ${n} คน` : ''), course: cbShortName(c), date: dTh, time: timeTxt };
         st.ticket = ticket;
-        st.done = `<div class="cb-card cb-done cb-ticket"><div class="cb-ok">✓</div><h2>จองเสร็จสิ้น</h2>
-          <div class="tk-no-l">เลขที่การจอง</div>
-          <div class="tk-no" id="tkNo">${cbEsc(ticket.no)}</div>
-          <div class="tk-codes"><div class="tk-qr">${qrSvg(ticket.no, 168)}</div><div class="tk-bar">${barcodeSvg(ticket.no, 64)}<div class="tk-bar-t">${cbEsc(ticket.no)}</div></div></div>
-          <p><b>${cbEsc(allNames)}</b>${n>1?` · ${n} คน`:''}</p>
-          <div class="cb-sum">📚 ${cbEsc(cbShortName(c))}<br>📅 ${dTh}${timeTxt?`<br>⏰ ${timeTxt}`:''}</div>
-          <div class="tk-acts">
-            <button type="button" class="tk-btn" id="tkCopy">📋 คัดลอกเลขที่</button>
-            <button type="button" class="tk-btn" id="tkSave">🖼 บันทึกรูปใบจอง</button>
-            <a class="tk-btn tk-line" id="tkLine" target="_blank" rel="noopener" href="https://line.me/R/share?text=${encodeURIComponent(`จองคอร์ส RANGSAN Academy เรียบร้อยแล้วครับ/ค่ะ\nเลขที่การจอง: ${ticket.no}\nชื่อ: ${allNames}\nคอร์ส: ${cbShortName(c)}\nวันที่: ${dTh}${timeTxt?`\nเวลา: ${timeTxt}`:''}`)}">💬 ส่งเลขที่ให้ร้านทาง LINE</a>
-          </div>
-          <p class="cb-note">แคปหน้าจอนี้ หรือกด “บันทึกรูปใบจอง” เก็บไว้ได้เลย · วันเรียนแสดง QR / บาร์โค้ดนี้กับทีมงาน · ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน</p></div>`;
+        st.done = ticketDoneHTML(ticket);
         render();
       }catch(err){
         console.error('customer booking failed', err);
