@@ -2224,6 +2224,27 @@
   .bkf-clear{ all:unset; cursor:pointer; padding:8px 14px; border-radius:999px; background:var(--cream); font-size:12.5px; font-weight:700; color:var(--ink); }
   .bkf-clear[hidden]{ display:none; }
   .bkf-info{ margin:-2px 0 10px; font-size:12.5px; color:var(--gold); font-weight:700; }
+  .cb-ticket .tk-no-l{ margin-top:6px; font-size:13px; color:#6A604F; letter-spacing:.04em; }
+  .cb-ticket .tk-no{ margin:2px 0 12px; font:800 30px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing:.06em; color:#0B2A15; user-select:all; -webkit-user-select:all; }
+  .cb-ticket .tk-codes{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:0 auto 14px; padding:14px; max-width:320px; border-radius:16px; background:#fff; border:1px dashed #CFC4AE; }
+  .cb-ticket .tk-qr svg{ display:block; width:168px; height:168px; }
+  .cb-ticket .tk-bar{ width:100%; } .cb-ticket .tk-bar svg{ display:block; }
+  .cb-ticket .tk-bar-t{ margin-top:4px; font:600 12px ui-monospace, Menlo, monospace; letter-spacing:.2em; color:#2A241A; }
+  .cb-ticket .tk-acts{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0 4px; }
+  .cb-ticket .tk-btn{ all:unset; cursor:pointer; box-sizing:border-box; padding:11px 16px; border-radius:999px; background:#F3EDE0; color:#0B2A15; font-weight:700; font-size:14px; text-align:center; }
+  .cb-ticket .tk-btn:disabled{ opacity:.6; }
+  .cb-ticket .tk-line{ background:#06C755; color:#fff; }
+  .bk-no{ display:inline-block; margin-left:6px; padding:2px 8px; border-radius:999px; background:#0B2A15; color:#F3EDE0; font:700 11.5px ui-monospace, Menlo, monospace; letter-spacing:.04em; vertical-align:middle; }
+  .bkf-scan{ all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border-radius:999px; background:#0B2A15; color:#fff; font-weight:700; font-size:13px; }
+  #scanOv{ position:fixed; inset:0; z-index:300; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.72); padding:16px; }
+  #scanOv .scan-box{ width:100%; max-width:420px; background:#FBF8F1; border-radius:20px; padding:14px; box-sizing:border-box; }
+  #scanOv .scan-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; color:#0B2A15; }
+  #scanOv .scan-x{ all:unset; cursor:pointer; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#F3EDE0; }
+  #scanOv .scan-view{ position:relative; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:1/1; }
+  #scanOv video, #scanOv #scanH5{ width:100%; height:100%; object-fit:cover; display:block; }
+  #scanOv .scan-frame{ position:absolute; inset:18%; border:3px solid rgba(255,255,255,.9); border-radius:14px; box-shadow:0 0 0 999px rgba(0,0,0,.25); pointer-events:none; }
+  #scanOv .scan-msg{ margin:10px 2px; font-size:13px; color:#6A604F; text-align:center; }
+  #scanOv .scan-manual{ display:flex; gap:6px; } #scanOv .scan-manual input{ flex:1; min-width:0; font:inherit; font-size:15px; padding:10px 12px; border-radius:12px; border:1px solid #CFC4AE; background:#fff; color:#2A241A; text-transform:uppercase; }
   .tap-busy{ opacity:.55 !important; transition:opacity .15s; }
   .reg-mini{ all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; border:1px solid rgba(220,167,61,.45); color:#DCA73D; margin-right:6px; }
   .reg-mini:active{ transform:scale(.97); }
@@ -9932,6 +9953,131 @@ function promptPayQrImgUrl(id, amount){
   if(!payload) return null;
   return 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(payload);
 }
+// ===================== BOOKING NUMBER · QR · BARCODE =====================
+// every link booking gets a short number (e.g. RS-1125-K7Q) the customer can show / send to the shop; staff can scan it
+const BK_NO_CHARS = 'ACDEFGHJKMNPQRTUVWXY34679'; // no 0/O, 1/I/L, 2/Z, 5/S, 8/B look-alikes
+function newBookingNo(dateStr){
+  const md = String(dateStr||'').slice(5,10).replace('-','') || '0000';
+  const used = new Set((sharedBookings||[]).map(b=> b.bookingNo).filter(Boolean));
+  for(let k = 0; k < 50; k++){
+    let r = ''; for(let i = 0; i < 3; i++) r += BK_NO_CHARS[Math.floor(Math.random()*BK_NO_CHARS.length)];
+    const no = `RS-${md}-${r}`; if(!used.has(no)) return no;
+  }
+  return `RS-${md}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+}
+function makeQr(text){
+  for(let t = 1; t <= 15; t++){ try{ const q = qrcode(t, 'M'); q.addData(text); q.make(); return q; }catch(e){} }
+  return null;
+}
+function qrSvg(text, size){
+  const q = makeQr(text); if(!q) return '';
+  const n = q.getModuleCount(), m = 2, full = n + m*2; let d = '';
+  for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(q.isDark(r,c)) d += `M${c+m} ${r+m}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${full} ${full}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="QR ${cbEsc(text)}"><rect width="${full}" height="${full}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+// Code 128 (set B) — the 1-D barcode most shop scanners read
+const C128 = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+function code128Bars(text){
+  const vals = [...String(text)].map(ch=> Math.max(0, Math.min(94, ch.charCodeAt(0) - 32)));
+  let sum = 104; vals.forEach((v,i)=> sum += v * (i+1));
+  const codes = [104, ...vals, sum % 103, 106];
+  const widths = []; codes.forEach(c=> C128[c].split('').forEach(w=> widths.push(+w)));
+  return widths; // alternating bar / space, starting with a bar
+}
+function barcodeSvg(text, h){
+  const w = code128Bars(text), quiet = 10, total = w.reduce((a,b)=> a+b, 0) + quiet*2;
+  let x = quiet, d = '';
+  w.forEach((wi,i)=>{ if(i % 2 === 0) d += `M${x} 0h${wi}v${h}h-${wi}z`; x += wi; });
+  return `<svg viewBox="0 0 ${total} ${h}" preserveAspectRatio="none" width="100%" height="${h}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="บาร์โค้ด ${cbEsc(text)}"><rect width="${total}" height="${h}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+// the booking ticket as a picture (for "บันทึกรูป" / share) — drawn on a canvas so it works offline
+async function bookingTicketPng(t){
+  const W = 720, H = 1060, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  try{ await document.fonts.ready; }catch(e){}
+  g.fillStyle = '#0E2E19'; g.fillRect(0,0,W,H);
+  g.fillStyle = '#FBF8F1'; const r = 28, x0 = 36, y0 = 36, w0 = W-72, h0 = H-72;
+  g.beginPath(); g.moveTo(x0+r,y0); g.arcTo(x0+w0,y0,x0+w0,y0+h0,r); g.arcTo(x0+w0,y0+h0,x0,y0+h0,r); g.arcTo(x0,y0+h0,x0,y0,r); g.arcTo(x0,y0,x0+w0,y0,r); g.fill();
+  const F = (sz, wt)=> `${wt||600} ${sz}px "FC Krung Thep", "Noto Sans Thai", "Sarabun", sans-serif`;
+  g.textAlign = 'center'; g.fillStyle = '#B07F1E'; g.font = F(22,700); g.fillText('RANGSAN ACADEMY · ใบจองคอร์ส', W/2, 96);
+  g.fillStyle = '#165028'; g.font = F(40,800); g.fillText('✓ จองเสร็จสิ้น', W/2, 150);
+  g.fillStyle = '#6A604F'; g.font = F(22,600); g.fillText('เลขที่การจอง', W/2, 205);
+  g.fillStyle = '#0B2A15'; g.font = '800 58px ui-monospace, Menlo, Consolas, monospace'; g.fillText(t.no, W/2, 268);
+  // QR
+  const q = makeQr(t.no); if(q){ const n = q.getModuleCount(), size = 300, cell = Math.floor(size / (n+4)), qs = cell*(n+4), qx = (W-qs)/2, qy = 300;
+    g.fillStyle = '#fff'; g.fillRect(qx,qy,qs,qs); g.fillStyle = '#000';
+    for(let rr=0; rr<n; rr++) for(let cc=0; cc<n; cc++) if(q.isDark(rr,cc)) g.fillRect(qx+(cc+2)*cell, qy+(rr+2)*cell, cell, cell); }
+  // barcode
+  const bw = code128Bars(t.no), total = bw.reduce((a,b)=> a+b, 0), unit = Math.max(2, Math.floor(520/total)), bx = (W - total*unit)/2, by = 640;
+  g.fillStyle = '#fff'; g.fillRect(bx-20, by-10, total*unit+40, 120); g.fillStyle = '#000';
+  let xx = bx; bw.forEach((wi,i)=>{ if(i%2===0) g.fillRect(xx, by, wi*unit, 100); xx += wi*unit; });
+  g.fillStyle = '#2A241A'; g.textAlign = 'left'; g.font = F(26,700);
+  const lines = [`👤 ${t.names}`, `📚 ${t.course}`, `📅 ${t.date}`].concat(t.time ? [`⏰ ${t.time}`] : []);
+  lines.forEach((ln,i)=> g.fillText(ln.length > 40 ? ln.slice(0,39)+'…' : ln, 80, 820 + i*44));
+  g.textAlign = 'center'; g.fillStyle = '#8A7F6C'; g.font = F(20,600); g.fillText('แสดงหน้านี้หรือแจ้งเลขที่การจองกับทีมงาน', W/2, H-70);
+  return cv.toDataURL('image/png');
+}
+function bindTicket(t){
+  if(!t) return;
+  const cp = document.getElementById('tkCopy'), sv = document.getElementById('tkSave');
+  if(cp) cp.onclick = async ()=>{
+    try{ await navigator.clipboard.writeText(t.no); }
+    catch(e){ const ta = document.createElement('textarea'); ta.value = t.no; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(_){} ta.remove(); }
+    cp.textContent = '✓ คัดลอกแล้ว'; setTimeout(()=> cp.textContent = '📋 คัดลอกเลขที่', 1800);
+  };
+  if(sv) sv.onclick = async ()=>{
+    sv.disabled = true; sv.textContent = 'กำลังสร้างรูป…';
+    try{
+      const url = await bookingTicketPng(t);
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], `RANGSAN-${t.no}.png`, { type:'image/png' });
+      if(navigator.canShare && navigator.canShare({ files:[file] })){ await navigator.share({ files:[file], title:`ใบจอง ${t.no}` }); }
+      else { const a = document.createElement('a'); a.href = url; a.download = `RANGSAN-${t.no}.png`; document.body.appendChild(a); a.click(); a.remove(); }
+    }catch(e){ if(e && e.name !== 'AbortError') alert('บันทึกรูปไม่สำเร็จ — แคปหน้าจอแทนได้เลย'); }
+    sv.disabled = false; sv.textContent = '🖼 บันทึกรูปใบจอง';
+  };
+}
+// ---------- staff scanner (camera) — BarcodeDetector where the browser has it, otherwise a small reader loaded on demand ----------
+function loadScriptOnce(src){ return new Promise((res, rej)=>{ if(document.querySelector(`script[src="${src}"]`)) return res(); const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = ()=> rej(new Error('โหลดตัวสแกนไม่สำเร็จ')); document.head.appendChild(sc); }); }
+async function openBookingScanner(onCode){
+  let ov = document.getElementById('scanOv');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'scanOv'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="scan-box"><div class="scan-head"><b>📷 สแกนเลขที่การจอง</b><button type="button" class="scan-x" aria-label="ปิด">✕</button></div>
+    <div class="scan-view" id="scanView"><video id="scanVideo" playsinline muted></video><div class="scan-frame"></div></div>
+    <div class="scan-msg" id="scanMsg">กำลังเปิดกล้อง…</div>
+    <div class="scan-manual"><input type="text" id="scanManual" placeholder="หรือพิมพ์เลขที่ เช่น RS-1125-K7Q" autocomplete="off" autocapitalize="characters"><button type="button" class="btn small" id="scanManualGo">ค้นหา</button></div></div>`;
+  ov.style.display = 'flex';
+  let stopped = false, stream = null, h5 = null, raf = 0;
+  const stop = async ()=>{ stopped = true; cancelAnimationFrame(raf); try{ stream && stream.getTracks().forEach(t=> t.stop()); }catch(e){} try{ if(h5){ await h5.stop(); h5.clear(); } }catch(e){} ov.style.display = 'none'; ov.innerHTML = ''; };
+  const done = code=>{ if(stopped) return; const m = String(code||'').toUpperCase().match(/RS-\d{4}-[A-Z0-9]{3,4}/); stop(); onCode(m ? m[0] : String(code||'').trim()); };
+  ov.querySelector('.scan-x').onclick = stop;
+  ov.onclick = e=>{ if(e.target === ov) stop(); };
+  const mi = ov.querySelector('#scanManual');
+  ov.querySelector('#scanManualGo').onclick = ()=>{ if(mi.value.trim()) done(mi.value); };
+  mi.onkeydown = e=>{ if(e.key === 'Enter' && mi.value.trim()) done(mi.value); };
+  const msg = t=>{ const el = document.getElementById('scanMsg'); if(el) el.textContent = t; };
+  try{
+    if('BarcodeDetector' in window){
+      const det = new BarcodeDetector({ formats:['qr_code','code_128'] });
+      stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+      const v = document.getElementById('scanVideo'); v.srcObject = stream; await v.play();
+      msg('ส่องกล้องไปที่ QR หรือบาร์โค้ดในหน้าจองของลูกค้า');
+      const tick = async ()=>{ if(stopped) return; try{ const r = await det.detect(v); if(r && r[0]){ done(r[0].rawValue); return; } }catch(e){} raf = requestAnimationFrame(tick); };
+      tick();
+    } else {
+      msg('กำลังโหลดตัวสแกน…');
+      await loadScriptOnce('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js');
+      if(stopped) return;
+      document.getElementById('scanView').innerHTML = '<div id="scanH5"></div>';
+      h5 = new Html5Qrcode('scanH5', { formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.CODE_128 ], experimentalFeatures:{ useBarCodeDetectorIfSupported:true }, verbose:false });
+      await h5.start({ facingMode:'environment' }, { fps:12, qrbox:(vw, vh)=>{ const m = Math.floor(Math.min(vw, vh) * 0.8); return { width:m, height:m }; } }, txt=> done(txt), ()=>{});
+      msg('ส่องกล้องไปที่ QR หรือบาร์โค้ดในหน้าจองของลูกค้า');
+    }
+  }catch(e){
+    console.warn('scanner', e);
+    msg('เปิดกล้องไม่ได้ (ต้องอนุญาตการใช้กล้อง) — พิมพ์เลขที่การจองด้านล่างแทนได้');
+    mi.focus();
+  }
+}
 // generates the QR code entirely in-browser (no external network call) so it never breaks from a third-party outage
 function promptPayQrSvg(id, amount){
   const payload = buildPromptPayPayload(id, amount);
@@ -10535,6 +10681,7 @@ function renderLogTab(){
       <div class="bkf-bar">
         <div class="bkf-search"><span>🔍</span><input type="search" id="bkfQ" placeholder="ค้นหาชื่อลูกค้า หรือเบอร์โทร" autocomplete="off" value="${cbEsc(bkFilter.q)}"></div>
         <div class="rdp" id="bkfDP"></div><input type="hidden" id="bkfDate" value="${bkFilter.date}">
+        <button type="button" class="bkf-scan" id="bkfScan" aria-label="สแกนเลขที่การจอง">📷 สแกน</button>
         <button type="button" class="bkf-clear" id="bkfClear" ${bkFilter.q||bkFilter.date?'':'hidden'}>ล้าง ✕</button>
       </div>
       <div class="bkf-info" id="bkfInfo"></div>
@@ -11111,7 +11258,7 @@ function renderLogTab(){
       <div class="tk-row" style="${b.taught?'opacity:.68;':''}">
         <div style="flex:1; min-width:0;">
           ${needsInstructor ? `<div class="ac-name" style="color:#8A6416; font-size:14px; margin-bottom:6px;">⚠️ ยังไม่ระบุอาจารย์</div>` : ''}
-          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.source==='link' ? '<span class="bk-src-link">📲 จองผ่านลิงค์</span>' : ''}${b.source==='hold' ? `<span class="bk-src-hold">🔒 ล็อกวันไว้ · รอลูกค้ากรอก</span><button type="button" class="bk-slip-btn" data-hold-copy="${b.holdId}">🔗 ลิงค์</button>` : ''}${b.slipKey ? `<button type="button" class="bk-slip-btn" data-slip="${b.slipKey}">🧾 สลิป</button>` : ''}${b.customerName ? (b.customerNameEn
+          ${(b.customerName || b.customerPhone) ? `<div class="ac-field" style="font-size:14px;"><b>ผู้เรียน</b> ${b.customerName || '-'}${b.bookingNo ? `<span class="bk-no" title="เลขที่การจอง">#${b.bookingNo}</span>` : ''}${b.source==='link' ? '<span class="bk-src-link">📲 จองผ่านลิงค์</span>' : ''}${b.source==='hold' ? `<span class="bk-src-hold">🔒 ล็อกวันไว้ · รอลูกค้ากรอก</span><button type="button" class="bk-slip-btn" data-hold-copy="${b.holdId}">🔗 ลิงค์</button>` : ''}${b.slipKey ? `<button type="button" class="bk-slip-btn" data-slip="${b.slipKey}">🧾 สลิป</button>` : ''}${b.customerName ? (b.customerNameEn
               ? ` <button type="button" class="en-name" data-en-name="${b._idx}" title="แก้ชื่อภาษาอังกฤษ">${b.customerNameEn} ✎</button>`
               : ` <button type="button" class="en-name is-auto" data-en-name="${b._idx}" title="ระบบสะกดให้ — แตะเพื่อยืนยันหรือแก้">${thaiRomanize(b.customerName)} ✎</button>`) : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
@@ -11271,7 +11418,7 @@ function renderLogTab(){
     const hit = b=>{
       if(fDate && b.date !== fDate) return false;
       if(!fq) return true;
-      const text = [b.customerName, b.customerNameEn, b.customerLine, b.note, b.customerPhone].filter(Boolean).join(' ').toLowerCase();
+      const text = [b.bookingNo, b.customerName, b.customerNameEn, b.customerLine, b.note, b.customerPhone].filter(Boolean).join(' ').toLowerCase();
       if(text.includes(fq)) return true;
       if(fDigits.length >= 3){ const ph = String(b.customerPhone||'').replace(/\D/g,'') + ' ' + String(b.note||'').replace(/\D/g,''); if(ph.includes(fDigits) || (fDigits[0]==='0' && ph.includes(fDigits.slice(1)))) return true; }
       return false;
@@ -11341,6 +11488,13 @@ function renderLogTab(){
     const dp = rsDatePicker(document.getElementById('bkfDP'), { value: bkFilter.date, marks, placeholder:'เลือกวันที่',
       onChange: v=>{ bkFilter.date = v || ''; d.value = bkFilter.date; apply(); } });
     clr.onclick = ()=>{ bkFilter.q = ''; bkFilter.date = ''; q.value = ''; d.value = ''; dp.set(''); apply(); };
+    const sc = document.getElementById('bkfScan');
+    if(sc) sc.onclick = ()=> openBookingScanner(code=>{
+      bkFilter.q = code; bkFilter.date = ''; q.value = code; d.value = ''; dp.set(''); apply();
+      const hit = sharedBookings.find(b=> (b.bookingNo||'').toUpperCase() === code.toUpperCase());
+      flashSaved(hit ? `พบการจอง ${code} · ${hit.customerName||''}` : `ไม่พบเลขที่ ${code}`);
+      setTimeout(()=>{ const el = document.getElementById('bkfInfo'); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }, 100);
+    });
   })();
 
   const TIMED_COURSE_IDS = ['c6'];
@@ -14195,7 +14349,7 @@ async function startCustomerBooking(param){
     } else if(bg){ bg.remove(); root.classList.remove('has-bg'); }
   };
   let render = ()=>{
-    if(st.done){ root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; return; }
+    if(st.done){ root.innerHTML = `<div class="cb-wrap">${head()}${st.done}</div>`; bindTicket(st.ticket); return; }
     if(!st.cid){
       root.innerHTML = `<div class="cb-wrap">${head()}<div class="cb-card"><h2>เลือกคอร์สที่ต้องการเรียน</h2>
         <div class="cb-courses">${bookable.map(c=>`<button type="button" class="cb-course ${cbImg['course_'+c.id]?'has-img':''}" data-cid="${c.id}">${cbImg['course_'+c.id]?`<img src="${cbImg['course_'+c.id]}" alt="">`:''}<b>${cbEsc(cbShortName(c))}</b><span>${cbIsWorkshop(c.id)?`เวิร์คช็อป · ${(DEFAULT_PER_PERSON_PRICE[c.id]||c.price).toLocaleString()} บาท/คน`:(c.price?`${c.price.toLocaleString()} บาท`:'สอบถามราคา')}</span></button>`).join('')}</div></div></div>`;
@@ -14343,6 +14497,7 @@ async function startCustomerBooking(param){
           catch(e){ console.error('slip upload failed', e); }
         }
         if(st.time) base.startTime = st.time;
+        base.bookingNo = newBookingNo(st.date); // shown to the customer + scannable by staff
         if(st.hold){
           const h0 = holdRecs[0];
           base.holdRef = st.hold.id; base.source = 'link';
@@ -14395,11 +14550,23 @@ async function startCustomerBooking(param){
           }
         }
         const dTh = new Date(st.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
-        try{ await postLineGroup(['📲 RANGSAN Academy — ลูกค้าจองผ่านลิงค์', '', `👤 ${[name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', ')}${n>1?` (${n} คน)`:''}`, `📞 ${phone}${extra.lineId?` · LINE: ${extra.lineId}`:''}`, `📚 ${cbShortName(c)}`, `🗓️ ${dTh}${st.time?` · ${st.time} น.`:''}`, base.allergy?`⚠️ แพ้: ${base.allergy}`:'' ].filter(Boolean).join('\n')); }catch(e){}
-        st.done = `<div class="cb-card cb-done"><div class="cb-ok">✓</div><h2>จองเรียบร้อยแล้ว</h2>
-          <p><b>${cbEsc([name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', '))}</b>${n>1?` · ${n} คน`:''}</p>
-          <div class="cb-sum">📚 ${cbEsc(cbShortName(c))}<br>📅 ${dTh}${st.time?`<br>⏰ ${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)} น.`:''}</div>
-          <p class="cb-note">แคปหน้าจอนี้เก็บไว้ได้เลย ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน</p></div>`;
+        try{ await postLineGroup(['📲 RANGSAN Academy — ลูกค้าจองผ่านลิงค์', `🔖 เลขที่การจอง ${base.bookingNo}`, '', `👤 ${[name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', ')}${n>1?` (${n} คน)`:''}`, `📞 ${phone}${extra.lineId?` · LINE: ${extra.lineId}`:''}`, `📚 ${cbShortName(c)}`, `🗓️ ${dTh}${st.time?` · ${st.time} น.`:''}`, base.allergy?`⚠️ แพ้: ${base.allergy}`:'' ].filter(Boolean).join('\n')); }catch(e){}
+        const allNames = [name].concat([...Array(n-1)].map((_,i)=> String(fd['p'+(i+2)+'_name']||'').trim()).filter(Boolean)).join(', ');
+        const timeTxt = st.time ? `${st.time}–${addMinutesToTime(st.time, courseDurationMin(st.cid)||90)} น.` : '';
+        const ticket = { no: base.bookingNo, names: allNames + (n>1 ? ` · ${n} คน` : ''), course: cbShortName(c), date: dTh, time: timeTxt };
+        st.ticket = ticket;
+        st.done = `<div class="cb-card cb-done cb-ticket"><div class="cb-ok">✓</div><h2>จองเสร็จสิ้น</h2>
+          <div class="tk-no-l">เลขที่การจอง</div>
+          <div class="tk-no" id="tkNo">${cbEsc(ticket.no)}</div>
+          <div class="tk-codes"><div class="tk-qr">${qrSvg(ticket.no, 168)}</div><div class="tk-bar">${barcodeSvg(ticket.no, 64)}<div class="tk-bar-t">${cbEsc(ticket.no)}</div></div></div>
+          <p><b>${cbEsc(allNames)}</b>${n>1?` · ${n} คน`:''}</p>
+          <div class="cb-sum">📚 ${cbEsc(cbShortName(c))}<br>📅 ${dTh}${timeTxt?`<br>⏰ ${timeTxt}`:''}</div>
+          <div class="tk-acts">
+            <button type="button" class="tk-btn" id="tkCopy">📋 คัดลอกเลขที่</button>
+            <button type="button" class="tk-btn" id="tkSave">🖼 บันทึกรูปใบจอง</button>
+            <a class="tk-btn tk-line" id="tkLine" target="_blank" rel="noopener" href="https://line.me/R/share?text=${encodeURIComponent(`จองคอร์ส RANGSAN Academy เรียบร้อยแล้วครับ/ค่ะ\nเลขที่การจอง: ${ticket.no}\nชื่อ: ${allNames}\nคอร์ส: ${cbShortName(c)}\nวันที่: ${dTh}${timeTxt?`\nเวลา: ${timeTxt}`:''}`)}">💬 ส่งเลขที่ให้ร้านทาง LINE</a>
+          </div>
+          <p class="cb-note">แคปหน้าจอนี้ หรือกด “บันทึกรูปใบจอง” เก็บไว้ได้เลย · วันเรียนแสดง QR / บาร์โค้ดนี้กับทีมงาน · ทีมงานจะโทรยืนยันก่อนวันเรียน 1 วัน</p></div>`;
         render();
       }catch(err){
         console.error('customer booking failed', err);
