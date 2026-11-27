@@ -2646,6 +2646,182 @@
   #custBook .cbw-back{ font-size:16px; } #custBook .cbw-next{ font-size:17px; }
   @media (max-width:420px){ #custBook .cbp-course{ font-size:19px; } #custBook .cb-day{ font-size:15.5px; } #custBook .cb-day small{ font-size:10.5px; } }
 
+  /* ---- instructor profile (full-screen dark board) ---- */
+  #profX{ position:fixed; inset:0; z-index:70; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; background:#050505; opacity:0; transition:opacity .25s ease; }
+  #profX.open{ opacity:1; }
+  html.pfx-lock, html.pfx-lock body{ overflow:hidden; }
+  .pfx-wrap{ max-width:1180px; margin:0 auto; padding:max(16px, env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)); color:#F2F2F2; font-family:'IBM Plex Sans Thai', sans-serif; transform:translateY(14px); transition:transform .35s cubic-bezier(0.22,1,0.36,1); }
+  #profX.open .pfx-wrap{ transform:none; }
+  .pfx-wrap button{ font-family:inherit; -webkit-tap-highlight-color:transparent; }
+  .pfx-wrap button:focus-visible, .pfx-premium:focus-visible{ outline:2px solid #A68A6D; outline-offset:2px; }
+  .pfx-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .pfx-me{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .pfx-logo{ flex:none; width:54px; height:54px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:#A68A6D; box-shadow:0 0 0 2px #050505, 0 0 0 3px #A68A6D; }
+  .pfx-logo img{ width:100%; height:100%; object-fit:cover; }
+  .pfx-logo b{ width:100%; height:100%; display:grid; place-items:center; color:#fff; font-size:22px; }
+  .pfx-me .d{ margin:0; font-size:14px; font-weight:600; }
+  .pfx-me .w{ margin:2px 0 0; font-size:12.5px; color:#8C8C8C; }
+  .pfx-switch{ display:flex; align-items:center; gap:8px; }
+  .pfx-arrow{ width:36px; height:36px; border-radius:50%; border:0; background:#1C1C1C; color:#BDBDBD; font-size:20px; line-height:1; cursor:pointer; }
+  .pfx-ava{ padding:2px; border:2px solid transparent; border-radius:50%; background:none; cursor:pointer; transition:border-color .2s, transform .2s; }
+  .pfx-ava.on{ border-color:#F2F2F2; transform:scale(1.06); }
+  .pfx-ava .idb-av{ width:34px !important; height:34px !important; }
+  .pfx-actions{ display:flex; align-items:center; gap:8px; }
+  .pfx-btn{ display:inline-flex; align-items:center; gap:6px; padding:9px 15px; border-radius:999px; border:1px solid #3A3A3A; background:transparent; color:#F2F2F2; font-size:13px; font-weight:600; cursor:pointer; }
+  .pfx-close{ width:40px; height:40px; border-radius:50%; border:0; background:#1C1C1C; color:#F2F2F2; font-size:16px; cursor:pointer; }
+  .pfx-hello h2{ margin:16px 0 2px; font-size:24px; font-weight:700; letter-spacing:-.01em; color:#F2F2F2; }
+  .pfx-hello p{ margin:0; font-size:13px; color:#8C8C8C; }
+
+  .pfx-grid{ display:grid; gap:12px; margin-top:16px; grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"photo" "stats" "prog" "bars" "radial" "side" "cloud"; }
+  .pfx-photo{ grid-area:photo; } .pfx-stats{ grid-area:stats; } .pfx-cloud{ grid-area:cloud; } .pfx-prog{ grid-area:prog; }
+  .pfx-radial-t{ grid-area:radial; } .pfx-bars-t{ grid-area:bars; } .pfx-side{ grid-area:side; }
+  @media (min-width:700px){
+    .pfx-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"photo prog" "stats radial" "cloud radial" "bars bars" "side side"; }
+    .pfx-side{ display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media (min-width:1050px){
+    .pfx-grid{ grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:"photo prog radial side" "stats bars bars side" "cloud bars bars side"; }
+    .pfx-side{ display:flex !important; }
+  }
+  .pfx-tile{ position:relative; min-width:0; overflow:hidden; background:#1C1C1C; border-radius:24px; padding:18px; }
+  .pfx-th{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .pfx-th h3{ margin:0; font-size:15px; font-weight:600; color:#F2F2F2; }
+  .pfx-mini-tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:#8C8C8C; white-space:nowrap; }
+  .pfx-empty{ text-align:center; color:#8C8C8C; font-size:12.5px; padding:22px 8px; }
+
+  .pfx-photo{ padding:0; display:flex; flex-direction:column; }
+  .pfx-photo .pic{ position:relative; flex:1; min-height:270px; background:#2A2A2A; display:grid; place-items:center; overflow:hidden; }
+  .pfx-photo .pic img{ width:100%; height:100%; object-fit:cover; object-position:center 22%; }
+  .pfx-photo .pic > b{ font-size:96px; color:#fff; font-weight:700; }
+  .pfx-photo .pill{ position:absolute; top:12px; display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; background:rgba(16,16,16,.72); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); color:#F2F2F2; font-size:11.5px; font-weight:600; }
+  .pfx-photo .pill.st{ left:12px; } .pfx-photo .pill.tn{ right:12px; }
+  .pfx-photo .pill i{ width:8px; height:8px; border-radius:50%; background:#6F6F6F; }
+  .pfx-photo .pill.on i{ background:#4FA56A; box-shadow:0 0 0 3px rgba(79,165,106,.3); }
+  .pfx-photo .pill.soon i{ background:#C4894B; }
+  .pfx-photo .who{ flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px 18px 18px; }
+  .pfx-photo .who h3{ margin:0; font-size:21px; font-weight:700; }
+  .pfx-photo .who p{ margin:3px 0 0; font-size:13px; color:#8C8C8C; }
+  .pfx-photo .go{ flex:none; width:34px; height:34px; border-radius:50%; border:0; background:#2A2A2A; color:#BDBDBD; font-size:16px; cursor:pointer; }
+  .pfx-stats{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .pfx-stat b{ display:block; font-size:42px; font-weight:700; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums; }
+  .pfx-stat span{ display:block; margin-top:16px; font-size:12.5px; color:#8C8C8C; }
+  .pfx-tags{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:12px 8px; padding:10px 0 6px; min-height:120px; }
+  .pfx-tags span{ display:inline-block; transform:translateY(var(--y)) rotate(var(--r)); padding:5px 11px; border-radius:999px; border:1px solid #E6E6E6; background:#0F0F0F; color:#F2F2F2; font-size:12px; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,.45); transition:transform .5s cubic-bezier(.3,1.4,.6,1); }
+  .pfx-tags em{ font-style:normal; font-family:'IBM Plex Mono', monospace; color:#8C8C8C; margin-left:3px; }
+  .pfx-round{ width:30px; height:30px; border-radius:50%; border:0; background:#2A2A2A; color:#BDBDBD; font-size:15px; cursor:pointer; }
+
+  .pfx-rl{ list-style:none; margin:0; padding:0; }
+  .pfx-rl li{ display:flex; align-items:center; gap:12px; padding:8px 0; transition:opacity .45s ease var(--d), transform .5s cubic-bezier(0.22,1,0.36,1) var(--d); }
+  .pfx-rl .ic{ flex:none; width:38px; height:38px; border-radius:11px; background:#F2F2F2; color:#111; display:grid; place-items:center; }
+  .pfx-rl .tx{ flex:1; min-width:0; }
+  .pfx-rl .t{ margin:0; font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pfx-rl .s{ margin:2px 0 0; font-size:11.5px; color:#8C8C8C; }
+  .pfx-rl b{ flex:none; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600; color:#6CC487; }
+
+  .pfx-radial-t{ display:flex; flex-direction:column; padding-bottom:0; }
+  .pfx-radial{ position:relative; flex:1; display:flex; align-items:center; justify-content:center; min-height:200px; }
+  .pfx-radial svg{ width:100%; max-width:240px; height:auto; overflow:visible; }
+  .pfx-radial line{ stroke-dasharray:1; stroke-dashoffset:0; transition:stroke-dashoffset 700ms cubic-bezier(0.22,1,0.36,1) var(--d); }
+  .pfx-radial-n{ position:absolute; right:0; bottom:4px; text-align:right; }
+  .pfx-radial-n b{ display:block; font-size:22px; font-weight:700; line-height:1; }
+  .pfx-radial-n span{ font-size:11px; color:#8C8C8C; }
+  .pfx-legend{ list-style:none; margin:12px -18px 0; padding:12px 18px 14px; background:#151515; }
+  .pfx-legend li{ display:grid; grid-template-columns:10px minmax(0,1fr) auto 38px; align-items:center; gap:10px; padding:5px 0; font-size:12px; }
+  .pfx-legend i{ width:10px; height:10px; border-radius:3px; }
+  .pfx-legend .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pfx-legend .c, .pfx-legend .p{ font-family:'IBM Plex Mono', monospace; color:#8C8C8C; text-align:right; }
+
+  .pfx-bars-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .pfx-bars-head h3{ margin:0; font-size:15px; font-weight:600; }
+  .pfx-bars-head .m{ margin:3px 0 0; font-size:12px; color:#8C8C8C; }
+  .pfx-bars-head .g{ margin:3px 0 0; font-size:12px; font-weight:600; font-family:'IBM Plex Mono', monospace; }
+  .pfx-bars-head .g.up{ color:#6CC487; } .pfx-bars-head .g.down{ color:#E08A72; }
+  .pfx-bars-head .g span{ color:#8C8C8C; font-family:'IBM Plex Sans Thai', sans-serif; font-weight:400; }
+  .pfx-pills{ display:inline-flex; gap:2px; padding:3px; border:1px solid #2E2E2E; border-radius:12px; }
+  .pfx-pills button{ border:1px solid transparent; background:none; color:#8C8C8C; font-size:11.5px; font-weight:600; padding:5px 10px; border-radius:9px; cursor:pointer; white-space:nowrap; }
+  .pfx-pills button.on{ background:#2A2A2A; border-color:#3D3D3D; color:#F2F2F2; }
+  .pfx-bars{ display:flex; align-items:stretch; gap:8px; height:250px; margin-top:18px; }
+  .pfx-bar{ flex:1; min-width:0; display:flex; flex-direction:column; padding:0; border:0; background:none; color:inherit; cursor:pointer; }
+  .pfx-bar .col{ position:relative; flex:1; display:flex; align-items:flex-end; }
+  .pfx-bar .fill{ display:block; width:100%; height:var(--h); border-radius:8px; background:#343434; transition:height 800ms cubic-bezier(0.22,1,0.36,1) var(--d), background .2s; }
+  .pfx-bar:hover .fill{ background:#404040; }
+  .pfx-bar.on .fill{ background:#4FA56A; }
+  .pfx-bar .lb{ margin-top:8px; font-size:11px; color:#8C8C8C; text-align:center; white-space:nowrap; }
+  .pfx-bar.on .lb{ color:#F2F2F2; font-weight:600; }
+  .pfx-bar .tip{ position:absolute; bottom:calc(var(--h) + 14px); left:50%; transform:translateX(-50%); z-index:2; padding:6px 10px; border-radius:10px; border:1px solid #E6E6E6; background:#0F0F0F; font-size:11.5px; font-weight:600; white-space:nowrap; text-align:left; pointer-events:none; }
+  .pfx-bar .tip b{ display:block; font-size:11px; color:#F2F2F2; }
+  .pfx-bar .tip i{ display:inline-block; width:7px; height:7px; border-radius:50%; background:#4FA56A; margin-right:5px; }
+  .pfx-bar .tip em{ display:block; font-style:normal; font-weight:400; font-size:10px; color:#8C8C8C; margin-top:1px; }
+  .pfx-bar .dash{ position:absolute; left:50%; bottom:0; height:calc(var(--h) + 12px); border-left:1px dashed rgba(255,255,255,.65); z-index:1; pointer-events:none; }
+  .pfx-bar:first-child .tip, .pfx-bar:nth-child(2) .tip{ left:0; transform:none; }
+  .pfx-bar:last-child .tip, .pfx-bar:nth-last-child(2) .tip{ left:auto; right:0; transform:none; }
+  .pfx-bars-foot{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:14px; font-size:11.5px; color:#8C8C8C; }
+  .pfx-bars-foot i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+  .pfx-bars-foot span:first-child{ color:#F2F2F2; font-weight:600; }
+
+  .pfx-side{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .pfx-frac{ margin:0; font-size:15px; font-weight:600; color:#8C8C8C; font-family:'IBM Plex Mono', monospace; }
+  .pfx-frac b{ color:#F2F2F2; }
+  .pfx-trend-t .m{ margin:2px 0 0; font-size:11px; color:#8C8C8C; }
+  .pfx-trend{ display:block; width:100%; height:74px; margin-top:4px; overflow:visible; }
+  .pfx-trend-l{ stroke-dasharray:1; stroke-dashoffset:0; transition:stroke-dashoffset 1200ms cubic-bezier(0.22,1,0.36,1); }
+  .pfx-trend-x{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace; font-size:10px; color:#6F6F6F; margin-top:4px; }
+  .pfx-trend-k{ display:flex; gap:14px; margin:8px 0 0; font-size:10.5px; color:#8C8C8C; }
+  .pfx-trend-k i{ display:inline-block; width:12px; height:0; margin-right:5px; vertical-align:middle; border-top:2px solid #F2F2F2; }
+  .pfx-trend-k i.g{ border-top:2px dashed #6F6F6F; }
+  .pfx-stage-t{ background:#262626; }
+  .pfx-stage{ position:relative; display:flex; align-items:center; gap:12px; }
+  .pfx-stage svg{ flex:none; }
+  .pfx-stage .pct{ position:absolute; left:0; top:50%; width:58px; transform:translateY(-50%); text-align:center; font-size:12px; font-weight:700; }
+  .pfx-stage .m{ margin:0; font-size:11.5px; color:#8C8C8C; }
+  .pfx-stage .t{ margin:2px 0 0; font-size:13.5px; font-weight:600; line-height:1.35; }
+  .pfx-ring{ stroke-dashoffset:var(--off); transition:stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1) .2s; }
+  .pfx-tl{ list-style:none; margin:0; padding:0; }
+  .pfx-tl li{ position:relative; display:flex; align-items:center; gap:12px; padding:8px 0; transition:opacity .45s ease var(--d), transform .5s cubic-bezier(0.22,1,0.36,1) var(--d); }
+  .pfx-tl li:not(:last-child)::after{ content:''; position:absolute; left:18px; top:46px; bottom:-8px; border-left:1px dashed #3F3F3F; }
+  .pfx-tl .dot{ flex:none; width:36px; height:36px; border-radius:50%; border:1px solid #333; display:grid; place-items:center; color:#BDBDBD; font-size:10px; letter-spacing:1px; }
+  .pfx-tl .done .dot{ background:#4FA56A; border-color:#4FA56A; color:#0B0B0B; box-shadow:0 0 0 4px rgba(79,165,106,.22); }
+  .pfx-tl .cur .dot{ background:#2A2A2A; border-color:#6F6F6F; }
+  .pfx-tl .tx{ flex:1; min-width:0; }
+  .pfx-tl .t{ margin:0; font-size:13px; font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .pfx-tl .s{ margin:2px 0 0; font-size:11px; color:#8C8C8C; }
+  .pfx-tl .r{ flex:none; font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:#BDBDBD; }
+  .pfx-premium{ border-radius:24px; padding:18px; background:#A68A6D; color:#1A1209; cursor:pointer; transition:transform .15s; }
+  .pfx-premium:active{ transform:scale(.985); }
+  .pfx-premium .r{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .pfx-premium .pp{ padding:8px 14px; border-radius:999px; background:#0F0F0F; color:#F2F2F2; font-size:13px; font-weight:600; font-family:'IBM Plex Mono', monospace; white-space:nowrap; }
+  .pfx-premium .pp small{ color:#8C8C8C; font-size:11px; font-family:'IBM Plex Sans Thai', sans-serif; }
+  .pfx-premium h3{ margin:18px 0 4px; font-size:20px; font-weight:700; }
+  .pfx-premium p{ margin:0; font-size:12px; opacity:.75; }
+
+  .pfx-reg{ margin-top:14px; }
+  .pfx-reg-btns{ display:flex; gap:6px; }
+  .pfx-bk{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:12px; }
+  .pfx-bk div{ background:#262626; border-radius:14px; padding:10px 12px; }
+  .pfx-bk span{ display:block; font-size:11px; color:#8C8C8C; }
+  .pfx-bk b{ display:block; margin-top:2px; font-size:14px; }
+  .pfx-reg-light{ border-radius:16px; }
+  .pfx-reg-light:empty{ display:none; }
+
+  .pfx-grid.anim .pfx-tile, .pfx-grid.anim .pfx-premium{ opacity:0; transform:translateY(10px); }
+  .pfx-grid.anim.in .pfx-tile, .pfx-grid.anim.in .pfx-premium{ opacity:1; transform:none; transition:opacity .5s ease, transform .6s cubic-bezier(0.22,1,0.36,1); }
+  .pfx-grid.anim:not(.in) .pfx-radial line, .pfx-grid.anim:not(.in) .pfx-trend-l{ stroke-dashoffset:1; }
+  .pfx-grid.anim:not(.in) .pfx-bar .fill{ height:2%; }
+  .pfx-grid.anim:not(.in) .pfx-ring{ stroke-dashoffset:var(--c); }
+  .pfx-grid.anim:not(.in) .pfx-rl li, .pfx-grid.anim:not(.in) .pfx-tl li{ opacity:0; transform:translateY(6px); }
+  .pfx-grid.anim:not(.in) .pfx-tags span{ transform:translateY(12px) rotate(0deg); }
+  @media (max-width:699px){
+    .pfx-switch{ order:3; width:100%; justify-content:center; }
+    .pfx-btn span{ display:none; }
+    .pfx-photo .pic{ min-height:300px; }
+    .pfx-bars{ gap:4px; height:220px; }
+    .pfx-bar .lb{ font-size:9.5px; }
+    .pfx-hello h2{ font-size:21px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    #profX, .pfx-wrap{ transition:none; }
+  }
   /* ---- instructor dashboard (light bento) ---- */
   #idashCard.idash-card{ background:#F7F3EA; border-color:#EAE2D2; color:#1D1810; padding:20px 16px; }
   #idashCard.idash-card h2{ color:#0B2A15; margin:0; }
@@ -6880,6 +7056,7 @@ function instructorKPI(name){
 
 function openInstructorProfile(name, booking){
   regDayFilter = (booking && booking.date) ? booking.date : null; // list only the class day that was tapped
+  if(typeof openProfileX === 'function'){ try{ openProfileX(name, booking); return; }catch(e){ console.error('profile screen failed, falling back to popup', e); } }
   const photo = instructorPhotos[name];
   const initial = (name||'').replace('อาจารย์','').trim().charAt(0) || '?';
   const idx = state.instructors.indexOf(name);
@@ -8095,6 +8272,291 @@ function openInstructorDashboard(name){
   window._idash.who = name || 'all';
   window._idash.scroll = true;
   switchTab('dashboard');
+}
+
+/* ============================= INSTRUCTOR PROFILE — full-screen board ============================= */
+// opened from every instructor avatar / “my profile”: photo card, tenure stats, course cloud, recent classes,
+// teaching-format sunburst, income bars, this-month trend, level ring, upcoming timeline, this-month card,
+// plus the registrant list for the tapped class day
+const PFX = { green:'#4FA56A', violet:'#958AE0', tan:'#C4894B', bar:'#343434', card:'#A68A6D' }; // validated on #1C1C1C
+window._pfx = window._pfx || { range:'12m', sel:null };
+function pfxType(c){
+  if(/group|workshop/i.test(c.course||'')) return 'group';
+  return (c.students||0) >= 2 ? 'semi' : 'private';
+}
+const PFX_TYPES = [
+  { k:'private', label:'Private (1 คน)', color:PFX.tan },
+  { k:'semi',    label:'Semi-Private (2 คนขึ้นไป)', color:PFX.violet },
+  { k:'group',   label:'คลาสกลุ่ม / Workshop', color:PFX.green },
+];
+function pfxShortCourse(n){ return (n||'').replace(/^คอร์ส\s*\d+\s*:\s*/,'').replace(/\s*\(.*?\)\s*$/,''); }
+function pfxTitle(level){ return level>=6 ? 'Master Barista' : level>=3 ? 'Pro Barista' : 'Rookie Barista'; }
+function pfxEnsureShell(){
+  let ov = document.getElementById('profX');
+  if(ov) return ov;
+  ov = document.createElement('div');
+  ov.id = 'profX'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','โปรไฟล์อาจารย์');
+  ov.innerHTML = `<div class="pfx-wrap" id="pfxWrap"></div>`;
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && ov.classList.contains('open')) closeProfileX(); });
+  return ov;
+}
+function closeProfileX(){
+  const ov = document.getElementById('profX'); if(!ov) return;
+  ov.classList.remove('open'); document.documentElement.classList.remove('pfx-lock');
+  setTimeout(()=>{ if(!ov.classList.contains('open')) ov.style.display = 'none'; }, 260);
+}
+function openProfileX(name, booking){
+  const ov = pfxEnsureShell();
+  window._pfx.name = name; window._pfx.booking = booking || null; window._pfx.sel = null; window._pfx.first = true;
+  ov.style.display = 'block';
+  renderProfileX();
+  requestAnimationFrame(()=>{ ov.classList.add('open'); });
+  document.documentElement.classList.add('pfx-lock');
+  ov.scrollTop = 0;
+}
+function pfxData(name){
+  const L = idbLedger(name);
+  const today = new Date(); today.setHours(0,0,0,0); const todayS = idbIso(today);
+  const classes = L.classes.slice().sort((a,b)=> b.date.localeCompare(a.date));
+  const firstDate = classes.length ? classes[classes.length-1].date : null;
+  const days = firstDate ? Math.max(1, Math.round((today - idbDate(firstDate))/864e5) + 1) : 0;
+  const kpi = instructorKPI(name); const level = 1 + Math.floor(kpi.sessions/3);
+  const upcomingMap = new Map();
+  (sharedBookings||[]).forEach(b=>{
+    if(b.taught || !b.date || b.date < todayS || b.instructor !== name) return;
+    const k = [b.date, b.courseId, b.startTime||''].join('|');
+    if(!upcomingMap.has(k)){ const c = courseById(b.courseId); upcomingMap.set(k, { date:b.date, time:b.startTime||'', course: c ? c.name : 'คอร์ส', n:0 }); }
+    upcomingMap.get(k).n++;
+  });
+  const upcoming = [...upcomingMap.values()].sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  const todayTaught = classes.filter(c=> c.date === todayS);
+  const perCourse = {}; classes.forEach(c=>{ perCourse[c.course] = (perCourse[c.course]||0) + 1; });
+  const mFrom = idbIso(new Date(today.getFullYear(), today.getMonth(), 1));
+  const month = idbSum(L, mFrom, todayS);
+  const mEnd = idbIso(new Date(today.getFullYear(), today.getMonth()+1, 0));
+  const monthQueue = upcoming.filter(u=> u.date <= mEnd).length;
+  const totalStudents = classes.reduce((t,c)=> t + (c.students||0), 0);
+  return { L, today, todayS, classes, firstDate, days, kpi, level, upcoming, todayTaught, perCourse, month, monthQueue, totalStudents };
+}
+function pfxStatus(d){
+  if(d.todayTaught.length) return { t:'สอนแล้ววันนี้', c:'on' };
+  const nx = d.upcoming[0];
+  if(nx && nx.date === d.todayS) return { t:`มีคลาสวันนี้${nx.time?' '+nx.time:''}`, c:'on' };
+  if(nx) return { t:`คลาสถัดไป ${idbRelDay(nx.date)}`, c:'soon' };
+  return { t:'ยังไม่มีคิว', c:'off' };
+}
+function pfxTenure(days){
+  if(!days) return 'ยังไม่เริ่มสอน';
+  if(days < 60) return `สอนมา ${days} วัน`;
+  if(days < 365) return `สอนมา ${Math.round(days/30)} เดือน`;
+  return `สอนมา ${(days/365).toFixed(1)} ปี`;
+}
+function pfxBuckets(d){
+  const S = window._pfx, L = d.L, T = d.today; const out = [];
+  if(S.range === '12w'){
+    const monday = idbAddDays(T, -((T.getDay()+6)%7));
+    for(let i=11;i>=0;i--){ const s = idbAddDays(monday, -7*i), e = idbAddDays(s, 6); const r = idbSum(L, idbIso(s), idbIso(e)); out.push({ l: `${s.getDate()}/${s.getMonth()+1}`, long:`สัปดาห์ ${idbDayLbl(idbIso(s))}`, ...r }); }
+  } else {
+    const n = S.range === '6m' ? 6 : 12;
+    for(let i=n-1;i>=0;i--){ const s = new Date(T.getFullYear(), T.getMonth()-i, 1), e = new Date(s.getFullYear(), s.getMonth()+1, 0); const r = idbSum(L, idbIso(s), idbIso(e)); out.push({ l: IDB_TH_MONTH[s.getMonth()], long:`${IDB_TH_MONTH[s.getMonth()]} ${String((s.getFullYear()+543)%100)}`, ...r }); }
+  }
+  return out;
+}
+function pfxBarsHTML(d){
+  const S = window._pfx; const B = pfxBuckets(d); const n = B.length;
+  const max = Math.max(1, ...B.map(b=> b.total)); const sel = S.sel != null && S.sel < n ? S.sel : n-1;
+  const sum = B.reduce((t,b)=> t + b.total, 0);
+  // growth vs the same-length window right before
+  const half = B.slice(Math.floor(n/2)).reduce((t,b)=> t+b.total, 0), firstHalf = B.slice(0, Math.floor(n/2)).reduce((t,b)=> t+b.total, 0);
+  const g = firstHalf ? (half-firstHalf)/firstHalf*100 : null;
+  const s = B[sel];
+  return `
+    <div class="pfx-bars-head">
+      <div><h3>รายได้ที่สร้าง</h3><p class="m">${B[0].long} – ${B[n-1].long} · ${idbBaht(sum)}</p>
+        ${g===null ? '' : `<p class="g ${g>=0?'up':'down'}">${g>=0?'+':'−'}${Math.abs(g).toFixed(1)}% <span>ครึ่งหลังเทียบครึ่งแรก</span></p>`}</div>
+      <div class="pfx-pills" role="radiogroup" aria-label="ช่วงเวลา">${[['12w','12 สัปดาห์'],['6m','6 เดือน'],['12m','12 เดือน']].map(o=> `<button type="button" role="radio" aria-checked="${S.range===o[0]}" class="${S.range===o[0]?'on':''}" data-pfx-range="${o[0]}">${o[1]}</button>`).join('')}</div>
+    </div>
+    <div class="pfx-bars" data-pfx-bars>
+      ${B.map((b,i)=>{ const h = b.total ? Math.max(6, b.total/max*100) : 3; const on = i===sel; return `
+        <button type="button" class="pfx-bar${on?' on':''}" data-i="${i}" aria-label="${b.long}: ${idbBaht(b.total)}, ${b.classes} คลาส" style="--h:${h.toFixed(1)}%;--d:${i*40}ms">
+          <span class="col">${on ? `<span class="tip"><b>${b.long}</b><i></i>${idbBaht(b.total)}<em>${b.classes} คลาส · ${b.students} คน</em></span><span class="dash"></span>` : ''}<span class="fill"></span></span>
+          <span class="lb">${b.l}</span>
+        </button>`; }).join('')}
+    </div>
+    <div class="pfx-bars-foot"><span><i style="background:${PFX.green}"></i>${s.long}</span><span>ค่าคอร์ส ${idbBaht(s.course)}</span><span>ขายสินค้า ${idbBaht(s.product)}</span><span>กำไรค่าคอร์ส ${idbBaht(s.profit)}</span></div>`;
+}
+function pfxRadialHTML(d){
+  const list = d.classes.slice(0, 120).reverse(); // oldest → newest, newest ends at 12 o'clock
+  const counts = { private:0, semi:0, group:0 }, stu = { private:0, semi:0, group:0 };
+  d.classes.forEach(c=>{ const t = pfxType(c); counts[t]++; stu[t] += c.students||0; });
+  const total = d.classes.length || 0;
+  const N = Math.max(list.length, 1), R0 = 46, maxLen = 44, maxS = Math.max(1, ...list.map(c=> c.students||1));
+  const col = t=> (PFX_TYPES.find(x=> x.k===t)||{}).color;
+  const lines = list.map((c,i)=>{
+    const a = (i/N)*Math.PI*2 - Math.PI/2 + Math.PI*2/N; const len = 14 + Math.sqrt((c.students||1)/maxS)*maxLen;
+    const x1 = 110 + Math.cos(a)*R0, y1 = 110 + Math.sin(a)*R0, x2 = 110 + Math.cos(a)*(R0+len), y2 = 110 + Math.sin(a)*(R0+len);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${col(pfxType(c))}" stroke-width="${N > 80 ? 1.6 : 2.2}" stroke-linecap="round" pathLength="1" style="--d:${(i*9)}ms"/>`;
+  }).join('');
+  return `
+    <header class="pfx-th"><h3>รูปแบบการสอน</h3><span class="pfx-mini-tag">${list.length < total ? `${list.length} คลาสล่าสุด` : 'ทุกคลาส'}</span></header>
+    <div class="pfx-radial">
+      ${total ? `<svg viewBox="0 0 220 220" aria-hidden="true">${lines}</svg>` : `<div class="pfx-empty">ยังไม่มีคลาสที่ยืนยันสอน</div>`}
+      <div class="pfx-radial-n"><b>${fmt(total)}</b><span>คลาส</span></div>
+    </div>
+    <ul class="pfx-legend">${PFX_TYPES.map(t=> `<li><i style="background:${t.color}"></i><span class="n">${t.label}</span><span class="c">${counts[t.k]} คลาส</span><span class="p">${total ? Math.round(counts[t.k]/total*100) : 0}%</span></li>`).join('')}</ul>`;
+}
+function pfxTrendHTML(d){
+  const T = d.today, dim = new Date(T.getFullYear(), T.getMonth()+1, 0).getDate();
+  const lm = new Date(T.getFullYear(), T.getMonth()-1, 1), lmDim = new Date(T.getFullYear(), T.getMonth(), 0).getDate();
+  const cur = [], prev = []; let a = 0, b = 0;
+  for(let i=1;i<=dim;i++){
+    const ds = idbIso(new Date(T.getFullYear(), T.getMonth(), i)), pd = i <= lmDim ? idbIso(new Date(lm.getFullYear(), lm.getMonth(), i)) : null;
+    if(pd && d.L.day[pd]) b += d.L.day[pd].classes; prev.push(b);
+    if(i <= T.getDate()){ if(d.L.day[ds]) a += d.L.day[ds].classes; cur.push(a); }
+  }
+  const W = 240, H = 74, max = Math.max(1, ...cur, ...prev);
+  const X = i=> (i/(dim-1))*W, Y = v=> H - 6 - (v/max)*(H-14);
+  const pc = cur.map((v,i)=> [X(i), Y(v)]), pp = prev.map((v,i)=> [X(i), Y(v)]);
+  const done = a, plan = a + d.monthQueue;
+  const last = pc[pc.length-1] || [0, H-6];
+  return `
+    <header class="pfx-th"><div><p class="pfx-frac"><b>${done}</b>/${plan || done}</p><p class="m">คลาสเดือนนี้ (สอนแล้ว/ทั้งหมดที่มีคิว)</p></div><span class="pfx-mini-tag">${IDB_TH_MONTH[T.getMonth()]}</span></header>
+    <svg class="pfx-trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${idbSmooth(pp)}" fill="none" stroke="#5A5A5A" stroke-width="1.5" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>
+      <path class="pfx-trend-l" d="${idbSmooth(pc)}" fill="none" stroke="#F2F2F2" stroke-width="2" vector-effect="non-scaling-stroke" pathLength="1"/>
+    </svg>
+    <div class="pfx-trend-x"><span>1</span><span>${Math.round(dim/4)}</span><span>${Math.round(dim/2)}</span><span>${Math.round(dim*3/4)}</span><span>${dim}</span></div>
+    <p class="pfx-trend-k"><span><i class="w"></i>เดือนนี้</span><span><i class="g"></i>เดือนที่แล้ว</span></p>`;
+}
+function pfxStageHTML(d){
+  const into = d.kpi.sessions % 3, pct = Math.round(into/3*100), left = 3 - into;
+  const R = 22, C = 2*Math.PI*R;
+  return `<div class="pfx-stage">
+    <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r="${R}" fill="none" stroke="#333" stroke-width="4"/>
+      <circle class="pfx-ring" cx="29" cy="29" r="${R}" fill="none" stroke="${PFX.green}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" style="--off:${(C*(1-into/3)).toFixed(1)};--c:${C.toFixed(1)}" transform="rotate(-90 29 29)"/></svg>
+    <b class="pct">${pct}%</b>
+    <div><p class="m">LV.${d.level} · ${pfxTitle(d.level)}</p><p class="t">อีก ${left} รอบสอน ถึง LV.${d.level+1}</p></div>
+  </div>`;
+}
+function pfxTimelineHTML(d){
+  const items = d.todayTaught.map(c=> ({ done:true, t:pfxShortCourse(c.course), r:'วันนี้', sub:`สอนแล้ว · ${c.students} คน` }))
+    .concat(d.upcoming.slice(0, 5 - Math.min(2, d.todayTaught.length)).map((u,i)=> ({ done:false, cur:i===0, t:pfxShortCourse(u.course), r: u.time || idbDayLbl(u.date), sub:`${idbRelDay(u.date)} · ${u.n} คน` })));
+  if(!items.length) return `<header class="pfx-th"><h3>คิวสอนถัดไป</h3></header><div class="pfx-empty">ยังไม่มีคิวสอน</div>`;
+  return `<header class="pfx-th"><h3>คิวสอนถัดไป</h3><span class="pfx-mini-tag">${d.upcoming.length} คิว</span></header>
+    <ol class="pfx-tl">${items.map((x,i)=> `<li class="${x.done?'done':''}${x.cur?' cur':''}" style="--d:${200+i*70}ms">
+      <span class="dot">${x.done ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' : x.cur ? '•••' : ''}</span>
+      <div class="tx"><p class="t">${idbEsc(x.t)}</p><p class="s">${x.sub}</p></div><span class="r">${idbEsc(x.r)}</span></li>`).join('')}</ol>`;
+}
+function renderProfileX(){
+  const wrap = document.getElementById('pfxWrap'); if(!wrap) return;
+  const S = window._pfx, name = S.name, booking = S.booking;
+  const team = state.instructors||[]; const d = pfxData(name); S._d = d;
+  const photo = (typeof instructorPhotos!=='undefined' && instructorPhotos) ? instructorPhotos[name] : '';
+  const idx = team.indexOf(name); const color = ['#165028','#542B0D','#8F5A26'][idx>=0 ? idx%3 : 0];
+  const ini = (name||'').replace('อาจารย์','').trim().charAt(0) || '?';
+  const st = pfxStatus(d);
+  const now = new Date(); const dayNames = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  const isMe = name === currentUser;
+  const animate = S.first && !idbReduced(); S.first = false;
+  const recent = d.classes.slice(0, 6);
+  const courses = Object.keys(d.perCourse).sort((a,b)=> d.perCourse[b]-d.perCourse[a]);
+  const seed = k=> { let h = 0; for(const ch of k) h = (h*31 + ch.charCodeAt(0)) >>> 0; return h; };
+  const icon = t=> t === 'group' ? '<path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2.5 19c.5-3 2.8-4.8 5.5-4.8s5 1.8 5.5 4.8M16 10.5a2.5 2.5 0 1 0 0-5M16.5 14.3c2.3.3 4 1.8 4.5 4.7"/>'
+    : t === 'semi' ? '<path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.5 19c.5-3 2.8-4.8 5.5-4.8s5 1.8 5.5 4.8M17 13v6M14 16h6"/>'
+    : '<path d="M4 9h13v4.5A5.5 5.5 0 0 1 11.5 19h-1A5.5 5.5 0 0 1 5 13.5V9Z"/><path d="M17 10.3h1.2a2.2 2.2 0 1 1 0 4.4H17M9 5.5V4M13 5.5V4"/>';
+  const bk = booking && booking.date ? (()=>{ const c = courseById(booking.courseId); return { course: c ? c.name : '-', date: new Date(booking.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long', day:'numeric', month:'long', year:'numeric'}), note: booking.note||'' }; })() : null;
+  const regTile = `<section class="pfx-tile pfx-reg">
+      <header class="pfx-th"><h3>${bk ? 'คิวสอนที่เลือก' : 'ผู้ลงทะเบียนเรียน'}</h3>
+        <div class="pfx-reg-btns"><button class="btn ghost small" id="profileRegSettingsBtn" title="ตั้งค่าลิงก์ชีท">⚙️</button><button class="btn ghost small" id="profileRegRefreshBtn" title="รีเฟรช">⟳</button></div></header>
+      ${bk ? `<div class="pfx-bk"><div><span>คอร์ส</span><b>${idbEsc(bk.course)}</b></div><div><span>วันที่</span><b>${bk.date}</b></div>${bk.note ? `<div><span>หมายเหตุ</span><b>${idbEsc(bk.note)}</b></div>` : ''}</div>` : ''}
+      <div class="pfx-reg-light"><div id="profileRegCatFilterRow" class="cat-filter-row"></div><div id="profileRegListBox" class="eval-box"></div></div>
+    </section>`;
+
+  wrap.innerHTML = `
+    <header class="pfx-top">
+      <div class="pfx-me">
+        <span class="pfx-logo">${photo ? `<img src="${photo}" alt="">` : `<b style="background:${color}">${ini}</b>`}</span>
+        <div><p class="d">วัน${dayNames[now.getDay()]}, ${now.getDate()} ${IDB_TH_MONTH[now.getMonth()]}</p><p class="w">☕ ${d.todayTaught.length ? `สอนแล้ววันนี้ ${d.todayTaught.length} คลาส` : d.upcoming[0] && d.upcoming[0].date===d.todayS ? 'มีคลาสวันนี้' : 'วันนี้ไม่มีคลาส'}</p></div>
+      </div>
+      <div class="pfx-switch" aria-label="สลับอาจารย์">
+        <button type="button" class="pfx-arrow" data-pfx-step="-1" aria-label="อาจารย์คนก่อนหน้า">‹</button>
+        ${team.map(n=> `<button type="button" class="pfx-ava${n===name?' on':''}" data-pfx-who="${idbEsc(n)}" aria-label="${idbEsc(n)}" title="${idbEsc(n)}">${idbAvatar(n, 34)}</button>`).join('')}
+        <button type="button" class="pfx-arrow" data-pfx-step="1" aria-label="อาจารย์คนถัดไป">›</button>
+      </div>
+      <div class="pfx-actions">
+        <button type="button" class="pfx-btn" data-pfx-dash>📊 <span>Dashboard</span></button>
+        <button type="button" class="pfx-close" data-pfx-close aria-label="ปิด">✕</button>
+      </div>
+    </header>
+    <div class="pfx-hello"><h2>${isMe ? 'โปรไฟล์ของฉัน' : 'โปรไฟล์'}, ${idbEsc(name.replace('อาจารย์','อ.'))}</h2><p>${fmt(d.classes.length)} คลาส · ${fmt(d.totalStudents)} ผู้เรียน ตั้งแต่เริ่มสอน</p></div>
+
+    ${bk ? regTile : ''}
+    <div class="pfx-grid${animate?' anim':''}">
+      <section class="pfx-tile pfx-photo">
+        <div class="pic" style="${photo ? '' : `background:${color}`}">${photo ? `<img src="${photo}" alt="${idbEsc(name)}">` : `<b>${ini}</b>`}
+          <span class="pill st ${st.c}"><i></i>${st.t}</span><span class="pill tn">${pfxTenure(d.days)}</span></div>
+        <div class="who"><div><h3>${idbEsc(name)}</h3><p>${pfxTitle(d.level)} · LV.${d.level}</p></div>
+          <button type="button" class="go" data-pfx-dash aria-label="เปิด Dashboard">↗</button></div>
+      </section>
+      <div class="pfx-stats">
+        <section class="pfx-tile pfx-stat"><b data-count="${d.days}">${fmt(d.days)}</b><span>วันที่สอนกับ RANGSAN</span></section>
+        <section class="pfx-tile pfx-stat"><b data-count="${d.classes.length}">${fmt(d.classes.length)}</b><span>คลาสที่สอนแล้ว</span></section>
+      </div>
+      <section class="pfx-tile pfx-cloud">
+        <header class="pfx-th"><h3>คอร์สที่สอน</h3><button type="button" class="pfx-round" data-pfx-shuffle aria-label="สลับตำแหน่ง">↻</button></header>
+        <div class="pfx-tags" data-pfx-tags>${courses.length ? courses.map(c=>{ const h = seed(c + (S.shuffle||0)); const r = (h%25)-12; const dy = (h>>5)%10 - 5; return `<span style="--r:${r}deg;--y:${dy}px">${idbEsc(pfxShortCourse(c))} <em>${d.perCourse[c]}</em></span>`; }).join('') : `<div class="pfx-empty">ยังไม่มีคอร์สที่สอน</div>`}</div>
+      </section>
+      <section class="pfx-tile pfx-prog">
+        <header class="pfx-th"><h3>คลาสล่าสุด</h3><span class="pfx-mini-tag">${d.classes.length} คลาส</span></header>
+        ${recent.length ? `<ul class="pfx-rl">${recent.map((c,i)=> `<li style="--d:${120+i*60}ms"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon(pfxType(c))}</svg></span>
+          <div class="tx"><p class="t">${idbEsc(pfxShortCourse(c.course))}</p><p class="s">🕑 ${idbDayLbl(c.date)} · ${c.students} คน</p></div><b>${(c.course$ + c.product$) ? '+' + idbBaht(c.course$ + c.product$) : '<span style="color:#6F6F6F">—</span>'}</b></li>`).join('')}</ul>` : `<div class="pfx-empty">ยังไม่มีคลาสที่ยืนยันสอน</div>`}
+      </section>
+      <section class="pfx-tile pfx-radial-t">${pfxRadialHTML(d)}</section>
+      <section class="pfx-tile pfx-bars-t" data-pfx-barsbox>${pfxBarsHTML(d)}</section>
+      <div class="pfx-side">
+        <section class="pfx-tile pfx-trend-t">${pfxTrendHTML(d)}</section>
+        <section class="pfx-tile pfx-stage-t">${pfxStageHTML(d)}</section>
+        <section class="pfx-tile pfx-tl-t">${pfxTimelineHTML(d)}</section>
+        <section class="pfx-premium" data-pfx-dash role="button" tabindex="0">
+          <div class="r"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true">${[...Array(28)].map((_,i)=>{ const a=i/28*Math.PI*2; return `<line x1="${(20+Math.cos(a)*6).toFixed(1)}" y1="${(20+Math.sin(a)*6).toFixed(1)}" x2="${(20+Math.cos(a)*18).toFixed(1)}" y2="${(20+Math.sin(a)*18).toFixed(1)}" stroke="#1A1209" stroke-width="1.3" stroke-linecap="round"/>`; }).join('')}</svg>
+            <span class="pp">→ ${idbBaht(d.month.total)} <small>/เดือนนี้</small></span></div>
+          <h3>ยอดเดือนนี้ของ${isMe ? 'ฉัน' : idbEsc(name.replace('อาจารย์','อ.'))}</h3>
+          <p>ค่าคอร์ส ${idbBaht(d.month.course)} · ขายสินค้า ${idbBaht(d.month.product)} · กดดูกราฟทั้งหมด</p>
+        </section>
+      </div>
+    </div>
+    ${bk ? '' : regTile}
+  `;
+  pfxBind(wrap, d, animate);
+}
+function pfxBind(wrap, d, animate){
+  const S = window._pfx;
+  wrap.querySelectorAll('[data-pfx-close]').forEach(b=> b.onclick = closeProfileX);
+  wrap.querySelectorAll('[data-pfx-dash]').forEach(b=>{ const go = ()=>{ closeProfileX(); openInstructorDashboard(S.name); }; b.onclick = go; b.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } }; });
+  const team = state.instructors||[];
+  const pick = n=>{ if(!n || n === S.name) return; S.name = n; S.booking = null; S.sel = null; S.first = true; regDayFilter = null; renderProfileX(); document.getElementById('profX').scrollTop = 0; };
+  wrap.querySelectorAll('[data-pfx-who]').forEach(b=> b.onclick = ()=> pick(b.dataset.pfxWho));
+  wrap.querySelectorAll('[data-pfx-step]').forEach(b=> b.onclick = ()=>{ const i = team.indexOf(S.name); pick(team[(i + Number(b.dataset.pfxStep) + team.length) % team.length]); });
+  const sh = wrap.querySelector('[data-pfx-shuffle]'); if(sh) sh.onclick = ()=>{ S.shuffle = (S.shuffle||0) + 1; renderProfileX(); };
+  const bindBars = ()=>{
+    const box = wrap.querySelector('[data-pfx-barsbox]'); if(!box) return;
+    box.querySelectorAll('[data-pfx-range]').forEach(b=> b.onclick = ()=>{ S.range = b.dataset.pfxRange; S.sel = null; box.innerHTML = pfxBarsHTML(d); bindBars(); });
+    box.querySelectorAll('.pfx-bar').forEach(b=> b.onclick = ()=>{ S.sel = Number(b.dataset.i); box.innerHTML = pfxBarsHTML(d); box.classList.add('still'); bindBars(); });
+  };
+  bindBars();
+  // registrant list (same Google-Sheet list the old profile popup showed)
+  try{
+    loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
+    const rf = document.getElementById('profileRegRefreshBtn'); if(rf) rf.onclick = ()=> loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
+    const rs = document.getElementById('profileRegSettingsBtn'); if(rs) rs.onclick = ()=>{ promptSetEvalFormUrl(); loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox'); };
+  }catch(e){ console.error('profile registrants', e); }
+  // entrance + count-up
+  const grid = wrap.querySelector('.pfx-grid');
+  if(animate){
+    wrap.querySelectorAll('[data-count]').forEach(el=>{ const target = Number(el.dataset.count)||0, t0 = performance.now(); const tick = now=>{ if(!el.isConnected) return; const p = Math.min(1, (now-t0)/1100); el.textContent = fmt(Math.round(target*(1-Math.pow(1-p,4)))); if(p<1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+    requestAnimationFrame(()=> requestAnimationFrame(()=> grid && grid.classList.add('in')));
+  } else if(grid) grid.classList.add('in');
 }
 
 function bestSellingProductsHTML(){
