@@ -7056,7 +7056,7 @@ function instructorKPI(name){
 
 function openInstructorProfile(name, booking){
   regDayFilter = (booking && booking.date) ? booking.date : null; // list only the class day that was tapped
-  if(typeof openProfileX === 'function'){ try{ openProfileX(name, booking); return; }catch(e){ console.error('profile screen failed, falling back to popup', e); } }
+  if(typeof openProfileX === 'function'){ try{ openProfileX(name, booking); return; }catch(e){ console.error('profile screen failed, falling back to popup', e); try{ closeProfileX(); const o = document.getElementById('profX'); if(o) o.style.display = 'none'; }catch(_){} } }
   const photo = instructorPhotos[name];
   const initial = (name||'').replace('อาจารย์','').trim().charAt(0) || '?';
   const idx = state.instructors.indexOf(name);
@@ -7724,7 +7724,7 @@ function renderDashboard(){
     </div>
   `;
 
-  try{ renderInstructorDashboard(); }catch(e){ console.error('instructor dashboard', e); }
+  try{ renderInstructorDashboard(); }catch(e){ console.error('instructor dashboard', e); const ib = document.getElementById('idashBox'); if(ib) ib.innerHTML = `<div class="idb-empty" style="text-align:left; display:block;"><b>แสดง Dashboard ไม่สำเร็จ</b><br>ส่งภาพหน้านี้ให้ผู้ดูแลแอพ<pre style="white-space:pre-wrap; font-size:11px; color:#B5452C;">${String(e && (e.stack || e.message) || e).replace(/</g,'&lt;').slice(0,600)}</pre></div>`; }
   try{ ensureIdashVideo(); }catch(e){}
   const idBg = document.getElementById('idashBgBtn'); if(idBg) idBg.onclick = ()=> openBgSettings('idash');
   if(window._idash && window._idash.scroll){ window._idash.scroll = false; const ic = document.getElementById('idashCard'); if(ic) requestAnimationFrame(()=> ic.scrollIntoView({ behavior:'smooth', block:'start' })); }
@@ -8178,7 +8178,7 @@ function renderInstructorDashboard(opts){
       ${idbActivity(ctx)}
       ${who ? '' : idbTeam(ctx)}
     </div>
-    <p class="idb-note">นับจากคลาสที่กด “ยืนยันสอนแล้ว” (หลายคนจองคลาสเดียวกันนับ 1 รอบ) · ยอดขายสินค้า = ขายระหว่างคลาส + ขายหน้าร้านโดยอาจารย์คนนั้น · เทียบกับช่วงก่อนหน้าที่ยาวเท่ากัน</p>`;
+    <p class="idb-note">เวอร์ชัน 27 พ.ย. 69 · นับจากคลาสที่กด “ยืนยันสอนแล้ว” (หลายคนจองคลาสเดียวกันนับ 1 รอบ) · ยอดขายสินค้า = ขายระหว่างคลาส + ขายหน้าร้านโดยอาจารย์คนนั้น · เทียบกับช่วงก่อนหน้าที่ยาวเท่ากัน</p>`;
   idbBind(box, ctx, animate);
 }
 function idbBind(box, ctx, animate){
@@ -8310,7 +8310,16 @@ function openProfileX(name, booking){
   const ov = pfxEnsureShell();
   window._pfx.name = name; window._pfx.booking = booking || null; window._pfx.sel = null; window._pfx.first = true;
   ov.style.display = 'block';
-  renderProfileX();
+  try{ renderProfileX(); }
+  catch(e){
+    // never leave a blank screen: show what went wrong so it can be reported, with a way out
+    console.error('profile screen', e);
+    const w = document.getElementById('pfxWrap');
+    if(w){ w.innerHTML = `<div class="pfx-top"><div></div><div class="pfx-actions"><button type="button" class="pfx-close" data-pfx-close aria-label="ปิด">✕</button></div></div>
+      <div class="pfx-tile" style="margin-top:20px;"><h3 style="margin:0 0 8px;">เปิดโปรไฟล์ไม่สำเร็จ</h3><p style="margin:0; color:#8C8C8C; font-size:13px;">ลองปิดแล้วเปิดใหม่ ถ้ายังไม่ได้ ส่งภาพหน้านี้ให้ผู้ดูแลแอพ</p>
+      <pre style="white-space:pre-wrap; font-size:11px; color:#E08A72; margin:12px 0 0;">${idbEsc(String(e && (e.stack || e.message) || e)).slice(0,600)}</pre></div>`;
+      w.querySelectorAll('[data-pfx-close]').forEach(b=> b.onclick = closeProfileX); }
+  }
   requestAnimationFrame(()=>{ ov.classList.add('open'); });
   document.documentElement.classList.add('pfx-lock');
   ov.scrollTop = 0;
