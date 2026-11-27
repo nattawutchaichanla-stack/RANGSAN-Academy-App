@@ -2917,7 +2917,10 @@
     transform:translateX(-50%) scale(var(--sc)); transform-origin:top center;
     box-shadow:0 -10px 26px -14px rgba(29,24,16,.55), inset 0 1px 0 rgba(29,24,16,.35), inset 0 0 0 1px rgba(29,24,16,.12);
     transition:top 650ms cubic-bezier(0.34,1.35,0.64,1), transform 650ms cubic-bezier(0.34,1.35,0.64,1), opacity 500ms ease var(--dl); }
-  .idb-card.front{ cursor:default; }
+  .idb-card.front{ cursor:pointer; }
+  .idb-profbtn{ margin-top:12px; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; border:1px solid rgba(29,24,16,.14); background:#1D1810; color:#F7F3EA; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .idb-profbtn:active{ transform:scale(.97); }
+  .idb-plink{ border:0; background:none; padding:0; color:#8A5E0E; font:inherit; font-weight:700; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
   .idb-card .ratio{ display:block; padding-top:63.08%; }
   .idb-card .holo{ position:absolute; inset:0; background-image:linear-gradient(115deg, transparent 18%, rgba(255,150,205,.5) 32%, rgba(150,205,255,.5) 42%, rgba(175,255,170,.45) 52%, rgba(255,214,140,.4) 62%, transparent 78%); background-size:260% 100%; background-position:var(--gl,30%) 0; mix-blend-mode:soft-light; transition:background-position 700ms cubic-bezier(0.22,1,0.36,1); }
   .idb-card .row{ position:absolute; left:0; right:0; top:0; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 14px 0 8px; }
@@ -7897,6 +7900,7 @@ function idbHero(ctx){
       <div class="idb-hello">
         <p class="g">สวัสดี, <span style="color:${IDB.goldText}">${idbEsc(name)}</span></p>
         <p class="s">${who ? 'สรุปการสอนและยอดของคุณ' : 'ภาพรวมการสอนและยอดของทั้งทีม'} · ${ctx.periodTxt}</p>
+        ${who ? `<button type="button" class="idb-profbtn" data-openprof="${idbEsc(who)}">👤 ดูโปรไฟล์ทั้งหมด ↗</button>` : ''}
       </div>
       <div class="idb-net">
         <p class="l">ยอดรวม (ค่าคอร์ส + สินค้า)</p>
@@ -7932,7 +7936,7 @@ function idbStack(ctx){
       <div class="idb-stack-in">
       ${order.map((id,pos)=>{
         const c = cards.find(x=> x.id === id); const fromFront = order.length - 1 - pos; const isFront = fromFront === 0;
-        return `<button type="button" class="idb-card${isFront?' front':''}" data-pick="${idbEsc(id)}" aria-pressed="${isFront}" aria-label="${idbEsc(c.label)}${isFront?' (เลือกอยู่)':' — แตะเพื่อเลือก'}"
+        return `<button type="button" class="idb-card${isFront?' front':''}" data-pick="${idbEsc(id)}" aria-pressed="${isFront}" aria-label="${idbEsc(c.label)}${isFront ? (id==='all' ? ' (เลือกอยู่)' : ' — แตะเพื่อเปิดโปรไฟล์') : ' — แตะเพื่อเลือก'}"
           style="top:${(depth-fromFront)*PEEK}px;z-index:${pos+1};--sc:${(1-fromFront*0.055).toFixed(3)};--dl:${pos*80}ms;color:${c.ink};background-image:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 34%),radial-gradient(110% 90% at 100% 0%,${c.c1} 0%,transparent 60%),linear-gradient(135deg,${c.c1} 0%,${c.c2} 100%)">
           <span class="ratio"></span><span class="holo"></span>
           <span class="row">
@@ -7944,7 +7948,7 @@ function idbStack(ctx){
         <div class="idb-stack-sp" aria-hidden="true" style="margin-top:${depth*PEEK}px"><div></div></div>
       </div>
       <div class="idb-stack-panel" aria-live="polite">
-        <div><p class="n">${idbEsc(front.label)}</p><p class="m">${fmt(fs.classes)} รอบ · ${fmt(fs.students)} คน</p></div>
+        <div><p class="n">${idbEsc(front.label)}</p><p class="m">${fmt(fs.classes)} รอบ · ${fmt(fs.students)} คน${sel !== 'all' ? ` · <button type="button" class="idb-plink" data-openprof="${idbEsc(sel)}">โปรไฟล์ ↗</button>` : ''}</p></div>
         <p class="b">${idbBaht(fs.total)}</p>
       </div>
     </div>`);
@@ -8185,7 +8189,8 @@ function idbBind(box, ctx, animate){
   const S = ctx.S;
   const rerender = (o)=> renderInstructorDashboard(o);
   box.querySelectorAll('[data-pick]').forEach(b=> b.addEventListener('click', ()=>{
-    const id = b.dataset.pick; if(id === S.who) return;
+    const id = b.dataset.pick;
+    if(id === S.who){ if(id !== 'all') openInstructorProfile(id, null); return; }
     const card = b.classList.contains('idb-card');
     S.who = id;
     if(card && !idbReduced()){ // let the stack shuffle first, then refresh the board
@@ -8196,6 +8201,7 @@ function idbBind(box, ctx, animate){
     } else rerender();
     if(b.classList.contains('idb-tr')) box.scrollIntoView({ behavior:'smooth', block:'start' });
   }));
+  box.querySelectorAll('[data-openprof]').forEach(b=> b.onclick = e=>{ e.stopPropagation(); openInstructorProfile(b.dataset.openprof, null); });
   box.querySelectorAll('[data-months]').forEach(b=> b.onclick = ()=>{ S.months = Number(b.dataset.months); rerender(); });
   box.querySelectorAll('[data-metric]').forEach(b=> b.onclick = ()=>{ S.metric = b.dataset.metric; rerender({ quiet:true }); });
   box.querySelectorAll('[data-gauge]').forEach(b=> b.onclick = ()=>{ S.gauge = b.dataset.gauge; rerender({ quiet:true }); });
