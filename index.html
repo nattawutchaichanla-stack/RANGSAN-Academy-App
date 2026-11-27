@@ -2281,6 +2281,16 @@
   .en-name.is-auto{ color:#8A7D68; font-style:italic; font-weight:500; border-bottom:1px dashed #B9AC93; }
   .name-en{ font-weight:500; font-size:.92em; opacity:.8; margin-left:6px; letter-spacing:.01em; }
   .reg-name .name-en{ display:block; margin:1px 0 0; }
+  .reg-cert{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin:6px 0 2px; padding:6px 10px; border-radius:10px; font-size:12px; background:rgba(220,167,61,.14); color:inherit; border:1px solid rgba(220,167,61,.35); }
+  .reg-cert b{ color:#DCA73D; }
+  .reg-cert .cert-nm{ font-weight:700; letter-spacing:.01em; }
+  .reg-cert .cert-nm i{ font-weight:500; opacity:.7; }
+  .reg-cert.is-unknown{ background:transparent; border-style:dashed; border-color:rgba(148,138,120,.5); }
+  .reg-cert.is-unknown b{ color:#E08A72; }
+  .reg-cert .cert-opts{ display:inline-flex; gap:4px; margin-left:auto; }
+  .cert-opt{ border:1px solid rgba(148,138,120,.55); background:transparent; color:inherit; font:inherit; font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:999px; cursor:pointer; }
+  .cert-opt.on{ background:#DCA73D; border-color:#DCA73D; color:#1A1209; }
+  .tk-row .reg-cert b{ color:#8A5E0E; }
   .tk-age{ font-weight:700; color:#8A6416; }
   #bookingModalOverlay .vip-past, #overdueModalOverlay .vip-past{ color:#DCC08A; }
   #newBookingVip .vip-wrap{ margin:0 0 2px 4px; }
@@ -5287,7 +5297,7 @@ async function loadRegistrationList(filterRowId, listBoxId){
     const dateIdx = findCol(['วันที่คุณจะเข้าร่วม', 'วันที่เข้าร่วม']);
     const timeIdx = 0;
 
-    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx, ageCols: findAgeCols(headers), enNameIdx: findEnNameCol(headers) };
+    regRowsCache = { headers, dataRows, courseIdx, nameIdx, phoneIdx, lineIdx, dateIdx, timeIdx, ageCols: findAgeCols(headers), enNameIdx: findEnNameCol(headers), certIdx: findCertCol(headers) };
 
     const courses = ['ทั้งหมด', ...new Set(dataRows.map(r=> (r[courseIdx]||'ไม่ระบุคอร์ส').trim()).filter(Boolean))];
     if(filterRow){
@@ -5386,6 +5396,7 @@ function renderRegistrationList(listBoxId){
         </div>
         ${vip}
         <div class="reg-course" style="font-size:11.5px; margin-top:2px;">${course||'-'}${(()=>{ const a = ageFromRow(r, regRowsCache.ageCols); return a ? ` · <span class="reg-age">อายุ ${a}</span>` : ''; })()}</div>
+        ${certIssued(bk && bk.courseId, course) ? certLineHTML(certLangOf(bk, r), (name||'').trim() || (bk && bk.customerName) || '', (regRowsCache.enNameIdx>=0 ? (r[regRowsCache.enNameIdx]||'').trim() : '') || (bk && bk.customerNameEn) || '', `data-cert-row="${rowIdx}" data-cert-set`) : ''}
         <div style="font-size:11px; color:#948a78; margin-top:2px;">
           ${phone ? `📞 ${phone}` : ''} ${line ? `· LINE: ${line}` : ''} · สมัครเมื่อ ${submitted||'-'}
         </div>
@@ -5402,6 +5413,14 @@ function renderRegistrationList(listBoxId){
   const cl = box.querySelector('[data-reg-cancelled]'); if(cl) cl.onclick = ()=> openCancelledList(box.id);
   box.querySelectorAll('[data-reg-edit]').forEach(btn=> btn.onclick = ()=> regEditDate(regRowsCache.dataRows[+btn.dataset.regEdit], btn, box.id));
   box.querySelectorAll('[data-reg-notify]').forEach(btn=> btn.onclick = ()=> regNotifyCustomer(regRowsCache.dataRows[+btn.dataset.regNotify], btn));
+  box.querySelectorAll('[data-cert-row]').forEach(btn=> btn.onclick = async ()=>{
+    const r = regRowsCache.dataRows[+btn.dataset.certRow]; const b = await regBookingEnsure(r, btn); if(!b) return;
+    const v = btn.dataset.certSet === 'en' ? 'ภาษาอังกฤษ' : 'ภาษาไทย';
+    if(certLangOf(b, r) === btn.dataset.certSet) return;
+    b.ackLang = v; b.ackLangBy = currentUser || '';
+    try{ await saveSharedBookings(); flashSaved(`ใบ Acknowledgment: ${v} ✓`); }catch(e){ alert('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+    renderRegistrationList(box.id);
+  });
 }
 function rsThDate(iso){ if(!iso) return ''; const d = new Date(iso+'T00:00:00'); return isNaN(d) ? iso : `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`; }
 async function regBookingEnsure(r, btn){
@@ -5924,6 +5943,32 @@ function thaiRomanize(text){
   };
   return String(text||'').trim().split(/\s+/).map(x=>{ const r = word(x); return r ? r[0].toUpperCase()+r.slice(1) : ''; }).filter(Boolean).join(' ');
 }
+// "ประสงค์ออกใบ Acknowledgment เป็นภาษาไทย หรือ ภาษาอังกฤษ" — which name goes on the certificate
+function findCertCol(headers){
+  return headers.findIndex(h=> /acknowledg|ใบประกาศ|เกียรติบัตร|certificate/i.test(h||''));
+}
+function certLangNorm(v){
+  const t = String(v||''); const en = /อังกฤษ|english|\beng?\b/i.test(t), th = /ไทย|thai/i.test(t);
+  return en && th ? 'both' : en ? 'en' : th ? 'th' : '';
+}
+// staff choice > in-app booking form > Google Form sheet
+function certLangOf(bk, row){
+  if(bk && bk.ackLang) return certLangNorm(bk.ackLang);
+  if(bk && bk.form && bk.form.ackLang) return certLangNorm(bk.form.ackLang);
+  if(bk && bk.ackLangForm) return certLangNorm(bk.ackLangForm);
+  if(row && regRowsCache && regRowsCache.certIdx >= 0) return certLangNorm(row[regRowsCache.certIdx]);
+  return '';
+}
+function certIssued(courseId, courseText){ // the Acknowledgment is only given for Private courses
+  if(courseId) return !isPerPersonCourse(courseId);
+  return !/workshop|group/i.test(courseText||'');
+}
+function certLineHTML(lang, thName, enName, setAttr){
+  const pick = lang === 'en' ? 'ภาษาอังกฤษ' : lang === 'th' ? 'ภาษาไทย' : lang === 'both' ? 'ไทย + อังกฤษ' : '';
+  const nm = lang === 'en' ? (enName || '<i>ยังไม่มีชื่อภาษาอังกฤษ</i>') : lang === 'th' ? (thName || '-') : lang === 'both' ? `${thName||'-'} / ${enName||'—'}` : '';
+  const btn = (k, l)=> setAttr ? `<button type="button" class="cert-opt${lang===k?' on':''}" ${setAttr}="${k}">${l}</button>` : '';
+  return `<div class="reg-cert${lang ? '' : ' is-unknown'}">🎓 ใบ Acknowledgment: ${lang ? `<b>${pick}</b> → <span class="cert-nm">${nm}</span>` : '<b>ยังไม่ระบุภาษา</b>'}${setAttr ? `<span class="cert-opts">${btn('th','ไทย')}${btn('en','อังกฤษ')}</span>` : ''}</div>`;
+}
 function findEnNameCol(headers){
   return headers.findIndex(h=> /(อังกฤษ|english|eng\b)/i.test(h) && /(ชื่อ|name)/i.test(h));
 }
@@ -6184,6 +6229,7 @@ async function syncBookingsFromGoogleForm(){
     const goalIdx = findCol(['เป้าหมายการเรียน']);
     const topicsIdx = findCol(['หัวข้อที่อยากให้เน้น']);
     const ageCols = findAgeCols(headers);
+    const certIdx = findCertCol(headers);
     const photoConsentIdx = findCol(['การยินยอมให้ใช้ภาพถ่ายและวิดีโอ', 'ยินยอมให้ใช้ภาพถ่าย', 'ยินยอมให้ถ่ายรูป', 'ยินยอมให้ถ่ายภาพ', 'อนุญาตให้ถ่ายรูป', 'อนุญาตให้ถ่ายภาพ', 'ยินยอม']);
 
     const existingKeys = new Set(sharedBookings.filter(b=>b.syncKey).map(b=>b.syncKey));
@@ -6212,6 +6258,7 @@ async function syncBookingsFromGoogleForm(){
       const photoConsent = photoConsentIdx>=0 ? (r[photoConsentIdx]||'').trim() : '';
       const age = ageFromRow(r, ageCols);
       const nameEn = enNameIdx>=0 ? (r[enNameIdx]||'').trim() : '';
+      const ackLangForm = certIdx>=0 ? (r[certIdx]||'').trim() : '';
       const isoDate = parseThaiFormDate(rawDate);
       const courseId = matchCourseIdFromText(courseText);
       if(!isoDate || !courseId || !name){
@@ -6247,6 +6294,7 @@ async function syncBookingsFromGoogleForm(){
           if(!existing.photoConsent && photoConsent){ existing.photoConsent = photoConsent; changed = true; }
           if(!existing.age && age){ existing.age = age; changed = true; }
           if(!existing.customerNameEn && nameEn){ existing.customerNameEn = nameEn; changed = true; }
+          if(ackLangForm && existing.ackLangForm !== ackLangForm){ existing.ackLangForm = ackLangForm; changed = true; }
           if(changed) enriched++;
         }
         skipped++;
@@ -6261,6 +6309,7 @@ async function syncBookingsFromGoogleForm(){
         allergy,
         occupation, income, province, basicKnowledge, equipment, goal, topics, photoConsent, age,
         customerName: name, customerNameEn: nameEn, customerPhone: phone, customerLine: line,
+        ...(ackLangForm ? { ackLangForm } : {}),
         source: 'google_form',
         syncKey,
         taught: false
@@ -12547,6 +12596,7 @@ function renderLogTab(){
               ? ` <button type="button" class="en-name" data-en-name="${b._idx}" title="แก้ชื่อภาษาอังกฤษ">${b.customerNameEn} ✎</button>`
               : ` <button type="button" class="en-name is-auto" data-en-name="${b._idx}" title="ระบบสะกดให้ — แตะเพื่อยืนยันหรือแก้">${thaiRomanize(b.customerName)} ✎</button>`) : ''}${b.age ? ` · <span class="tk-age">อายุ ${b.age}</span>` : ''}${b.customerPhone ? ` · <a href="tel:${String(b.customerPhone).replace(/[^\d+]/g,'')}" style="color:inherit;">📞 ${b.customerPhone}</a>` : ''}</div>` : ''}
           ${(b.customerName || b.customerPhone) ? vipBadgeHTML(customerHistory(b.customerName, b.customerPhone, b.date, b.syncKey)) : ''}
+          ${b.customerName && certIssued(b.courseId) && certLangOf(b) ? certLineHTML(certLangOf(b), b.customerName, b.customerNameEn || '', '') : ''}
           ${b.form ? cbDetailsHTML(b) : ''}
           <select data-assign-instructor="${b._idx}" class="select-light tk-instructor" style="margin:0 0 8px;">
             <option value="">— เลือกอาจารย์ผู้สอน —</option>
