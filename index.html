@@ -2645,6 +2645,57 @@
   #custBook .cb-sum{ font-size:15.5px; line-height:1.75; }
   #custBook .cbw-back{ font-size:16px; } #custBook .cbw-next{ font-size:17px; }
   @media (max-width:420px){ #custBook .cbp-course{ font-size:19px; } #custBook .cb-day{ font-size:15.5px; } #custBook .cb-day small{ font-size:10.5px; } }
+
+  /* ---- instructor dashboard ---- */
+  .idash-chips{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; margin:0 -2px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .idash-chips::-webkit-scrollbar{ display:none; }
+  .idash-chip{ flex:none; display:flex; align-items:center; gap:8px; padding:5px 14px 5px 5px; border-radius:999px; border:1px solid #D9CFB9; background:#fff; font:inherit; font-size:13px; font-weight:600; color:#4A3F31; cursor:pointer; min-height:42px; }
+  .idash-chip.on{ background:var(--rs-green,#0B2A15); border-color:var(--rs-green,#0B2A15); color:#EFE8D6; }
+  .idash-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; overflow:hidden; color:#fff; font-family:'IBM Plex Mono'; font-weight:700; }
+  .idash-av img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .idash-av.all{ width:30px; height:30px; background:#E8DFCB; color:#4A3F31; }
+  .idash-chip.on .idash-av.all{ background:#EFE8D6; color:#0B2A15; }
+  .idash-av.all.big{ width:48px; height:48px; background:#165028; color:#EFE8D6; }
+  .idash-controls{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:4px 0 14px; }
+  .idash-seg{ display:inline-flex; background:#F1EBDD; border-radius:10px; padding:3px; gap:2px; }
+  .idash-seg button{ border:0; background:transparent; font:inherit; font-size:12.5px; font-weight:600; color:#6B604F; padding:6px 11px; border-radius:8px; cursor:pointer; min-height:32px; }
+  .idash-seg button.on{ background:#fff; color:#0B2A15; box-shadow:0 1px 3px rgba(26,15,8,.12); }
+  .idash-period{ font-size:12px; color:#8A7F6C; }
+  .idash-head{ display:flex; align-items:center; gap:12px; padding:12px; background:#FAF6EC; border-radius:14px; margin-bottom:12px; }
+  .idash-head .t{ font-weight:700; font-size:15.5px; color:#0B2A15; }
+  .idash-head .s{ font-size:12px; color:#7A6F5E; margin-top:2px; }
+  .idash-kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:16px; }
+  .idash-kpi{ background:#FAF6EC; border-radius:14px; padding:12px; }
+  .idash-kpi .l{ font-size:11.5px; color:#7A6F5E; font-weight:500; }
+  .idash-kpi .v{ font-family:'IBM Plex Mono'; font-size:20px; font-weight:600; color:#0B2A15; margin:3px 0 2px; letter-spacing:-.02em; }
+  .idash-d{ font-size:11px; font-weight:600; color:#8A7F6C; }
+  .idash-d.up{ color:#2F7D4A; } .idash-d.down{ color:#B8452F; }
+  .idash-chart{ margin:4px 0 10px; min-width:0; }
+  .idash-charts.two{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .idash-sub{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:12.5px; font-weight:700; color:#0B2A15; margin:14px 0 8px; }
+  .idash-sub > span:not(.idash-legend){ font-weight:400; color:#8A7F6C; font-size:11.5px; }
+  .idash-sub .idash-seg button{ padding:4px 10px; min-height:28px; font-size:12px; }
+  .idash-legend{ display:inline-flex; gap:12px; font-weight:500; font-size:11.5px; color:#4A3F31; }
+  .idash-legend i, .idash-detail i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+  .idash-hit{ cursor:pointer; }
+  .idash-detail{ display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:12.5px; color:#2B241A; background:#FAF6EC; border-radius:12px; padding:10px 12px; margin:2px 0 6px; }
+  .idash-detail b{ color:#0B2A15; }
+  .idash-detail.muted{ color:#8A7F6C; justify-content:center; background:transparent; border:1px dashed #E2D9C6; }
+  .idash-cmp{ display:flex; flex-direction:column; gap:6px; }
+  .idash-cmp-row{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid #EEE7D8; background:#fff; border-radius:12px; padding:8px 10px; font:inherit; cursor:pointer; }
+  .idash-cmp-row .nm{ flex:1; min-width:0; font-size:12.5px; }
+  .idash-cmp-row .bar{ display:flex; height:6px; margin-top:5px; background:#F1EBDD; border-radius:3px; overflow:hidden; }
+  .idash-cmp-row .bar i{ display:block; height:100%; border-radius:3px; }
+  .idash-cmp-row .num{ text-align:right; flex:none; font-size:12px; display:flex; flex-direction:column; }
+  .idash-cmp-row .num span{ font-family:'IBM Plex Mono'; color:#7A6F5E; font-size:11px; }
+  .idash-two{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:4px 22px; }
+  .idash-hb{ display:grid; grid-template-columns:minmax(0,1.3fr) 1fr auto; align-items:center; gap:8px; font-size:12px; padding:5px 0; border-bottom:1px dashed #EEE7D8; }
+  .idash-hb .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#2B241A; }
+  .idash-hb .t{ height:7px; background:#F1EBDD; border-radius:4px; overflow:hidden; }
+  .idash-hb .t i{ display:block; height:100%; border-radius:4px; }
+  .idash-hb b{ font-family:'IBM Plex Mono'; font-size:12px; min-width:34px; text-align:right; }
+  .idash-empty{ text-align:center; color:#948a78; font-size:12.5px; padding:18px 8px; background:#FAF6EC; border-radius:12px; }
+  .idash-note{ font-size:11px; color:#A39782; margin:14px 0 0; }
 </style>
 <script>
 /* QR Code Generator for JavaScript — Copyright (c) 2009 Kazuhiko Arase — MIT License
@@ -6667,6 +6718,7 @@ function openInstructorProfile(name, booking){
       <div class="stat-row"><span class="stat-icon">💰</span><span class="stat-name">กำไรสะสม</span><div class="stat-track"><div class="stat-fill f3" id="statProfit"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.profit)}</span></div>
       <div class="stat-row"><span class="stat-icon">📦</span><span class="stat-name">ยอดขายวัตถุดิบในคอร์สสอน</span><div class="stat-track"><div class="stat-fill f4" id="statEff"></div></div><span class="stat-val mono" style="width:auto;">${fmt(kpi.verifiedMaterialSales)}</span></div>
     </div>
+    <button type="button" class="btn" id="profileDashBtn" style="width:100%; margin-top:14px; display:flex; align-items:center; justify-content:center; gap:8px;">📊 ดูกราฟการสอนและยอด (Dashboard)</button>
     <div style="margin-top:16px; text-align:left;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
         <span style="font-size:12px; font-weight:700; color:var(--gold); letter-spacing:.5px;">📋 ผู้ลงทะเบียนเรียน</span>
@@ -6680,6 +6732,8 @@ function openInstructorProfile(name, booking){
     </div>
   `;
   openModal('profileModalOverlay');
+  const dashBtn = document.getElementById('profileDashBtn');
+  if(dashBtn) dashBtn.onclick = ()=>{ closeModal('profileModalOverlay'); openInstructorDashboard(name); };
   loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
   document.getElementById('profileRegRefreshBtn').onclick = ()=> loadRegistrationList('profileRegCatFilterRow', 'profileRegListBox');
   document.getElementById('profileRegSettingsBtn').onclick = ()=>{
@@ -7167,6 +7221,11 @@ function renderDashboard(){
   const lowStock = state.stock.filter(s=> s.stock < stockNeed(s.key));
 
   el.innerHTML = `
+    <div class="card idash-card" id="idashCard">
+      <h2>Dashboard รายอาจารย์</h2>
+      <p class="hint">กราฟการสอนและยอดของแต่ละอาจารย์ เลือกชื่อด้านล่างเพื่อดูทีละคน</p>
+      <div id="idashBox"></div>
+    </div>
     <div class="card">
       <h2>ภาพรวม</h2>
       <p class="greeting">${greetingLine()}</p>
@@ -7252,6 +7311,8 @@ function renderDashboard(){
     </div>
   `;
 
+  try{ renderInstructorDashboard(); }catch(e){ console.error('instructor dashboard', e); }
+  if(window._idash && window._idash.scroll){ window._idash.scroll = false; const ic = document.getElementById('idashCard'); if(ic) requestAnimationFrame(()=> ic.scrollIntoView({ behavior:'smooth', block:'start' })); }
   loadRegistrationList();
   document.getElementById('regRefreshBtn').onclick = ()=> loadRegistrationList();
   document.getElementById('regSettingsBtn').onclick = ()=>{
@@ -7306,6 +7367,249 @@ function renderDashboard(){
     if(window._msMonth>11){ window._msMonth=0; window._msYear++; }
     renderMonthSummary();
   };
+}
+
+/* ============================= INSTRUCTOR DASHBOARD (per-teacher charts) ============================= */
+// state survives re-renders of the dashboard tab
+window._idash = window._idash || { who:null, months:6, metric:'classes', sel:null };
+const IDASH_TEAM_ICON = '<svg viewBox="0 0 24 24" width="58%" height="58%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.2 6-5.2s5.4 1.9 6 5.2"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.4c2.4.2 4.1 1.8 4.6 4.6"/></svg>';
+const IDASH_C1 = '#2F7D4A', IDASH_C2 = '#C9902A'; // validated pair: course income / product sales
+function idashMonthKeys(n, endOffset){
+  const out = []; const now = new Date();
+  for(let i=n-1+(endOffset||0); i>=(endOffset||0); i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  return out;
+}
+function idashMonthLabel(key, withYear){
+  const [y,m] = key.split('-').map(Number);
+  const names = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return names[m-1] + (withYear ? ' ' + String((y+543)%100).padStart(2,'0') : '');
+}
+// who: instructor name, or null for everyone
+function idashCompute(who, monthKeys){
+  const rows = {}; monthKeys.forEach(k=> rows[k] = { classes:0, students:0, courseRev:0, courseProfit:0, product:0 });
+  const first = monthKeys[0], last = monthKeys[monthKeys.length-1];
+  const inRange = d=> d && d.slice(0,7) >= first && d.slice(0,7) <= last;
+  const mine = b=> who ? b.instructor === who : true;
+  const classKeys = new Set(), perCourse = {}, perProduct = {};
+  const addProd = (p)=>{ const q = Number(p.qty)||0, t = (Number(p.price)||0)*q; if(!perProduct[p.name]) perProduct[p.name] = { qty:0, total:0 }; perProduct[p.name].qty += q; perProduct[p.name].total += t; return t; };
+  (sharedBookings||[]).forEach(b=>{
+    if(!b || !b.taught || !mine(b) || !inRange(b.date)) return;
+    const r = rows[b.date.slice(0,7)]; if(!r) return;
+    const ck = [b.date, b.courseId, b.instructor||'', b.startTime||''].join('|');
+    if(!classKeys.has(ck)){
+      classKeys.add(ck); r.classes++;
+      const c = courseById(b.courseId); const cn = c ? c.name : 'คอร์สอื่น';
+      perCourse[cn] = (perCourse[cn]||0) + 1;
+    }
+    r.students += Number(b.taughtStudents)||0;
+    const pl = bookingPL(b); r.courseRev += pl.revenue; r.courseProfit += pl.profit;
+    (b.soldProducts||[]).forEach(p=>{ r.product += addProd(p); });
+  });
+  (standaloneSales||[]).forEach(s=>{
+    if(!s || !inRange(s.date)) return;
+    if(who && s.seller !== who) return;
+    const r = rows[s.date.slice(0,7)]; if(!r) return;
+    (s.items||[]).forEach(p=>{ r.product += addProd(p); });
+  });
+  const tot = { classes:0, students:0, courseRev:0, courseProfit:0, product:0 };
+  monthKeys.forEach(k=> Object.keys(tot).forEach(f=> tot[f] += rows[k][f]));
+  return { rows, tot, perCourse, perProduct };
+}
+function idashCompact(n){
+  n = Math.round(n||0);
+  if(Math.abs(n) >= 1e6) return (n/1e6).toFixed(n%1e6===0?0:1)+'M';
+  if(Math.abs(n) >= 1e4) return Math.round(n/1e3)+'k';
+  if(Math.abs(n) >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'k';
+  return String(n);
+}
+function idashNiceMax(v){
+  if(v <= 0) return 4;
+  const p = Math.pow(10, Math.floor(Math.log10(v))); const f = v/p;
+  const nf = f<=1 ? 1 : f<=2 ? 2 : f<=2.5 ? 2.5 : f<=5 ? 5 : 10;
+  return nf*p;
+}
+// rounded-top bar anchored to the baseline (4px data-end radius)
+function idashBarPath(x, y, w, h, roundTop){
+  if(h <= 0) return '';
+  const r = roundTop ? Math.min(4, w/2, h) : 0;
+  return `M${x},${y+h} L${x},${y+r} Q${x},${y} ${x+r},${y} L${x+w-r},${y} Q${x+w},${y} ${x+w},${y+r} L${x+w},${y+h} Z`;
+}
+// series: [{key,color,label}] stacked in order; data: [{label, sub, values:{key:n}}]
+function idashBarsSVG(id, data, series, opts){
+  opts = opts || {};
+  const W = Math.round(opts.W || 560), H = opts.H || 210, padL = 36, padR = 6, padT = 22, padB = 32;
+  const cw = W-padL-padR, ch = H-padT-padB;
+  const totals = data.map(d=> series.reduce((s,se)=> s + (d.values[se.key]||0), 0));
+  const max = idashNiceMax(Math.max(0, ...totals));
+  const n = data.length, slot = cw/n, bw = Math.max(8, Math.min(38, slot*0.6)); const fs = slot < 30 ? 10 : 11.5;
+  const y = v=> padT + ch - (v/max)*ch;
+  let grid = '';
+  [0, .5, 1].forEach(f=>{
+    const v = max*f, yy = y(v);
+    grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${f===0?'#CFC4AC':'#ECE5D6'}" stroke-width="1"/>`;
+    grid += `<text x="${padL-6}" y="${yy+3.5}" font-size="10" fill="#8A7F6C" text-anchor="end" font-family="IBM Plex Mono">${opts.money ? idashCompact(v) : (Number.isInteger(v) ? v : v.toFixed(1))}</text>`;
+  });
+  const maxIdx = totals.indexOf(Math.max(...totals));
+  let bars = '', labels = '', hits = '';
+  data.forEach((d,i)=>{
+    const x = padL + slot*i + (slot-bw)/2;
+    let acc = 0; const nonzero = series.filter(se=> (d.values[se.key]||0) > 0);
+    series.forEach(se=>{
+      const v = d.values[se.key]||0; if(v <= 0) return;
+      const top = se === nonzero[nonzero.length-1];
+      const y0 = y(acc + v), h = y(acc) - y0 - (acc > 0 ? 2 : 0); // 2px surface gap between stacked segments
+      bars += `<path d="${idashBarPath(x, y0, bw, Math.max(0,h), top)}" fill="${se.color}"/>`;
+      acc += v;
+    });
+    const sel = opts.selIndex === i;
+    labels += `<text x="${x+bw/2}" y="${H-padB+15}" font-size="${fs}" fill="${sel?'#1A1209':'#7A6F5E'}" font-weight="${sel?700:400}" text-anchor="middle" font-family="IBM Plex Sans Thai">${d.label}</text>`;
+    if(d.sub) labels += `<text x="${x+bw/2}" y="${H-padB+27}" font-size="9" fill="#A39782" text-anchor="middle" font-family="IBM Plex Sans Thai">${d.sub}</text>`;
+    // selective direct labels: the tallest bar, the latest bar and the tapped bar
+    if(totals[i] > 0 && (i===maxIdx || i===n-1 || sel)){
+      labels += `<text x="${x+bw/2}" y="${y(totals[i])-6}" font-size="${fs}" font-weight="600" fill="#1A1209" text-anchor="middle" font-family="IBM Plex Mono">${opts.money ? idashCompact(totals[i]) : totals[i]}</text>`;
+    }
+    if(sel) bars = `<rect x="${padL+slot*i+2}" y="${padT-14}" width="${slot-4}" height="${ch+14}" rx="6" fill="#F3EDDF"/>` + bars;
+    hits += `<rect class="idash-hit" data-i="${i}" x="${padL+slot*i}" y="0" width="${slot}" height="${H}" fill="transparent"/>`;
+  });
+  return `<svg id="${id}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="width:100%; height:auto; display:block; touch-action:manipulation;" role="img" aria-label="${opts.aria||''}">${grid}${bars}${labels}${hits}</svg>`;
+}
+function idashAvatar(name, size){
+  const photo = (typeof instructorPhotos!=='undefined' && instructorPhotos) ? instructorPhotos[name] : '';
+  const idx = (state.instructors||[]).indexOf(name);
+  const color = ['#165028','#542B0D','#8F5A26'][idx>=0 ? idx%3 : 0];
+  const ini = (name||'').replace('อาจารย์','').trim().charAt(0) || '?';
+  return `<span class="idash-av" style="width:${size}px;height:${size}px;background:${color};font-size:${Math.round(size*.42)}px;">${photo ? `<img src="${photo}" alt="">` : ini}</span>`;
+}
+function idashDelta(cur, prev){
+  if(!prev && !cur) return '';
+  if(!prev) return `<span class="idash-d">ช่วงก่อนยังไม่มี</span>`;
+  const pct = (cur-prev)/Math.abs(prev)*100;
+  if(Math.abs(pct) < 0.5) return `<span class="idash-d">เท่าเดิม</span>`;
+  return `<span class="idash-d ${pct>0?'up':'down'}">${pct>0?'▲':'▼'} ${Math.abs(pct).toFixed(0)}%</span>`;
+}
+function renderInstructorDashboard(){
+  const box = document.getElementById('idashBox'); if(!box) return;
+  const S = window._idash;
+  const team = (state.instructors||[]);
+  if(S.who === null) S.who = team.includes(currentUser) ? currentUser : 'all';
+  if(S.who !== 'all' && !team.includes(S.who)) S.who = 'all';
+  const who = S.who === 'all' ? null : S.who;
+  const keys = idashMonthKeys(S.months), prevKeys = idashMonthKeys(S.months, S.months);
+  const cur = idashCompute(who, keys), prev = idashCompute(who, prevKeys);
+  if(S.sel != null && S.sel >= keys.length) S.sel = null;
+  const todayStr = new Date().toISOString().slice(0,10);
+  const upcoming = (sharedBookings||[]).filter(b=> !b.taught && b.date && b.date >= todayStr && (who ? b.instructor===who : true)).length;
+  const T = cur.tot, P = prev.tot;
+  const boxW = box.clientWidth || 560, twoCol = boxW >= 720;
+  const chartW = Math.max(280, twoCol ? (boxW - 24)/2 : boxW), chartH = twoCol ? 220 : 196;
+  box.dataset.w = boxW;
+  const periodTxt = `${idashMonthLabel(keys[0], true)} – ${idashMonthLabel(keys[keys.length-1], true)}`;
+
+  const chips = [`<button type="button" class="idash-chip ${S.who==='all'?'on':''}" data-who="all"><span class="idash-av all">${IDASH_TEAM_ICON}</span><span>ทุกคน</span></button>`]
+    .concat(team.map(n=> `<button type="button" class="idash-chip ${S.who===n?'on':''}" data-who="${n.replace(/"/g,'&quot;')}">${idashAvatar(n, 30)}<span>${n.replace('อาจารย์','อ.')}</span></button>`)).join('');
+  const seg = (name, cur, opts)=> `<div class="idash-seg" role="group">${opts.map(o=> `<button type="button" data-${name}="${o[0]}" class="${String(cur)===String(o[0])?'on':''}">${o[1]}</button>`).join('')}</div>`;
+
+  const kpi = (label, val, c, p, money)=> `<div class="idash-kpi"><div class="l">${label}</div><div class="v">${money ? fmt(val) : val}</div>${idashDelta(c, p)}</div>`;
+  const monthData = keys.map((k,i)=>{
+    const r = cur.rows[k]; const showYear = i===0 || k.endsWith('-01');
+    return { label: idashMonthLabel(k), sub: showYear ? String((Number(k.slice(0,4))+543)%100).padStart(2,'0') : '', values: { classes:r.classes, students:r.students, courseRev:r.courseRev, product:r.product } };
+  });
+  const metricSeries = S.metric === 'students' ? [{ key:'students', color:IDASH_C1, label:'ผู้เรียน' }] : [{ key:'classes', color:IDASH_C1, label:'รอบสอน' }];
+  const moneySeries = [{ key:'courseRev', color:IDASH_C1, label:'รายได้ค่าคอร์ส' }, { key:'product', color:IDASH_C2, label:'ยอดขายสินค้า' }];
+
+  // detail of the tapped month (also the table view for the charts)
+  const selKey = S.sel != null ? keys[S.sel] : null;
+  const selRow = selKey ? cur.rows[selKey] : null;
+  const detail = selRow ? `<div class="idash-detail"><b>${idashMonthLabel(selKey, true)}</b>
+      <span>${selRow.classes} รอบ</span><span>${selRow.students} คน</span>
+      <span><i style="background:${IDASH_C1}"></i>ค่าคอร์ส ${fmt(selRow.courseRev)}</span>
+      <span><i style="background:${IDASH_C2}"></i>สินค้า ${fmt(selRow.product)}</span>
+      <span>กำไรค่าคอร์ส ${fmt(selRow.courseProfit)}</span></div>`
+    : `<div class="idash-detail muted">แตะที่แท่งกราฟเพื่อดูตัวเลขของเดือนนั้น</div>`;
+
+  // compare everyone (only on the "ทุกคน" view)
+  let compare = '';
+  if(!who && team.length){
+    const per = team.map(n=> ({ n, d: idashCompute(n, keys).tot }));
+    const mk = S.metric === 'students' ? 'students' : 'classes';
+    const maxC = Math.max(1, ...per.map(p=> p.d[mk]));
+    const maxM = Math.max(1, ...per.map(p=> p.d.courseRev + p.d.product));
+    compare = `<div class="idash-sub">เทียบรายอาจารย์ <span>${periodTxt}</span></div>
+      <div class="idash-cmp">${per.sort((a,b)=> (b.d.courseRev+b.d.product)-(a.d.courseRev+a.d.product)).map(p=>`
+        <button type="button" class="idash-cmp-row" data-who="${p.n.replace(/"/g,'&quot;')}">
+          ${idashAvatar(p.n, 34)}
+          <div class="nm"><b>${p.n}</b>
+            <div class="bar"><i style="width:${p.d[mk]/maxC*100}%;background:${IDASH_C1}"></i></div>
+            <div class="bar"><i style="width:${p.d.courseRev/maxM*100}%;background:${IDASH_C1}"></i><i style="width:${p.d.product/maxM*100}%;background:${IDASH_C2};margin-left:2px"></i></div>
+          </div>
+          <div class="num"><b>${p.d[mk]} ${mk==='students'?'คน':'รอบ'}</b><span>${fmt(p.d.courseRev + p.d.product)} ฿</span></div>
+        </button>`).join('')}</div>`;
+  }
+
+  const courseList = Object.keys(cur.perCourse).map(n=> ({ n, c: cur.perCourse[n] })).sort((a,b)=> b.c - a.c).slice(0,6);
+  const maxCourse = Math.max(1, ...courseList.map(x=> x.c));
+  const prodList = Object.keys(cur.perProduct).map(n=> ({ n, ...cur.perProduct[n] })).sort((a,b)=> b.total - a.total).slice(0,5);
+  const maxProd = Math.max(1, ...prodList.map(x=> x.total));
+  const empty = t=> `<div class="idash-empty">${t}</div>`;
+
+  box.innerHTML = `
+    <div class="idash-chips">${chips}</div>
+    <div class="idash-controls">
+      ${seg('months', S.months, [[3,'3 เดือน'],[6,'6 เดือน'],[12,'12 เดือน']])}
+      <span class="idash-period">${periodTxt}</span>
+    </div>
+    ${who ? `<div class="idash-head">${idashAvatar(who, 48)}<div><div class="t">${who}</div><div class="s">${upcoming ? `มีคิวรอสอนอีก ${upcoming} คิว` : 'ยังไม่มีคิวรอสอน'} · เทียบกับ ${S.months} เดือนก่อนหน้า</div></div></div>`
+          : `<div class="idash-head"><span class="idash-av all big">${IDASH_TEAM_ICON}</span><div><div class="t">ทุกอาจารย์รวมกัน</div><div class="s">${upcoming ? `มีคิวรอสอนอีก ${upcoming} คิว` : 'ยังไม่มีคิวรอสอน'} · เทียบกับ ${S.months} เดือนก่อนหน้า</div></div></div>`}
+    <div class="idash-kpis">
+      ${kpi('รอบที่สอน', T.classes, T.classes, P.classes)}
+      ${kpi('ผู้เรียน', T.students, T.students, P.students)}
+      ${kpi('รายได้ค่าคอร์ส', T.courseRev, T.courseRev, P.courseRev, true)}
+      ${kpi('ยอดขายสินค้า', T.product, T.product, P.product, true)}
+      ${kpi('กำไรค่าคอร์ส', T.courseProfit, T.courseProfit, P.courseProfit, true)}
+      ${kpi('ยอดรวม (ค่าคอร์ส+สินค้า)', T.courseRev+T.product, T.courseRev+T.product, P.courseRev+P.product, true)}
+    </div>
+    <div class="idash-charts${twoCol?' two':''}">
+    <div class="idash-chart">
+      <div class="idash-sub">การสอนรายเดือน ${seg('metric', S.metric, [['classes','รอบสอน'],['students','ผู้เรียน']])}</div>
+      ${T.classes || T.students ? idashBarsSVG('idashChartA', monthData, metricSeries, { selIndex:S.sel, aria:'จำนวนการสอนรายเดือน', W:chartW, H:chartH }) : empty('ยังไม่มีการสอนที่ยืนยันแล้วในช่วงนี้')}
+    </div>
+    <div class="idash-chart">
+      <div class="idash-sub">ยอดรายเดือน (บาท)
+        <span class="idash-legend"><span><i style="background:${IDASH_C1}"></i>ค่าคอร์ส</span><span><i style="background:${IDASH_C2}"></i>ขายสินค้า</span></span></div>
+      ${T.courseRev || T.product ? idashBarsSVG('idashChartB', monthData, moneySeries, { money:true, selIndex:S.sel, aria:'ยอดรายเดือน', W:chartW, H:chartH }) : empty('ยังไม่มียอดในช่วงนี้')}
+    </div>
+    </div>
+    ${detail}
+    ${compare}
+    <div class="idash-two">
+      <div>
+        <div class="idash-sub">คอร์สที่สอน</div>
+        ${courseList.length ? courseList.map(x=> `<div class="idash-hb"><span class="n">${x.n}</span><span class="t"><i style="width:${x.c/maxCourse*100}%;background:${IDASH_C1}"></i></span><b>${x.c}</b></div>`).join('') : empty('ยังไม่มีข้อมูล')}
+      </div>
+      <div>
+        <div class="idash-sub">สินค้าที่ขายได้</div>
+        ${prodList.length ? prodList.map(x=> `<div class="idash-hb"><span class="n">${x.n}</span><span class="t"><i style="width:${x.total/maxProd*100}%;background:${IDASH_C2}"></i></span><b>${idashCompact(x.total)}</b></div>`).join('') : empty('ยังไม่มีการขายสินค้า')}
+      </div>
+    </div>
+    <p class="idash-note">นับจากคลาสที่กด “ยืนยันสอนแล้ว” · ยอดขายสินค้า = ขายระหว่างคลาส + ขายหน้าร้านโดยอาจารย์คนนั้น</p>
+  `;
+
+  box.querySelectorAll('[data-who]').forEach(b=> b.onclick = ()=>{ S.who = b.dataset.who; S.sel = null; renderInstructorDashboard(); if(b.classList.contains('idash-cmp-row')) box.scrollIntoView({ behavior:'smooth', block:'start' }); });
+  box.querySelectorAll('[data-months]').forEach(b=> b.onclick = ()=>{ S.months = Number(b.dataset.months); S.sel = null; renderInstructorDashboard(); });
+  box.querySelectorAll('[data-metric]').forEach(b=> b.onclick = ()=>{ S.metric = b.dataset.metric; renderInstructorDashboard(); });
+  box.querySelectorAll('.idash-hit').forEach(r=> r.addEventListener('click', ()=>{ const i = Number(r.dataset.i); S.sel = S.sel === i ? null : i; renderInstructorDashboard(); }));
+  if(!window.__idashRz){
+    window.__idashRz = true; let t = null;
+    window.addEventListener('resize', ()=>{ clearTimeout(t); t = setTimeout(()=>{ const b = document.getElementById('idashBox'); if(b && b.offsetParent && Math.abs((b.clientWidth||0) - Number(b.dataset.w||0)) > 40) renderInstructorDashboard(); }, 250); });
+  }
+}
+function openInstructorDashboard(name){
+  window._idash.who = name || 'all'; window._idash.sel = null;
+  window._idash.scroll = true;
+  switchTab('dashboard');
 }
 
 function bestSellingProductsHTML(){
@@ -10759,7 +11063,10 @@ function renderLogTab(){
       </table>
     </div>
     <div class="card">
-      <h2>KPI รายอาจารย์</h2>
+      <div class="card-head">
+        <div><h2>KPI รายอาจารย์</h2><p class="hint" style="margin-bottom:10px;">แตะชื่ออาจารย์เพื่อดูกราฟรายเดือน</p></div>
+        <button class="btn small" id="kpiDashBtn" style="flex:none;">📊 Dashboard</button>
+      </div>
       <table>
         <thead><tr><th>ชื่ออาจารย์</th><th class="num">รอบที่สอน</th><th class="num">ผู้เรียนรวม</th><th class="num">รายได้ที่สร้าง</th><th class="num">กำไรที่สร้าง</th><th class="num">กำไรเฉลี่ย/รอบ</th></tr></thead>
         <tbody id="kpiBody"></tbody>
@@ -11761,9 +12068,11 @@ function renderLogTab(){
   const kpiBody = document.getElementById('kpiBody');
   kpiBody.innerHTML = state.instructors.map(name=>{
     const k = instructorKPI(name);
-    return `<tr><td><b>${name}</b></td><td class="num">${k.sessions}</td><td class="num">${k.students}</td>
+    return `<tr class="kpi-dash-row" data-dash-who="${name.replace(/"/g,'&quot;')}" style="cursor:pointer;"><td><b>${name}</b> <span style="font-size:11px; color:#948a78;">📊</span></td><td class="num">${k.sessions}</td><td class="num">${k.students}</td>
       <td class="num">${fmt(k.revenue)}</td><td class="num">${fmt(k.profit)}</td><td class="num">${fmt(k.avg)}</td></tr>`;
   }).join('');
+  kpiBody.querySelectorAll('[data-dash-who]').forEach(tr=> tr.onclick = ()=> openInstructorDashboard(tr.dataset.dashWho));
+  const kdb = document.getElementById('kpiDashBtn'); if(kdb) kdb.onclick = ()=> openInstructorDashboard(currentUser && (state.instructors||[]).includes(currentUser) ? currentUser : 'all');
 }
 
 /* ============================= RENDER: STOCK / WAREHOUSE TAB ============================= */
