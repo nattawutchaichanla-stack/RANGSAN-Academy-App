@@ -2646,36 +2646,36 @@
   #custBook .cbw-back{ font-size:16px; } #custBook .cbw-next{ font-size:17px; }
   @media (max-width:420px){ #custBook .cbp-course{ font-size:19px; } #custBook .cb-day{ font-size:15.5px; } #custBook .cb-day small{ font-size:10.5px; } }
 
-  /* ---- instructor dashboard (dark bento) ---- */
-  #idashCard.idash-card{ background:#0B0A07; border-color:#0B0A07; color:#F3EEE3; padding:20px 16px; }
-  #idashCard.idash-card h2{ color:#F3EEE3; margin:0; }
+  /* ---- instructor dashboard (light bento) ---- */
+  #idashCard.idash-card{ background:#F7F3EA; border-color:#EAE2D2; color:#1D1810; padding:20px 16px; }
+  #idashCard.idash-card h2{ color:#0B2A15; margin:0; }
   #idashCard.idash-card{ position:relative; isolation:isolate; overflow:hidden; }
   #idashCard > .idash-bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; pointer-events:none; }
-  #idashCard.has-bgvid::after{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(rgba(11,10,7,.70),rgba(11,10,7,.86)); }
+  #idashCard.has-bgvid::after{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(rgba(247,243,234,.78),rgba(247,243,234,.90)); }
   .idash-titlerow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
-  .idash-bgbtn{ flex:none; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#E9E2D2; border-radius:999px; padding:6px 12px; font:600 12px 'IBM Plex Sans Thai', sans-serif; cursor:pointer; }
+  .idash-bgbtn{ flex:none; border:1px solid rgba(29,24,16,.14); background:#fff; color:#3A3024; border-radius:999px; padding:6px 12px; font:600 12px 'IBM Plex Sans Thai', sans-serif; cursor:pointer; }
   .idash-bgbtn:active{ transform:scale(.96); }
   /* with a custom background the tiles turn see-through so the picture shows between and behind them */
-  body.idash-has-bg #idashCard .idb-tile:not(.idb-month){ background:rgba(22,21,15,.74); border-color:rgba(255,255,255,.1); }
-  body.idash-has-bg.idash-bg-still #idashCard .idb-tile:not(.idb-month){ background:rgba(22,21,15,.6); -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2); }
-  body.idash-has-bg #idashCard .idb-month{ box-shadow:0 10px 30px -12px rgba(0,0,0,.6); }
+  body.idash-has-bg #idashCard .idb-tile:not(.idb-month){ background:rgba(255,255,255,.82); border-color:rgba(255,255,255,.6); }
+  body.idash-has-bg.idash-bg-still #idashCard .idb-tile:not(.idb-month){ background:rgba(255,255,255,.64); -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2); }
+  body.idash-has-bg #idashCard .idb-month{ box-shadow:0 10px 30px -12px rgba(29,24,16,.35); }
   .bg-row.bg-row-focus{ outline:2px solid #DCA73D; outline-offset:2px; transition:outline-color .3s; }
-  #idashCard.idash-card .hint{ color:#9A927F; }
-  #idashBox{ --ib-t:#F3EEE3; --ib-m:#9A927F; --ib-tile:#16150F; --ib-line:rgba(255,255,255,.08); --ib-a:#C48F2E; --ib-a2:#8F83DA; --ib-solid:#DCA73D; color:var(--ib-t); font-family:'IBM Plex Sans Thai', sans-serif; }
+  #idashCard.idash-card .hint{ color:#7A6F5E; }
+  #idashBox{ --ib-t:#1D1810; --ib-m:#7A6F5E; --ib-tile:#FFFFFF; --ib-gold-t:#8A5E0E; --ib-line:rgba(29,24,16,.08); --ib-a:#B8862A; --ib-a2:#7B6FD0; --ib-solid:#DCA73D; color:var(--ib-t); font-family:'IBM Plex Sans Thai', sans-serif; }
   #idashBox button{ font-family:inherit; -webkit-tap-highlight-color:transparent; }
   #idashBox .mono, #idashBox .idb-net .v, #idashBox .idb-mini b{ font-variant-numeric:tabular-nums; }
   .idb-bar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 12px; }
   .idb-chips{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; max-width:100%; padding:1px; }
   .idb-chips::-webkit-scrollbar{ display:none; }
-  .idb-chip{ flex:none; display:inline-flex; align-items:center; gap:7px; padding:4px 12px 4px 4px; min-height:34px; border-radius:999px; border:1px solid rgba(255,255,255,.13); background:transparent; color:#D8D1C2; font-size:12.5px; font-weight:600; cursor:pointer; transition:background .2s, color .2s; }
-  .idb-chip.on{ background:var(--ib-t); border-color:var(--ib-t); color:#0B0A07; }
+  .idb-chip{ flex:none; display:inline-flex; align-items:center; gap:7px; padding:4px 12px 4px 4px; min-height:34px; border-radius:999px; border:1px solid rgba(29,24,16,.13); background:transparent; color:#4A3F31; background:#fff; font-size:12.5px; font-weight:600; cursor:pointer; transition:background .2s, color .2s; }
+  .idb-chip.on{ background:var(--ib-t); border-color:var(--ib-t); color:#F7F3EA; }
   .idb-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; overflow:hidden; color:#fff; font-family:'IBM Plex Mono', monospace; font-weight:600; }
   .idb-av img{ width:100%; height:100%; object-fit:cover; display:block; }
   .idb-av.t{ width:24px; height:24px; background:#2A2618; color:#F1D58E; }
-  .idb-chip.on .idb-av.t{ background:#0B0A07; }
-  .idb-pills{ display:inline-flex; border:1px solid rgba(255,255,255,.13); border-radius:999px; padding:2px; flex:none; }
+  .idb-chip.on .idb-av.t{ background:#3A3226; }
+  .idb-pills{ display:inline-flex; background:#fff; border:1px solid rgba(29,24,16,.13); border-radius:999px; padding:2px; flex:none; }
   .idb-pills button{ border:0; background:none; color:var(--ib-m); font-size:11.5px; font-weight:600; padding:5px 11px; min-height:28px; border-radius:999px; cursor:pointer; transition:background .2s, color .2s; white-space:nowrap; }
-  .idb-pills button.on{ background:var(--ib-t); color:#0B0A07; }
+  .idb-pills button.on{ background:var(--ib-t); color:#F7F3EA; }
   .idb-pills button:focus-visible, .idb-chip:focus-visible, .idb-card:focus-visible, .idb-tr:focus-visible, .idb-sb:focus-visible, .idb-stb:focus-visible{ outline:2px solid var(--ib-solid); outline-offset:2px; }
 
   .idb-grid{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
@@ -2697,16 +2697,16 @@
     .idb-act{ grid-column:3 / 5; grid-row:4; }
     .idb-team{ grid-column:1 / 5; grid-row:5; }
   }
-  .idb-tile{ position:relative; display:flex; flex-direction:column; min-width:0; overflow:hidden; border-radius:24px; border:1px solid var(--ib-line); background:var(--ib-tile); padding:18px; }
+  .idb-tile{ position:relative; display:flex; flex-direction:column; min-width:0; overflow:hidden; border-radius:24px; border:1px solid var(--ib-line); background:var(--ib-tile); padding:18px; box-shadow:0 1px 2px rgba(29,24,16,.04), 0 8px 24px -18px rgba(29,24,16,.18); }
   .idb-th{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
   .idb-th h3{ margin:0; font-size:13px; font-weight:500; color:var(--ib-m); }
   .idb-th sup{ font-family:'IBM Plex Mono', monospace; font-size:10px; }
-  .idb-tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; background:rgba(255,255,255,.07); color:var(--ib-m); white-space:nowrap; }
-  .idb-tag.v{ background:rgba(143,131,218,.18); color:#BDB4EE; }
+  .idb-tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; background:rgba(29,24,16,.07); color:var(--ib-m); white-space:nowrap; }
+  .idb-tag.v{ background:rgba(123,111,208,.13); color:#5547B0; }
   .idb-big{ margin:0; font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; letter-spacing:-.02em; }
   .idb-cap{ margin:2px 0 0; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
-  .idb-empty{ flex:1; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--ib-m); font-size:12.5px; padding:20px 10px; border:1px dashed rgba(255,255,255,.1); border-radius:14px; }
-  .idb-note{ margin:14px 2px 0; font-size:11px; line-height:1.6; color:#7A7365; }
+  .idb-empty{ flex:1; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--ib-m); font-size:12.5px; padding:20px 10px; border:1px dashed rgba(29,24,16,.1); border-radius:14px; }
+  .idb-note{ margin:14px 2px 0; font-size:11px; line-height:1.6; color:#8A7F6C; }
 
   /* hero */
   .idb-hero-top{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:16px 24px; }
@@ -2719,14 +2719,14 @@
   .idb-net .c{ margin:7px 0 0; font-family:'IBM Plex Mono', monospace; font-size:12px; }
   .idb-net .m{ color:var(--ib-m); }
   .idb-minis{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:16px; }
-  .idb-mini{ background:rgba(255,255,255,.04); border-radius:14px; padding:10px 12px; min-width:0; }
+  .idb-mini{ background:rgba(29,24,16,.04); border-radius:14px; padding:10px 12px; min-width:0; }
   .idb-mini span{ display:block; font-size:11px; color:var(--ib-m); }
   .idb-mini b{ display:block; font-family:'IBM Plex Mono', monospace; font-size:17px; font-weight:600; margin:3px 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .idb-dl{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; color:var(--ib-m); }
-  .idb-dl.up{ color:var(--ib-solid); } .idb-dl.down{ color:#E8907A; }
+  .idb-dl.up{ color:var(--ib-gold-t); } .idb-dl.down{ color:#B5452C; }
   .idb-strip{ flex:1; display:flex; align-items:flex-end; gap:3px; min-height:70px; margin-top:18px; touch-action:pan-y; cursor:crosshair; }
   .idb-sb{ flex:1; min-width:0; height:var(--h); padding:0; border:0; border-radius:4px; background:var(--ib-a); opacity:var(--o); transition:height 900ms cubic-bezier(0.22,1,0.36,1) var(--d), opacity .2s; cursor:inherit; }
-  .idb-sb.z{ background:rgba(255,255,255,.09); }
+  .idb-sb.z{ background:rgba(29,24,16,.09); }
   .idb-strip.hov .idb-sb{ opacity:.22; }
   .idb-strip.hov .idb-sb.on{ opacity:1; }
   .idb-strip-x{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
@@ -2739,7 +2739,7 @@
   .idb-stack-sp > div{ padding-top:30%; }
   .idb-card{ position:absolute; left:50%; display:block; width:calc(100% - 32px); max-width:300px; padding:0; border:0; border-radius:12px; overflow:hidden; text-align:left; cursor:pointer;
     transform:translateX(-50%) scale(var(--sc)); transform-origin:top center;
-    box-shadow:0 -10px 28px -14px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.35), inset 0 0 0 1px rgba(255,255,255,.12);
+    box-shadow:0 -10px 26px -14px rgba(29,24,16,.55), inset 0 1px 0 rgba(29,24,16,.35), inset 0 0 0 1px rgba(29,24,16,.12);
     transition:top 650ms cubic-bezier(0.34,1.35,0.64,1), transform 650ms cubic-bezier(0.34,1.35,0.64,1), opacity 500ms ease var(--dl); }
   .idb-card.front{ cursor:default; }
   .idb-card .ratio{ display:block; padding-top:63.08%; }
@@ -2751,7 +2751,7 @@
   .idb-card .nm .idb-av.t{ width:26px; height:26px; }
   .idb-card .lv{ flex:none; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; letter-spacing:.04em; }
   .idb-card .cup{ position:absolute; right:14px; bottom:12px; opacity:.7; }
-  .idb-stack-panel{ position:relative; z-index:20; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; height:82px; padding:0 18px 16px; background:rgba(22,21,15,.74); backdrop-filter:blur(18px) saturate(1.3); -webkit-backdrop-filter:blur(18px) saturate(1.3); border-top:1px solid rgba(255,255,255,.08); }
+  .idb-stack-panel{ position:relative; z-index:20; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; height:82px; padding:0 18px 16px; background:rgba(255,255,255,.80); backdrop-filter:blur(18px) saturate(1.3); -webkit-backdrop-filter:blur(18px) saturate(1.3); border-top:1px solid rgba(29,24,16,.08); }
   .idb-stack-panel > div{ min-width:0; }
   .idb-stack-panel .n{ margin:0; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .idb-stack-panel .m{ margin:3px 0 0; font-size:11px; color:var(--ib-m); }
@@ -2770,19 +2770,19 @@
   .idb-line-head{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px 28px; }
   .idb-line-head .k{ margin:0; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ib-m); }
   .idb-line-head .sw{ display:inline-block; width:16px; height:3px; border-radius:2px; }
-  .idb-line-head .sw.dash{ height:0; border-top:2px dashed #8A8272; }
+  .idb-line-head .sw.dash{ height:0; border-top:2px dashed #A39782; }
   .idb-line-head .v{ margin:4px 0 0; font-family:'IBM Plex Mono', monospace; font-size:21px; font-weight:600; }
   .idb-line-head .v.m{ color:var(--ib-m); }
-  .idb-badge{ margin-left:auto; padding:4px 10px; border-radius:999px; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; background:rgba(255,255,255,.07); color:var(--ib-m); }
+  .idb-badge{ margin-left:auto; padding:4px 10px; border-radius:999px; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; background:rgba(29,24,16,.07); color:var(--ib-m); }
   .idb-plot{ position:relative; flex:1; min-height:210px; margin-top:16px; touch-action:pan-y; cursor:crosshair; }
   .idb-plot svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
   .idb-area{ transition:opacity 900ms ease 400ms; }
   .idb-draw{ stroke-dasharray:1; stroke-dashoffset:0; transition:stroke-dashoffset 1300ms cubic-bezier(0.22,1,0.36,1); }
-  .idb-xh{ position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.2); transform:translateX(-50%); opacity:0; pointer-events:none; }
+  .idb-xh{ position:absolute; top:0; bottom:0; width:1px; background:rgba(29,24,16,.2); transform:translateX(-50%); opacity:0; pointer-events:none; }
   .idb-dot{ position:absolute; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; }
   .idb-dot.a{ width:14px; height:14px; border:3px solid var(--ib-tile); }
-  .idb-dot.b{ width:10px; height:10px; border:2px solid var(--ib-tile); background:#8A8272; opacity:0; }
-  .idb-tip{ position:absolute; top:-6px; transform:translate(-50%,-100%); padding:3px 8px; border-radius:6px; background:var(--ib-t); color:#0B0A07; font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; white-space:nowrap; opacity:0; pointer-events:none; }
+  .idb-dot.b{ width:10px; height:10px; border:2px solid var(--ib-tile); background:#A39782; opacity:0; }
+  .idb-tip{ position:absolute; top:-6px; transform:translate(-50%,-100%); padding:3px 8px; border-radius:6px; background:var(--ib-t); color:#F7F3EA; font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; white-space:nowrap; opacity:0; pointer-events:none; }
   .idb-plot.hov .idb-xh, .idb-plot.hov .idb-dot.b, .idb-plot.hov .idb-tip{ opacity:1; }
   .idb-ticks{ position:relative; height:16px; margin-top:10px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
   .idb-ticks span{ position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; }
@@ -2831,10 +2831,10 @@
 
   /* products */
   .idb-pl{ list-style:none; margin:12px 0 0; padding:0; }
-  .idb-pl li{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto; align-items:center; gap:8px; padding:6px 0; font-size:12px; border-bottom:1px dashed rgba(255,255,255,.07); }
+  .idb-pl li{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto; align-items:center; gap:8px; padding:6px 0; font-size:12px; border-bottom:1px dashed rgba(29,24,16,.07); }
   .idb-pl li:last-child{ border-bottom:0; }
   .idb-pl .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .idb-pl .t{ height:6px; border-radius:3px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .idb-pl .t{ height:6px; border-radius:3px; background:rgba(29,24,16,.07); overflow:hidden; }
   .idb-pl .t i{ display:block; height:100%; width:var(--w); border-radius:3px; }
   .idb-pl b{ font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; min-width:36px; text-align:right; }
 
@@ -2845,9 +2845,9 @@
   .idb-st-head .r{ flex:none; }
   .idb-st-bars{ flex:1; display:flex; align-items:flex-end; gap:3px; min-height:76px; margin-top:16px; touch-action:pan-y; cursor:crosshair; }
   .idb-st-bars.dense{ gap:2px; }
-  .idb-stb{ flex:1; min-width:0; height:var(--h); padding:0; border:0; border-radius:3px; background:#8A8272; opacity:var(--o); transform-origin:bottom; transition:transform 600ms cubic-bezier(.3,1.4,.6,1) var(--d), opacity .2s, background .2s; cursor:inherit; }
+  .idb-stb{ flex:1; min-width:0; height:var(--h); padding:0; border:0; border-radius:3px; background:#A39782; opacity:var(--o); transform-origin:bottom; transition:transform 600ms cubic-bezier(.3,1.4,.6,1) var(--d), opacity .2s, background .2s; cursor:inherit; }
   .idb-stb.last{ background:var(--ib-a); }
-  .idb-stb.z{ background:rgba(255,255,255,.07); opacity:1; }
+  .idb-stb.z{ background:rgba(29,24,16,.07); opacity:1; }
   .idb-st-bars.hov .idb-stb{ opacity:.16; }
   .idb-st-bars.hov .idb-stb.on{ opacity:1; background:var(--ib-a); }
   .idb-st-dl{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0 0; padding-top:12px; border-top:1px solid var(--ib-line); }
@@ -2857,27 +2857,27 @@
   /* activity */
   .idb-al{ list-style:none; margin:-4px -8px; padding:0; }
   .idb-al li{ display:flex; align-items:center; gap:12px; padding:8px; border-radius:16px; transition:background .2s, opacity 500ms ease var(--d), transform 500ms cubic-bezier(0.22,1,0.36,1) var(--d); }
-  .idb-al li:hover{ background:rgba(255,255,255,.04); }
-  .idb-al .ic{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.07); }
+  .idb-al li:hover{ background:rgba(29,24,16,.04); }
+  .idb-al .ic{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(29,24,16,.07); }
   .idb-al .tx{ flex:1; min-width:0; }
   .idb-al .t{ margin:0; font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .idb-al .d{ margin:2px 0 0; font-size:11px; color:var(--ib-m); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .idb-al .am{ flex:none; text-align:right; }
   .idb-al .a{ margin:0; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:500; }
   .idb-al .st{ margin:3px 0 0; display:flex; align-items:center; justify-content:flex-end; gap:4px; font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600; color:var(--ib-m); }
-  .idb-al .st.pend{ color:var(--ib-solid); }
+  .idb-al .st.pend{ color:var(--ib-gold-t); }
   .idb-al .spin{ animation:idbSpin 1s linear infinite; }
   @keyframes idbSpin{ to{ transform:rotate(360deg); } }
 
   /* team */
   .idb-tl{ display:flex; flex-direction:column; gap:8px; }
-  .idb-tr{ display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border:1px solid var(--ib-line); border-radius:16px; background:rgba(255,255,255,.025); color:inherit; text-align:left; cursor:pointer; transition:background .2s; }
-  .idb-tr:hover{ background:rgba(255,255,255,.05); }
+  .idb-tr{ display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border:1px solid var(--ib-line); border-radius:16px; background:rgba(29,24,16,.025); color:inherit; text-align:left; cursor:pointer; transition:background .2s; }
+  .idb-tr:hover{ background:rgba(29,24,16,.05); }
   .idb-tr .nm{ flex:1; min-width:0; font-size:13px; }
   .idb-tr .seg{ display:flex; gap:2px; height:8px; margin-top:7px; }
   .idb-tr .seg i{ display:block; width:var(--w); border-radius:3px; transition:width 900ms cubic-bezier(0.22,1,0.36,1) .2s; }
-  .idb-tr .cl{ height:3px; margin-top:4px; border-radius:2px; background:rgba(255,255,255,.06); overflow:hidden; }
-  .idb-tr .cl i{ display:block; height:100%; width:var(--w); background:#8A8272; }
+  .idb-tr .cl{ height:3px; margin-top:4px; border-radius:2px; background:rgba(29,24,16,.06); overflow:hidden; }
+  .idb-tr .cl i{ display:block; height:100%; width:var(--w); background:#A39782; }
   .idb-tr .num{ flex:none; text-align:right; display:flex; flex-direction:column; gap:2px; }
   .idb-tr .num b{ font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600; }
   .idb-tr .num span{ font-size:11px; color:var(--ib-m); }
@@ -7175,7 +7175,7 @@ function applyCustomBackgrounds(){
   if(u('login')) css += layer('#loginScreen', u('login'), -2, bgMotion.login) + ` #loginScreen .login-video{ display:none; }
     #pinModalOverlay .pin-modal-box{ background:linear-gradient(rgba(11,42,21,.78),rgba(11,42,21,.92)), ${u('login')} center/cover no-repeat !important; }`;
   if(u('page')) css += layer('body', u('page'), -1, bgMotion.page, 'linear-gradient(rgba(245,240,230,.84),rgba(245,240,230,.84))').replace('position:absolute','position:fixed');
-  if(u('idash')) css += layer('#idashCard', u('idash'), -1, bgMotion.idash, 'linear-gradient(rgba(11,10,7,.70),rgba(11,10,7,.86))');
+  if(u('idash')) css += layer('#idashCard', u('idash'), -1, bgMotion.idash, 'linear-gradient(rgba(247,243,234,.78),rgba(247,243,234,.90))');
   document.body.classList.toggle('idash-has-bg', !!(customBackgrounds.idash));
   document.body.classList.toggle('idash-bg-still', (bgMotion.idash||'none') === 'none' && !isBgVideo(customBackgrounds.idash||''));
   if(u('modal')){
@@ -7611,7 +7611,7 @@ function renderDashboard(){
 // dark bento board: hero + 30-day strip, instructor card stack, margin gauge, cumulative-vs-previous line,
 // course mix, "this month" accent tile, products, weekly teaching stream, activity, team comparison
 window._idash = window._idash || { who:null, months:6, metric:'money', gauge:'range', stream:'classes' };
-const IDB = { a:'#C48F2E', a2:'#8F83DA', a3:'#2F9A62', other:'#5E584C', solid:'#DCA73D', ink:'#2A1E08' }; // validated on #16150F
+const IDB = { a:'#B8862A', a2:'#7B6FD0', a3:'#2F8550', other:'#C9C0AE', solid:'#DCA73D', ink:'#2A1E08', goldText:'#8A5E0E', down:'#B5452C' }; // validated on #FFFFFF
 const IDB_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const IDB_TH_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const idbIso = d=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -7718,13 +7718,13 @@ function idbHero(ctx){
   return idbTile('idb-hero', '', '', `
     <div class="idb-hero-top">
       <div class="idb-hello">
-        <p class="g">สวัสดี, <span style="color:${IDB.solid}">${idbEsc(name)}</span></p>
+        <p class="g">สวัสดี, <span style="color:${IDB.goldText}">${idbEsc(name)}</span></p>
         <p class="s">${who ? 'สรุปการสอนและยอดของคุณ' : 'ภาพรวมการสอนและยอดของทั้งทีม'} · ${ctx.periodTxt}</p>
       </div>
       <div class="idb-net">
         <p class="l">ยอดรวม (ค่าคอร์ส + สินค้า)</p>
         <p class="v" data-count="${Math.round(cur.total)}">${idbBaht(cur.total)}</p>
-        <p class="c">${pct===null ? `<span class="m">ช่วงก่อนยังไม่มียอด</span>` : `<span style="color:${change>=0?IDB.solid:'#E8907A'}">${change>=0?'+':'−'}${idbBaht(Math.abs(change))} (${change>=0?'+':'−'}${Math.abs(pct).toFixed(1)}%)</span><span class="m"> · เทียบช่วงก่อน</span>`}</p>
+        <p class="c">${pct===null ? `<span class="m">ช่วงก่อนยังไม่มียอด</span>` : `<span style="color:${change>=0?IDB.goldText:IDB.down}">${change>=0?'+':'−'}${idbBaht(Math.abs(change))} (${change>=0?'+':'−'}${Math.abs(pct).toFixed(1)}%)</span><span class="m"> · เทียบช่วงก่อน</span>`}</p>
       </div>
     </div>
     <div class="idb-minis">
@@ -7779,10 +7779,10 @@ function idbGauge(ctx){
   return idbTile('idb-gauge', 'อัตรากำไรค่าคอร์ส', `<span class="idb-tag">${S.gauge==='month'?'เดือนนี้':'ทั้งช่วง'}</span>`, `
     <div class="idb-g-body">
       <svg width="150" height="86" viewBox="0 0 150 86" aria-hidden="true">
-        <path d="M 13 78 A 62 62 0 0 1 137 78" fill="none" stroke-width="10" stroke-linecap="round" stroke="rgba(255,255,255,.09)"/>
+        <path d="M 13 78 A 62 62 0 0 1 137 78" fill="none" stroke-width="10" stroke-linecap="round" stroke="rgba(29,24,16,.08)"/>
         <path class="idb-g-arc" d="M 13 78 A 62 62 0 0 1 137 78" fill="none" stroke-width="10" stroke-linecap="round" stroke="${IDB.solid}" stroke-dasharray="${len.toFixed(1)}" style="--off:${(len*(1-m)).toFixed(1)};--len:${len.toFixed(1)}"/>
-        <g class="idb-g-needle" style="--ang:${angle.toFixed(1)}deg"><line x1="75" y1="78" x2="75" y2="30" stroke-width="2.5" stroke-linecap="round" stroke="#F3EEE3"/></g>
-        <circle cx="75" cy="78" r="5" fill="#F3EEE3"/>
+        <g class="idb-g-needle" style="--ang:${angle.toFixed(1)}deg"><line x1="75" y1="78" x2="75" y2="30" stroke-width="2.5" stroke-linecap="round" stroke="#1D1810"/></g>
+        <circle cx="75" cy="78" r="5" fill="#1D1810"/>
       </svg>
       <p class="v">${has ? (m*100).toFixed(1) : '—'}<span>%</span></p>
       <p class="s">${has ? `กำไร ${idbBaht(src.profit)} จาก ${idbBaht(src.course)}` : 'ยังไม่มีรายได้ค่าคอร์ส'}</p>
@@ -7824,14 +7824,14 @@ function idbLine(ctx){
     <div class="idb-line-head">
       <div><p class="k"><i class="sw" style="background:${IDB.a}"></i>${ctx.periodShort}</p><p class="v" data-la>${fv(lastA)}</p></div>
       <div><p class="k"><i class="sw dash"></i>ช่วงก่อนหน้า</p><p class="v m" data-lb>${fv(lastB)}</p></div>
-      <span class="idb-badge" style="${lead===null?'':`background:${lead>=0?'rgba(196,143,46,.18)':'rgba(232,144,122,.16)'};color:${lead>=0?IDB.solid:'#E8907A'}`}">${lead===null ? 'ช่วงก่อนยังไม่มีข้อมูล' : `${lead>=0?'+':'−'}${Math.abs(lead).toFixed(1)}% เทียบช่วงก่อน`}</span>
+      <span class="idb-badge" style="${lead===null?'':`background:${lead>=0?'rgba(184,134,42,.14)':'rgba(181,69,44,.10)'};color:${lead>=0?IDB.goldText:IDB.down}`}">${lead===null ? 'ช่วงก่อนยังไม่มีข้อมูล' : `${lead>=0?'+':'−'}${Math.abs(lead).toFixed(1)}% เทียบช่วงก่อน`}</span>
     </div>
     <div class="idb-plot" data-plot role="img" aria-label="ยอดสะสม ${fv(lastA)} เทียบช่วงก่อนหน้า ${fv(lastB)}">
       <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
         <defs><linearGradient id="${uid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${IDB.a}" stop-opacity=".30"/><stop offset="1" stop-color="${IDB.a}" stop-opacity="0"/></linearGradient></defs>
-        ${[.25,.5,.75].map(f=> `<line x1="0" x2="${W}" y1="${H*f}" y2="${H*f}" vector-effect="non-scaling-stroke" stroke-dasharray="1 5" stroke="rgba(255,255,255,.14)"/>`).join('')}
+        ${[.25,.5,.75].map(f=> `<line x1="0" x2="${W}" y1="${H*f}" y2="${H*f}" vector-effect="non-scaling-stroke" stroke-dasharray="1 5" stroke="rgba(29,24,16,.16)"/>`).join('')}
         <path class="idb-area" d="${la} L ${W} ${H} L 0 ${H} Z" fill="url(#${uid})"/>
-        <path d="${lb}" fill="none" stroke-width="1.5" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" stroke="#8A8272"/>
+        <path d="${lb}" fill="none" stroke-width="1.5" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" stroke="#A39782"/>
         <path class="idb-draw" d="${la}" fill="none" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1" stroke="${IDB.a}"/>
       </svg>
       <span class="idb-xh" data-xh></span>
