@@ -2646,56 +2646,258 @@
   #custBook .cbw-back{ font-size:16px; } #custBook .cbw-next{ font-size:17px; }
   @media (max-width:420px){ #custBook .cbp-course{ font-size:19px; } #custBook .cb-day{ font-size:15.5px; } #custBook .cb-day small{ font-size:10.5px; } }
 
-  /* ---- instructor dashboard ---- */
-  .idash-chips{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; margin:0 -2px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-  .idash-chips::-webkit-scrollbar{ display:none; }
-  .idash-chip{ flex:none; display:flex; align-items:center; gap:8px; padding:5px 14px 5px 5px; border-radius:999px; border:1px solid #D9CFB9; background:#fff; font:inherit; font-size:13px; font-weight:600; color:#4A3F31; cursor:pointer; min-height:42px; }
-  .idash-chip.on{ background:var(--rs-green,#0B2A15); border-color:var(--rs-green,#0B2A15); color:#EFE8D6; }
-  .idash-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; overflow:hidden; color:#fff; font-family:'IBM Plex Mono'; font-weight:700; }
-  .idash-av img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .idash-av.all{ width:30px; height:30px; background:#E8DFCB; color:#4A3F31; }
-  .idash-chip.on .idash-av.all{ background:#EFE8D6; color:#0B2A15; }
-  .idash-av.all.big{ width:48px; height:48px; background:#165028; color:#EFE8D6; }
-  .idash-controls{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:4px 0 14px; }
-  .idash-seg{ display:inline-flex; background:#F1EBDD; border-radius:10px; padding:3px; gap:2px; }
-  .idash-seg button{ border:0; background:transparent; font:inherit; font-size:12.5px; font-weight:600; color:#6B604F; padding:6px 11px; border-radius:8px; cursor:pointer; min-height:32px; }
-  .idash-seg button.on{ background:#fff; color:#0B2A15; box-shadow:0 1px 3px rgba(26,15,8,.12); }
-  .idash-period{ font-size:12px; color:#8A7F6C; }
-  .idash-head{ display:flex; align-items:center; gap:12px; padding:12px; background:#FAF6EC; border-radius:14px; margin-bottom:12px; }
-  .idash-head .t{ font-weight:700; font-size:15.5px; color:#0B2A15; }
-  .idash-head .s{ font-size:12px; color:#7A6F5E; margin-top:2px; }
-  .idash-kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:16px; }
-  .idash-kpi{ background:#FAF6EC; border-radius:14px; padding:12px; }
-  .idash-kpi .l{ font-size:11.5px; color:#7A6F5E; font-weight:500; }
-  .idash-kpi .v{ font-family:'IBM Plex Mono'; font-size:20px; font-weight:600; color:#0B2A15; margin:3px 0 2px; letter-spacing:-.02em; }
-  .idash-d{ font-size:11px; font-weight:600; color:#8A7F6C; }
-  .idash-d.up{ color:#2F7D4A; } .idash-d.down{ color:#B8452F; }
-  .idash-chart{ margin:4px 0 10px; min-width:0; }
-  .idash-charts.two{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-  .idash-sub{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:12.5px; font-weight:700; color:#0B2A15; margin:14px 0 8px; }
-  .idash-sub > span:not(.idash-legend){ font-weight:400; color:#8A7F6C; font-size:11.5px; }
-  .idash-sub .idash-seg button{ padding:4px 10px; min-height:28px; font-size:12px; }
-  .idash-legend{ display:inline-flex; gap:12px; font-weight:500; font-size:11.5px; color:#4A3F31; }
-  .idash-legend i, .idash-detail i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; }
-  .idash-hit{ cursor:pointer; }
-  .idash-detail{ display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:12.5px; color:#2B241A; background:#FAF6EC; border-radius:12px; padding:10px 12px; margin:2px 0 6px; }
-  .idash-detail b{ color:#0B2A15; }
-  .idash-detail.muted{ color:#8A7F6C; justify-content:center; background:transparent; border:1px dashed #E2D9C6; }
-  .idash-cmp{ display:flex; flex-direction:column; gap:6px; }
-  .idash-cmp-row{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid #EEE7D8; background:#fff; border-radius:12px; padding:8px 10px; font:inherit; cursor:pointer; }
-  .idash-cmp-row .nm{ flex:1; min-width:0; font-size:12.5px; }
-  .idash-cmp-row .bar{ display:flex; height:6px; margin-top:5px; background:#F1EBDD; border-radius:3px; overflow:hidden; }
-  .idash-cmp-row .bar i{ display:block; height:100%; border-radius:3px; }
-  .idash-cmp-row .num{ text-align:right; flex:none; font-size:12px; display:flex; flex-direction:column; }
-  .idash-cmp-row .num span{ font-family:'IBM Plex Mono'; color:#7A6F5E; font-size:11px; }
-  .idash-two{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:4px 22px; }
-  .idash-hb{ display:grid; grid-template-columns:minmax(0,1.3fr) 1fr auto; align-items:center; gap:8px; font-size:12px; padding:5px 0; border-bottom:1px dashed #EEE7D8; }
-  .idash-hb .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#2B241A; }
-  .idash-hb .t{ height:7px; background:#F1EBDD; border-radius:4px; overflow:hidden; }
-  .idash-hb .t i{ display:block; height:100%; border-radius:4px; }
-  .idash-hb b{ font-family:'IBM Plex Mono'; font-size:12px; min-width:34px; text-align:right; }
-  .idash-empty{ text-align:center; color:#948a78; font-size:12.5px; padding:18px 8px; background:#FAF6EC; border-radius:12px; }
-  .idash-note{ font-size:11px; color:#A39782; margin:14px 0 0; }
+  /* ---- instructor dashboard (dark bento) ---- */
+  #idashCard.idash-card{ background:#0B0A07; border-color:#0B0A07; color:#F3EEE3; padding:20px 16px; }
+  #idashCard.idash-card h2{ color:#F3EEE3; }
+  #idashCard.idash-card .hint{ color:#9A927F; }
+  #idashBox{ --ib-t:#F3EEE3; --ib-m:#9A927F; --ib-tile:#16150F; --ib-line:rgba(255,255,255,.08); --ib-a:#C48F2E; --ib-a2:#8F83DA; --ib-solid:#DCA73D; color:var(--ib-t); font-family:'IBM Plex Sans Thai', sans-serif; }
+  #idashBox button{ font-family:inherit; -webkit-tap-highlight-color:transparent; }
+  #idashBox .mono, #idashBox .idb-net .v, #idashBox .idb-mini b{ font-variant-numeric:tabular-nums; }
+  .idb-bar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 12px; }
+  .idb-chips{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; max-width:100%; padding:1px; }
+  .idb-chips::-webkit-scrollbar{ display:none; }
+  .idb-chip{ flex:none; display:inline-flex; align-items:center; gap:7px; padding:4px 12px 4px 4px; min-height:34px; border-radius:999px; border:1px solid rgba(255,255,255,.13); background:transparent; color:#D8D1C2; font-size:12.5px; font-weight:600; cursor:pointer; transition:background .2s, color .2s; }
+  .idb-chip.on{ background:var(--ib-t); border-color:var(--ib-t); color:#0B0A07; }
+  .idb-av{ flex:none; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; overflow:hidden; color:#fff; font-family:'IBM Plex Mono', monospace; font-weight:600; }
+  .idb-av img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .idb-av.t{ width:24px; height:24px; background:#2A2618; color:#F1D58E; }
+  .idb-chip.on .idb-av.t{ background:#0B0A07; }
+  .idb-pills{ display:inline-flex; border:1px solid rgba(255,255,255,.13); border-radius:999px; padding:2px; flex:none; }
+  .idb-pills button{ border:0; background:none; color:var(--ib-m); font-size:11.5px; font-weight:600; padding:5px 11px; min-height:28px; border-radius:999px; cursor:pointer; transition:background .2s, color .2s; white-space:nowrap; }
+  .idb-pills button.on{ background:var(--ib-t); color:#0B0A07; }
+  .idb-pills button:focus-visible, .idb-chip:focus-visible, .idb-card:focus-visible, .idb-tr:focus-visible, .idb-sb:focus-visible, .idb-stb:focus-visible{ outline:2px solid var(--ib-solid); outline-offset:2px; }
+
+  .idb-grid{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  @media (min-width:640px){
+    .idb-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:row dense; }
+    .idb-hero, .idb-line, .idb-stream, .idb-act, .idb-team{ grid-column:span 2; }
+    .idb-month{ grid-row:span 2; }
+  }
+  @media (min-width:1000px){
+    .idb-grid{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .idb-hero{ grid-column:1 / 3; grid-row:1; }
+    .idb-stack{ grid-column:3; grid-row:1; }
+    .idb-gauge{ grid-column:4; grid-row:1; }
+    .idb-line{ grid-column:1 / 3; grid-row:2 / 4; }
+    .idb-mix{ grid-column:3; grid-row:2; }
+    .idb-month{ grid-column:4; grid-row:2 / 4; }
+    .idb-prod{ grid-column:3; grid-row:3; }
+    .idb-stream{ grid-column:1 / 3; grid-row:4; }
+    .idb-act{ grid-column:3 / 5; grid-row:4; }
+    .idb-team{ grid-column:1 / 5; grid-row:5; }
+  }
+  .idb-tile{ position:relative; display:flex; flex-direction:column; min-width:0; overflow:hidden; border-radius:24px; border:1px solid var(--ib-line); background:var(--ib-tile); padding:18px; }
+  .idb-th{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+  .idb-th h3{ margin:0; font-size:13px; font-weight:500; color:var(--ib-m); }
+  .idb-th sup{ font-family:'IBM Plex Mono', monospace; font-size:10px; }
+  .idb-tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; background:rgba(255,255,255,.07); color:var(--ib-m); white-space:nowrap; }
+  .idb-tag.v{ background:rgba(143,131,218,.18); color:#BDB4EE; }
+  .idb-big{ margin:0; font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; letter-spacing:-.02em; }
+  .idb-cap{ margin:2px 0 0; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
+  .idb-empty{ flex:1; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--ib-m); font-size:12.5px; padding:20px 10px; border:1px dashed rgba(255,255,255,.1); border-radius:14px; }
+  .idb-note{ margin:14px 2px 0; font-size:11px; line-height:1.6; color:#7A7365; }
+
+  /* hero */
+  .idb-hero-top{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:16px 24px; }
+  .idb-hello{ min-width:0; }
+  .idb-hello .g{ margin:0; font-size:27px; font-weight:700; line-height:1.15; letter-spacing:-.02em; }
+  .idb-hello .s{ margin:6px 0 0; font-size:12.5px; color:var(--ib-m); }
+  .idb-net{ text-align:right; }
+  .idb-net .l{ margin:0; font-size:12px; color:var(--ib-m); }
+  .idb-net .v{ margin:4px 0 0; font-family:'IBM Plex Mono', monospace; font-size:34px; font-weight:600; line-height:1; letter-spacing:-.04em; }
+  .idb-net .c{ margin:7px 0 0; font-family:'IBM Plex Mono', monospace; font-size:12px; }
+  .idb-net .m{ color:var(--ib-m); }
+  .idb-minis{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:16px; }
+  .idb-mini{ background:rgba(255,255,255,.04); border-radius:14px; padding:10px 12px; min-width:0; }
+  .idb-mini span{ display:block; font-size:11px; color:var(--ib-m); }
+  .idb-mini b{ display:block; font-family:'IBM Plex Mono', monospace; font-size:17px; font-weight:600; margin:3px 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-dl{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; color:var(--ib-m); }
+  .idb-dl.up{ color:var(--ib-solid); } .idb-dl.down{ color:#E8907A; }
+  .idb-strip{ flex:1; display:flex; align-items:flex-end; gap:3px; min-height:70px; margin-top:18px; touch-action:pan-y; cursor:crosshair; }
+  .idb-sb{ flex:1; min-width:0; height:var(--h); padding:0; border:0; border-radius:4px; background:var(--ib-a); opacity:var(--o); transition:height 900ms cubic-bezier(0.22,1,0.36,1) var(--d), opacity .2s; cursor:inherit; }
+  .idb-sb.z{ background:rgba(255,255,255,.09); }
+  .idb-strip.hov .idb-sb{ opacity:.22; }
+  .idb-strip.hov .idb-sb.on{ opacity:1; }
+  .idb-strip-x{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
+  .idb-strip-x .cur{ color:var(--ib-t); text-align:center; }
+
+  /* card stack */
+  .idb-stack-wrap{ position:relative; display:flex; flex-direction:column; justify-content:flex-end; flex:1; margin:0 -18px -18px; overflow:hidden; }
+  .idb-stack-in{ position:relative; }
+  .idb-stack-sp{ visibility:hidden; width:calc(100% - 32px); max-width:300px; margin-left:auto; margin-right:auto; }
+  .idb-stack-sp > div{ padding-top:30%; }
+  .idb-card{ position:absolute; left:50%; display:block; width:calc(100% - 32px); max-width:300px; padding:0; border:0; border-radius:12px; overflow:hidden; text-align:left; cursor:pointer;
+    transform:translateX(-50%) scale(var(--sc)); transform-origin:top center;
+    box-shadow:0 -10px 28px -14px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.35), inset 0 0 0 1px rgba(255,255,255,.12);
+    transition:top 650ms cubic-bezier(0.34,1.35,0.64,1), transform 650ms cubic-bezier(0.34,1.35,0.64,1), opacity 500ms ease var(--dl); }
+  .idb-card.front{ cursor:default; }
+  .idb-card .ratio{ display:block; padding-top:63.08%; }
+  .idb-card .holo{ position:absolute; inset:0; background-image:linear-gradient(115deg, transparent 18%, rgba(255,150,205,.5) 32%, rgba(150,205,255,.5) 42%, rgba(175,255,170,.45) 52%, rgba(255,214,140,.4) 62%, transparent 78%); background-size:260% 100%; background-position:var(--gl,30%) 0; mix-blend-mode:soft-light; transition:background-position 700ms cubic-bezier(0.22,1,0.36,1); }
+  .idb-card .row{ position:absolute; left:0; right:0; top:0; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 14px 0 8px; }
+  .idb-card .nm{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .idb-card .nm b{ font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-card .nm .idb-av{ box-shadow:0 0 0 1.5px rgba(255,255,255,.35); }
+  .idb-card .nm .idb-av.t{ width:26px; height:26px; }
+  .idb-card .lv{ flex:none; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; letter-spacing:.04em; }
+  .idb-card .cup{ position:absolute; right:14px; bottom:12px; opacity:.7; }
+  .idb-stack-panel{ position:relative; z-index:20; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; height:82px; padding:0 18px 16px; background:rgba(22,21,15,.74); backdrop-filter:blur(18px) saturate(1.3); -webkit-backdrop-filter:blur(18px) saturate(1.3); border-top:1px solid rgba(255,255,255,.08); }
+  .idb-stack-panel > div{ min-width:0; }
+  .idb-stack-panel .n{ margin:0; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-stack-panel .m{ margin:3px 0 0; font-size:11px; color:var(--ib-m); }
+  .idb-stack-panel .b{ margin:0; flex:none; font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:600; }
+
+  /* gauge */
+  .idb-g-body{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .idb-g-arc{ stroke-dashoffset:var(--off); transition:stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1); }
+  .idb-g-needle{ transform:rotate(var(--ang)); transform-origin:75px 78px; transition:transform 900ms cubic-bezier(0.22,1,0.36,1); }
+  .idb-g-body .v{ margin:8px 0 0; font-family:'IBM Plex Mono', monospace; font-size:28px; font-weight:600; line-height:1; }
+  .idb-g-body .v span{ font-size:15px; color:var(--ib-m); margin-left:2px; }
+  .idb-g-body .s{ margin:6px 0 0; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); text-align:center; }
+  .idb-g-foot{ display:flex; justify-content:center; margin-top:14px; }
+
+  /* cumulative line */
+  .idb-line-head{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px 28px; }
+  .idb-line-head .k{ margin:0; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ib-m); }
+  .idb-line-head .sw{ display:inline-block; width:16px; height:3px; border-radius:2px; }
+  .idb-line-head .sw.dash{ height:0; border-top:2px dashed #8A8272; }
+  .idb-line-head .v{ margin:4px 0 0; font-family:'IBM Plex Mono', monospace; font-size:21px; font-weight:600; }
+  .idb-line-head .v.m{ color:var(--ib-m); }
+  .idb-badge{ margin-left:auto; padding:4px 10px; border-radius:999px; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; background:rgba(255,255,255,.07); color:var(--ib-m); }
+  .idb-plot{ position:relative; flex:1; min-height:210px; margin-top:16px; touch-action:pan-y; cursor:crosshair; }
+  .idb-plot svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .idb-area{ transition:opacity 900ms ease 400ms; }
+  .idb-draw{ stroke-dasharray:1; stroke-dashoffset:0; transition:stroke-dashoffset 1300ms cubic-bezier(0.22,1,0.36,1); }
+  .idb-xh{ position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.2); transform:translateX(-50%); opacity:0; pointer-events:none; }
+  .idb-dot{ position:absolute; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; }
+  .idb-dot.a{ width:14px; height:14px; border:3px solid var(--ib-tile); }
+  .idb-dot.b{ width:10px; height:10px; border:2px solid var(--ib-tile); background:#8A8272; opacity:0; }
+  .idb-tip{ position:absolute; top:-6px; transform:translate(-50%,-100%); padding:3px 8px; border-radius:6px; background:var(--ib-t); color:#0B0A07; font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; white-space:nowrap; opacity:0; pointer-events:none; }
+  .idb-plot.hov .idb-xh, .idb-plot.hov .idb-dot.b, .idb-plot.hov .idb-tip{ opacity:1; }
+  .idb-ticks{ position:relative; height:16px; margin-top:10px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
+  .idb-ticks span{ position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; }
+  .idb-ticks span:first-child{ transform:none; }
+  .idb-ticks .end{ right:0; left:auto !important; transform:none; color:var(--ib-t); }
+
+  /* course mix */
+  .idb-seg{ display:flex; gap:4px; height:34px; margin-top:14px; }
+  .idb-seg span{ flex:0 1 var(--fb); min-width:6px; border-radius:8px; transition:flex-basis 1000ms cubic-bezier(0.22,1,0.36,1) var(--dl), opacity .2s; }
+  .idb-legend{ list-style:none; padding:0; margin:14px 0 0; display:grid; grid-template-columns:minmax(0,1fr); gap:8px; }
+  .idb-legend li{ display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:12px; min-width:0; transition:opacity .2s; }
+  .idb-legend li.dim{ opacity:.4; }
+  .idb-legend .n{ display:flex; align-items:center; gap:7px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-legend i, .idb-legend-in i{ flex:none; display:inline-block; width:8px; height:8px; border-radius:50%; }
+  .idb-legend .p{ flex:none; font-family:'IBM Plex Mono', monospace; color:var(--ib-m); }
+  .idb-legend-in{ display:inline-flex; gap:12px; font-size:11.5px; color:var(--ib-m); }
+  .idb-legend-in i{ margin-right:5px; vertical-align:middle; border-radius:2px; }
+
+  /* this-month accent tile */
+  .idb-month{ border:0; }
+  .idb-month .idb-th h3{ color:inherit; opacity:.75; font-weight:600; }
+  .idb-live{ display:inline-flex; align-items:center; gap:6px; padding:2px 9px; border-radius:999px; background:rgba(42,30,8,.12); font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; white-space:nowrap; }
+  .idb-live i{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .idb-month .big{ margin:2px 0 0; font-family:'IBM Plex Mono', monospace; font-size:50px; font-weight:600; line-height:1; letter-spacing:-.05em; }
+  .idb-month .big span{ font-size:18px; letter-spacing:0; }
+  .idb-month .sub{ margin:6px 0 0; font-size:12px; font-weight:500; opacity:.75; }
+  .idb-month .box{ margin-top:16px; padding:12px; border-radius:16px; background:rgba(42,30,8,.1); }
+  .idb-month .box .r{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; font-weight:600; }
+  .idb-month .box .r span{ opacity:.7; }
+  .idb-month .box .r b{ font-family:'IBM Plex Mono', monospace; }
+  .idb-month .bar{ height:6px; margin-top:8px; border-radius:999px; background:rgba(42,30,8,.14); overflow:hidden; }
+  .idb-month .bar i{ display:block; height:100%; width:var(--w); border-radius:999px; background:currentColor; transition:width 1s cubic-bezier(0.22,1,0.36,1) .2s; }
+  .idb-month dl{ margin:12px 0 0; display:flex; flex-direction:column; gap:6px; }
+  .idb-month dl div{ display:flex; justify-content:space-between; gap:10px; font-size:12px; }
+  .idb-month dt{ opacity:.7; white-space:nowrap; }
+  .idb-month dd{ margin:0; font-family:'IBM Plex Mono', monospace; font-weight:600; max-width:58%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; }
+  .idb-month .foot{ margin-top:auto; padding-top:20px; }
+  .idb-month .foot .k{ margin:0; font-size:12px; font-weight:600; opacity:.7; }
+  .idb-month .money{ margin:4px 0 0; font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; }
+  .idb-month .vs{ margin:2px 0 0; font-family:'IBM Plex Mono', monospace; font-size:11px; opacity:.72; }
+  .idb-month .mb{ display:flex; align-items:flex-end; gap:4px; height:46px; margin-top:14px; }
+  .idb-month .mb span{ flex:1; height:var(--h); border-radius:4px; background:currentColor; transform-origin:bottom; transition:transform 800ms cubic-bezier(0.22,1,0.36,1) .3s; }
+  .idb-month .cap{ margin:6px 0 0; font-family:'IBM Plex Mono', monospace; font-size:10px; opacity:.6; }
+  .idb-month .go{ width:100%; margin-top:14px; padding:12px; border:0; border-radius:16px; background:#2A1E08; color:#DCA73D; font-size:14px; font-weight:600; cursor:pointer; transition:transform .15s; }
+  .idb-month .go:active{ transform:scale(.98); }
+
+  /* products */
+  .idb-pl{ list-style:none; margin:12px 0 0; padding:0; }
+  .idb-pl li{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto; align-items:center; gap:8px; padding:6px 0; font-size:12px; border-bottom:1px dashed rgba(255,255,255,.07); }
+  .idb-pl li:last-child{ border-bottom:0; }
+  .idb-pl .n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-pl .t{ height:6px; border-radius:3px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .idb-pl .t i{ display:block; height:100%; width:var(--w); border-radius:3px; }
+  .idb-pl b{ font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; min-width:36px; text-align:right; }
+
+  /* weekly stream */
+  .idb-st-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
+  .idb-st-head .v{ margin:0; font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; }
+  .idb-st-head .m{ margin:3px 0 0; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ib-m); }
+  .idb-st-head .r{ flex:none; }
+  .idb-st-bars{ flex:1; display:flex; align-items:flex-end; gap:3px; min-height:76px; margin-top:16px; touch-action:pan-y; cursor:crosshair; }
+  .idb-st-bars.dense{ gap:2px; }
+  .idb-stb{ flex:1; min-width:0; height:var(--h); padding:0; border:0; border-radius:3px; background:#8A8272; opacity:var(--o); transform-origin:bottom; transition:transform 600ms cubic-bezier(.3,1.4,.6,1) var(--d), opacity .2s, background .2s; cursor:inherit; }
+  .idb-stb.last{ background:var(--ib-a); }
+  .idb-stb.z{ background:rgba(255,255,255,.07); opacity:1; }
+  .idb-st-bars.hov .idb-stb{ opacity:.16; }
+  .idb-st-bars.hov .idb-stb.on{ opacity:1; background:var(--ib-a); }
+  .idb-st-dl{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0 0; padding-top:12px; border-top:1px solid var(--ib-line); }
+  .idb-st-dl dt{ font-size:11px; color:var(--ib-m); }
+  .idb-st-dl dd{ margin:3px 0 0; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* activity */
+  .idb-al{ list-style:none; margin:-4px -8px; padding:0; }
+  .idb-al li{ display:flex; align-items:center; gap:12px; padding:8px; border-radius:16px; transition:background .2s, opacity 500ms ease var(--d), transform 500ms cubic-bezier(0.22,1,0.36,1) var(--d); }
+  .idb-al li:hover{ background:rgba(255,255,255,.04); }
+  .idb-al .ic{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.07); }
+  .idb-al .tx{ flex:1; min-width:0; }
+  .idb-al .t{ margin:0; font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-al .d{ margin:2px 0 0; font-size:11px; color:var(--ib-m); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .idb-al .am{ flex:none; text-align:right; }
+  .idb-al .a{ margin:0; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:500; }
+  .idb-al .st{ margin:3px 0 0; display:flex; align-items:center; justify-content:flex-end; gap:4px; font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600; color:var(--ib-m); }
+  .idb-al .st.pend{ color:var(--ib-solid); }
+  .idb-al .spin{ animation:idbSpin 1s linear infinite; }
+  @keyframes idbSpin{ to{ transform:rotate(360deg); } }
+
+  /* team */
+  .idb-tl{ display:flex; flex-direction:column; gap:8px; }
+  .idb-tr{ display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border:1px solid var(--ib-line); border-radius:16px; background:rgba(255,255,255,.025); color:inherit; text-align:left; cursor:pointer; transition:background .2s; }
+  .idb-tr:hover{ background:rgba(255,255,255,.05); }
+  .idb-tr .nm{ flex:1; min-width:0; font-size:13px; }
+  .idb-tr .seg{ display:flex; gap:2px; height:8px; margin-top:7px; }
+  .idb-tr .seg i{ display:block; width:var(--w); border-radius:3px; transition:width 900ms cubic-bezier(0.22,1,0.36,1) .2s; }
+  .idb-tr .cl{ height:3px; margin-top:4px; border-radius:2px; background:rgba(255,255,255,.06); overflow:hidden; }
+  .idb-tr .cl i{ display:block; height:100%; width:var(--w); background:#8A8272; }
+  .idb-tr .num{ flex:none; text-align:right; display:flex; flex-direction:column; gap:2px; }
+  .idb-tr .num b{ font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600; }
+  .idb-tr .num span{ font-size:11px; color:var(--ib-m); }
+
+  /* entrance motion — only on first paint of a selection, never with reduced motion */
+  .idb-grid.anim .idb-tile{ opacity:0; transform:translateY(10px); }
+  .idb-grid.anim.in .idb-tile{ opacity:1; transform:none; transition:opacity 500ms ease, transform 600ms cubic-bezier(0.22,1,0.36,1); }
+  .idb-grid.anim:not(.in) .idb-sb{ height:6%; }
+  .idb-grid.anim:not(.in) .idb-draw{ stroke-dashoffset:1; }
+  .idb-grid.anim:not(.in) .idb-area{ opacity:0; }
+  .idb-grid.anim:not(.in) .idb-g-arc{ stroke-dashoffset:var(--len); }
+  .idb-grid.anim:not(.in) .idb-g-needle{ transform:rotate(-90deg); }
+  .idb-grid.anim:not(.in) .idb-seg span{ flex-basis:var(--fb0); }
+  .idb-grid.anim:not(.in) .idb-card{ opacity:0; transform:translateX(-50%) scale(var(--sc)) translateY(20px); }
+  .idb-grid.anim:not(.in) .idb-month .bar i, .idb-grid.anim:not(.in) .idb-tr .seg i{ width:0; }
+  .idb-grid.anim:not(.in) .idb-month .mb span, .idb-grid.anim:not(.in) .idb-stb{ transform:scaleY(0); }
+  .idb-grid.anim:not(.in) .idb-al li{ opacity:0; transform:translateY(6px); }
+  @media (max-width:639px){
+    #idashCard.idash-card{ padding:16px 10px; border-radius:22px; }
+    .idb-net{ text-align:left; }
+    .idb-hello .g{ font-size:23px; }
+    .idb-net .v{ font-size:30px; }
+    .idb-tile{ padding:16px; border-radius:22px; }
+    .idb-stack-wrap{ margin:0 -16px -16px; }
+    .idb-mini b{ font-size:15px; }
+    .idb-bar .idb-pills{ margin-left:auto; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .idb-al .spin{ animation:none; }
+    .idb-card, .idb-sb, .idb-stb, .idb-seg span, .idb-g-arc, .idb-g-needle, .idb-draw{ transition:none !important; }
+  }
 </style>
 <script>
 /* QR Code Generator for JavaScript — Copyright (c) 2009 Kazuhiko Arase — MIT License
@@ -7223,7 +7425,7 @@ function renderDashboard(){
   el.innerHTML = `
     <div class="card idash-card" id="idashCard">
       <h2>Dashboard รายอาจารย์</h2>
-      <p class="hint">กราฟการสอนและยอดของแต่ละอาจารย์ เลือกชื่อด้านล่างเพื่อดูทีละคน</p>
+      <p class="hint">กราฟการสอนและยอดของแต่ละอาจารย์ แตะชื่อหรือการ์ดอาจารย์เพื่อสลับ · แตะค้าง/ลากบนกราฟเพื่อดูตัวเลข</p>
       <div id="idashBox"></div>
     </div>
     <div class="card">
@@ -7369,245 +7571,492 @@ function renderDashboard(){
   };
 }
 
-/* ============================= INSTRUCTOR DASHBOARD (per-teacher charts) ============================= */
-// state survives re-renders of the dashboard tab
-window._idash = window._idash || { who:null, months:6, metric:'classes', sel:null };
-const IDASH_TEAM_ICON = '<svg viewBox="0 0 24 24" width="58%" height="58%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.2 6-5.2s5.4 1.9 6 5.2"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.4c2.4.2 4.1 1.8 4.6 4.6"/></svg>';
-const IDASH_C1 = '#2F7D4A', IDASH_C2 = '#C9902A'; // validated pair: course income / product sales
-function idashMonthKeys(n, endOffset){
-  const out = []; const now = new Date();
-  for(let i=n-1+(endOffset||0); i>=(endOffset||0); i--){
-    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
-  }
-  return out;
-}
-function idashMonthLabel(key, withYear){
-  const [y,m] = key.split('-').map(Number);
-  const names = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  return names[m-1] + (withYear ? ' ' + String((y+543)%100).padStart(2,'0') : '');
-}
-// who: instructor name, or null for everyone
-function idashCompute(who, monthKeys){
-  const rows = {}; monthKeys.forEach(k=> rows[k] = { classes:0, students:0, courseRev:0, courseProfit:0, product:0 });
-  const first = monthKeys[0], last = monthKeys[monthKeys.length-1];
-  const inRange = d=> d && d.slice(0,7) >= first && d.slice(0,7) <= last;
-  const mine = b=> who ? b.instructor === who : true;
-  const classKeys = new Set(), perCourse = {}, perProduct = {};
-  const addProd = (p)=>{ const q = Number(p.qty)||0, t = (Number(p.price)||0)*q; if(!perProduct[p.name]) perProduct[p.name] = { qty:0, total:0 }; perProduct[p.name].qty += q; perProduct[p.name].total += t; return t; };
-  (sharedBookings||[]).forEach(b=>{
-    if(!b || !b.taught || !mine(b) || !inRange(b.date)) return;
-    const r = rows[b.date.slice(0,7)]; if(!r) return;
-    const ck = [b.date, b.courseId, b.instructor||'', b.startTime||''].join('|');
-    if(!classKeys.has(ck)){
-      classKeys.add(ck); r.classes++;
-      const c = courseById(b.courseId); const cn = c ? c.name : 'คอร์สอื่น';
-      perCourse[cn] = (perCourse[cn]||0) + 1;
-    }
-    r.students += Number(b.taughtStudents)||0;
-    const pl = bookingPL(b); r.courseRev += pl.revenue; r.courseProfit += pl.profit;
-    (b.soldProducts||[]).forEach(p=>{ r.product += addProd(p); });
-  });
-  (standaloneSales||[]).forEach(s=>{
-    if(!s || !inRange(s.date)) return;
-    if(who && s.seller !== who) return;
-    const r = rows[s.date.slice(0,7)]; if(!r) return;
-    (s.items||[]).forEach(p=>{ r.product += addProd(p); });
-  });
-  const tot = { classes:0, students:0, courseRev:0, courseProfit:0, product:0 };
-  monthKeys.forEach(k=> Object.keys(tot).forEach(f=> tot[f] += rows[k][f]));
-  return { rows, tot, perCourse, perProduct };
-}
-function idashCompact(n){
-  n = Math.round(n||0);
-  if(Math.abs(n) >= 1e6) return (n/1e6).toFixed(n%1e6===0?0:1)+'M';
-  if(Math.abs(n) >= 1e4) return Math.round(n/1e3)+'k';
-  if(Math.abs(n) >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'k';
+/* ============================= INSTRUCTOR DASHBOARD — bento ============================= */
+// dark bento board: hero + 30-day strip, instructor card stack, margin gauge, cumulative-vs-previous line,
+// course mix, "this month" accent tile, products, weekly teaching stream, activity, team comparison
+window._idash = window._idash || { who:null, months:6, metric:'money', gauge:'range', stream:'classes' };
+const IDB = { a:'#C48F2E', a2:'#8F83DA', a3:'#2F9A62', other:'#5E584C', solid:'#DCA73D', ink:'#2A1E08' }; // validated on #16150F
+const IDB_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const IDB_TH_MONTH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const idbIso = d=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const idbDate = s=> { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const idbAddDays = (d, n)=> { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const idbDayLbl = s=> { const d = idbDate(s); return `${d.getDate()} ${IDB_TH_MONTH[d.getMonth()]}`; };
+const idbBaht = v=> '฿' + fmt(Math.round(v||0));
+const idbReduced = ()=> { try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+const idbEsc = s=> String(s==null?'':s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function idbCompact(n){
+  n = Math.round(n||0); const a = Math.abs(n);
+  if(a >= 1e6) return (n/1e6).toFixed(a%1e6===0?0:1)+'M';
+  if(a >= 1e4) return Math.round(n/1e3)+'k';
+  if(a >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'k';
   return String(n);
 }
-function idashNiceMax(v){
-  if(v <= 0) return 4;
-  const p = Math.pow(10, Math.floor(Math.log10(v))); const f = v/p;
-  const nf = f<=1 ? 1 : f<=2 ? 2 : f<=2.5 ? 2.5 : f<=5 ? 5 : 10;
-  return nf*p;
+function idbRelDay(s){
+  const t = idbDate(idbIso(new Date())), d = idbDate(s); const diff = Math.round((d - t)/864e5);
+  if(diff === 0) return 'วันนี้'; if(diff === 1) return 'พรุ่งนี้'; if(diff === -1) return 'เมื่อวาน';
+  if(diff > 1) return `อีก ${diff} วัน`;
+  if(diff > -7) return `${-diff} วันก่อน`;
+  return idbDayLbl(s);
 }
-// rounded-top bar anchored to the baseline (4px data-end radius)
-function idashBarPath(x, y, w, h, roundTop){
-  if(h <= 0) return '';
-  const r = roundTop ? Math.min(4, w/2, h) : 0;
-  return `M${x},${y+h} L${x},${y+r} Q${x},${y} ${x+r},${y} L${x+w-r},${y} Q${x+w},${y} ${x+w},${y+r} L${x+w},${y+h} Z`;
-}
-// series: [{key,color,label}] stacked in order; data: [{label, sub, values:{key:n}}]
-function idashBarsSVG(id, data, series, opts){
-  opts = opts || {};
-  const W = Math.round(opts.W || 560), H = opts.H || 210, padL = 36, padR = 6, padT = 22, padB = 32;
-  const cw = W-padL-padR, ch = H-padT-padB;
-  const totals = data.map(d=> series.reduce((s,se)=> s + (d.values[se.key]||0), 0));
-  const max = idashNiceMax(Math.max(0, ...totals));
-  const n = data.length, slot = cw/n, bw = Math.max(8, Math.min(38, slot*0.6)); const fs = slot < 30 ? 10 : 11.5;
-  const y = v=> padT + ch - (v/max)*ch;
-  let grid = '';
-  [0, .5, 1].forEach(f=>{
-    const v = max*f, yy = y(v);
-    grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${f===0?'#CFC4AC':'#ECE5D6'}" stroke-width="1"/>`;
-    grid += `<text x="${padL-6}" y="${yy+3.5}" font-size="10" fill="#8A7F6C" text-anchor="end" font-family="IBM Plex Mono">${opts.money ? idashCompact(v) : (Number.isInteger(v) ? v : v.toFixed(1))}</text>`;
-  });
-  const maxIdx = totals.indexOf(Math.max(...totals));
-  let bars = '', labels = '', hits = '';
-  data.forEach((d,i)=>{
-    const x = padL + slot*i + (slot-bw)/2;
-    let acc = 0; const nonzero = series.filter(se=> (d.values[se.key]||0) > 0);
-    series.forEach(se=>{
-      const v = d.values[se.key]||0; if(v <= 0) return;
-      const top = se === nonzero[nonzero.length-1];
-      const y0 = y(acc + v), h = y(acc) - y0 - (acc > 0 ? 2 : 0); // 2px surface gap between stacked segments
-      bars += `<path d="${idashBarPath(x, y0, bw, Math.max(0,h), top)}" fill="${se.color}"/>`;
-      acc += v;
-    });
-    const sel = opts.selIndex === i;
-    labels += `<text x="${x+bw/2}" y="${H-padB+15}" font-size="${fs}" fill="${sel?'#1A1209':'#7A6F5E'}" font-weight="${sel?700:400}" text-anchor="middle" font-family="IBM Plex Sans Thai">${d.label}</text>`;
-    if(d.sub) labels += `<text x="${x+bw/2}" y="${H-padB+27}" font-size="9" fill="#A39782" text-anchor="middle" font-family="IBM Plex Sans Thai">${d.sub}</text>`;
-    // selective direct labels: the tallest bar, the latest bar and the tapped bar
-    if(totals[i] > 0 && (i===maxIdx || i===n-1 || sel)){
-      labels += `<text x="${x+bw/2}" y="${y(totals[i])-6}" font-size="${fs}" font-weight="600" fill="#1A1209" text-anchor="middle" font-family="IBM Plex Mono">${opts.money ? idashCompact(totals[i]) : totals[i]}</text>`;
+
+// every money/teaching event for one instructor (or the whole team) — one pass, then sliced by date range
+function idbLedger(who){
+  const mine = b=> who ? b.instructor === who : true;
+  const day = {}; const classes = []; const sales = []; const seen = new Map();
+  const D = s=> day[s] || (day[s] = { course:0, product:0, profit:0, classes:0, students:0 });
+  const prodSum = arr=> (arr||[]).reduce((t,p)=> t + (Number(p.price)||0)*(Number(p.qty)||0), 0);
+  (sharedBookings||[]).forEach(b=>{
+    if(!b || !b.taught || !b.date || !mine(b)) return;
+    const r = D(b.date); const pl = bookingPL(b); const prod = prodSum(b.soldProducts);
+    const ck = [b.date, b.courseId, b.instructor||'', b.startTime||''].join('|');
+    r.course += pl.revenue; r.profit += pl.profit; r.product += prod; r.students += Number(b.taughtStudents)||0;
+    let cl = seen.get(ck);
+    if(!cl){
+      r.classes++;
+      const c = courseById(b.courseId);
+      cl = { key:ck, date:b.date, courseId:b.courseId, course: c ? c.name : 'คอร์สอื่น', instructor:b.instructor, students:0, course$:0, product$:0, items:[] };
+      classes.push(cl); seen.set(ck, cl);
     }
-    if(sel) bars = `<rect x="${padL+slot*i+2}" y="${padT-14}" width="${slot-4}" height="${ch+14}" rx="6" fill="#F3EDDF"/>` + bars;
-    hits += `<rect class="idash-hit" data-i="${i}" x="${padL+slot*i}" y="0" width="${slot}" height="${H}" fill="transparent"/>`;
+    cl.students += Number(b.taughtStudents)||0; cl.course$ += pl.revenue; cl.product$ += prod;
+    (b.soldProducts||[]).forEach(p=> cl.items.push({ name:p.name, qty:Number(p.qty)||0, total:(Number(p.price)||0)*(Number(p.qty)||0), where:'class' }));
   });
-  return `<svg id="${id}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="width:100%; height:auto; display:block; touch-action:manipulation;" role="img" aria-label="${opts.aria||''}">${grid}${bars}${labels}${hits}</svg>`;
+  (standaloneSales||[]).forEach(s=>{
+    if(!s || !s.date || (who && s.seller !== who)) return;
+    const t = prodSum(s.items); D(s.date).product += t;
+    sales.push({ date:s.date, time:s.time||0, seller:s.seller, total:t, items:(s.items||[]).map(p=> ({ name:p.name, qty:Number(p.qty)||0, total:(Number(p.price)||0)*(Number(p.qty)||0), where:'shop' })) });
+  });
+  return { day, classes, sales };
 }
-function idashAvatar(name, size){
+function idbSum(L, from, to){ // inclusive ISO dates
+  const o = { course:0, product:0, profit:0, classes:0, students:0 };
+  for(const k in L.day){ if(k >= from && k <= to){ const r = L.day[k]; for(const f in o) o[f] += r[f]; } }
+  o.total = o.course + o.product; return o;
+}
+function idbRanges(months){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(today.getFullYear(), today.getMonth()-(months-1), 1);
+  const len = Math.round((today - start)/864e5) + 1;
+  const pStart = new Date(today.getFullYear(), today.getMonth()-(2*months-1), 1);
+  const pEnd = idbAddDays(pStart, len-1);
+  return { start, today, len, pStart, pEnd, from:idbIso(start), to:idbIso(today), pFrom:idbIso(pStart), pTo:idbIso(pEnd) };
+}
+function idbDelta(cur, prev){
+  if(!prev && !cur) return `<span class="idb-dl">—</span>`;
+  if(!prev) return `<span class="idb-dl">ช่วงก่อนยังไม่มี</span>`;
+  const pct = (cur-prev)/Math.abs(prev)*100;
+  if(Math.abs(pct) < 0.5) return `<span class="idb-dl">เท่าเดิม</span>`;
+  return `<span class="idb-dl ${pct>0?'up':'down'}">${pct>0?'▲':'▼'} ${Math.abs(pct).toFixed(1)}%</span>`;
+}
+function idbPills(name, value, opts, label){
+  return `<div class="idb-pills" role="radiogroup" aria-label="${label}">${opts.map(o=> `<button type="button" role="radio" aria-checked="${String(o[0])===String(value)}" data-${name}="${o[0]}" class="${String(o[0])===String(value)?'on':''}">${o[1]}</button>`).join('')}</div>`;
+}
+function idbTile(cls, title, action, body, extra){
+  return `<section class="idb-tile ${cls}" ${extra||''}>${title||action ? `<header class="idb-th">${title?`<h3>${title}</h3>`:'<span></span>'}${action||''}</header>` : ''}${body}</section>`;
+}
+function idbAvatar(name, size){
   const photo = (typeof instructorPhotos!=='undefined' && instructorPhotos) ? instructorPhotos[name] : '';
   const idx = (state.instructors||[]).indexOf(name);
   const color = ['#165028','#542B0D','#8F5A26'][idx>=0 ? idx%3 : 0];
   const ini = (name||'').replace('อาจารย์','').trim().charAt(0) || '?';
-  return `<span class="idash-av" style="width:${size}px;height:${size}px;background:${color};font-size:${Math.round(size*.42)}px;">${photo ? `<img src="${photo}" alt="">` : ini}</span>`;
+  return `<span class="idb-av" style="width:${size}px;height:${size}px;background:${color};font-size:${Math.round(size*.42)}px;">${photo ? `<img src="${photo}" alt="" loading="lazy">` : ini}</span>`;
 }
-function idashDelta(cur, prev){
-  if(!prev && !cur) return '';
-  if(!prev) return `<span class="idash-d">ช่วงก่อนยังไม่มี</span>`;
-  const pct = (cur-prev)/Math.abs(prev)*100;
-  if(Math.abs(pct) < 0.5) return `<span class="idash-d">เท่าเดิม</span>`;
-  return `<span class="idash-d ${pct>0?'up':'down'}">${pct>0?'▲':'▼'} ${Math.abs(pct).toFixed(0)}%</span>`;
+const IDB_TEAM_ICON = '<svg viewBox="0 0 24 24" width="58%" height="58%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.2 6-5.2s5.4 1.9 6 5.2"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.4c2.4.2 4.1 1.8 4.6 4.6"/></svg>';
+function idbSmooth(pts){
+  return pts.map(([x,y],i)=>{
+    if(i===0) return `M ${x.toFixed(1)} ${y.toFixed(1)}`;
+    const [px,py] = pts[i-1]; const m = (px+x)/2;
+    return `C ${m.toFixed(1)} ${py.toFixed(1)}, ${m.toFixed(1)} ${y.toFixed(1)}, ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
 }
-function renderInstructorDashboard(){
+
+/* ---------- tiles ---------- */
+function idbHero(ctx){
+  const { who, cur, prev, L } = ctx;
+  const change = cur.total - prev.total, pct = prev.total ? change/prev.total*100 : null;
+  const days = []; for(let i=29;i>=0;i--){ const s = idbIso(idbAddDays(ctx.R.today, -i)); const r = L.day[s]; days.push({ s, v: r ? r.course + r.product : 0, c: r ? r.classes : 0 }); }
+  const max = Math.max(1, ...days.map(d=> d.v));
+  ctx.strip = days;
+  const name = who ? who.replace('อาจารย์','อ.') : 'ทีม RANGSAN';
+  const mini = (l, c, p, money)=> `<div class="idb-mini"><span>${l}</span><b title="${money ? idbBaht(c) : fmt(c)}">${money ? (Math.abs(c) >= 1e5 ? '฿' + (c/1e3).toFixed(1) + 'k' : idbBaht(c)) : fmt(c)}</b>${p ? idbDelta(c, p) : `<span class="idb-dl">—</span>`}</div>`;
+  return idbTile('idb-hero', '', '', `
+    <div class="idb-hero-top">
+      <div class="idb-hello">
+        <p class="g">สวัสดี, <span style="color:${IDB.solid}">${idbEsc(name)}</span></p>
+        <p class="s">${who ? 'สรุปการสอนและยอดของคุณ' : 'ภาพรวมการสอนและยอดของทั้งทีม'} · ${ctx.periodTxt}</p>
+      </div>
+      <div class="idb-net">
+        <p class="l">ยอดรวม (ค่าคอร์ส + สินค้า)</p>
+        <p class="v" data-count="${Math.round(cur.total)}">${idbBaht(cur.total)}</p>
+        <p class="c">${pct===null ? `<span class="m">ช่วงก่อนยังไม่มียอด</span>` : `<span style="color:${change>=0?IDB.solid:'#E8907A'}">${change>=0?'+':'−'}${idbBaht(Math.abs(change))} (${change>=0?'+':'−'}${Math.abs(pct).toFixed(1)}%)</span><span class="m"> · เทียบช่วงก่อน</span>`}</p>
+      </div>
+    </div>
+    <div class="idb-minis">
+      ${mini('รอบที่สอน', cur.classes, prev.classes)}
+      ${mini('ผู้เรียน', cur.students, prev.students)}
+      ${mini('กำไรค่าคอร์ส', cur.profit, prev.profit, true)}
+    </div>
+    <div class="idb-strip" data-strip>
+      ${days.map((d,i)=>{ const h = d.v ? 16 + d.v/max*84 : 5; return `<button type="button" class="idb-sb${d.v?'':' z'}" data-i="${i}" aria-label="${idbDayLbl(d.s)}: ${idbBaht(d.v)}" style="--h:${h}%;--o:${d.v ? (.4 + d.v/max*.6).toFixed(2) : 1};--d:${i*16}ms"></button>`; }).join('')}
+    </div>
+    <div class="idb-strip-x"><span>${idbDayLbl(days[0].s)}</span><span class="cur" data-strip-lbl aria-live="polite">ยอดรายวัน 30 วันล่าสุด</span><span>วันนี้</span></div>
+  `);
+}
+function idbStack(ctx){
+  const team = state.instructors||[];
+  const tones = [['#1E5A34','#0D2A18','#F1E7CF'],['#6B3A16','#2E160A','#F6E6D2'],['#9A6A2E','#4A2C10','#FFF1DC'],['#3F4A5C','#1A2030','#E9EEF6']];
+  const cards = [{ id:'all', label:'ทั้งทีม', c1:'#2A2618', c2:'#0E0D09', ink:'#F1D58E' }]
+    .concat(team.map((n,i)=> ({ id:n, label:n, c1:tones[i%tones.length][0], c2:tones[i%tones.length][1], ink:tones[i%tones.length][2] })));
+  const sel = ctx.S.who;
+  const order = cards.map(c=> c.id).filter(id=> id !== sel).concat([sel]);
+  const PEEK = 40, depth = order.length - 1;
+  const lv = n=> { const k = instructorKPI(n); return 1 + Math.floor(k.sessions/3); };
+  const stats = ctx.teamTotals;
+  const front = cards.find(c=> c.id === sel) || cards[0];
+  const fs = sel === 'all' ? ctx.cur : (stats[sel] || ctx.cur);
+  return idbTile('idb-stack', `ทีมอาจารย์ <sup>${team.length}</sup>`, '', `
+    <div class="idb-stack-wrap" data-stack>
+      <div class="idb-stack-in">
+      ${order.map((id,pos)=>{
+        const c = cards.find(x=> x.id === id); const fromFront = order.length - 1 - pos; const isFront = fromFront === 0;
+        return `<button type="button" class="idb-card${isFront?' front':''}" data-pick="${idbEsc(id)}" aria-pressed="${isFront}" aria-label="${idbEsc(c.label)}${isFront?' (เลือกอยู่)':' — แตะเพื่อเลือก'}"
+          style="top:${(depth-fromFront)*PEEK}px;z-index:${pos+1};--sc:${(1-fromFront*0.055).toFixed(3)};--dl:${pos*80}ms;color:${c.ink};background-image:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 34%),radial-gradient(110% 90% at 100% 0%,${c.c1} 0%,transparent 60%),linear-gradient(135deg,${c.c1} 0%,${c.c2} 100%)">
+          <span class="ratio"></span><span class="holo"></span>
+          <span class="row">
+            <span class="nm">${id==='all' ? `<span class="idb-av t">${IDB_TEAM_ICON}</span>` : idbAvatar(id, 26)}<b>${idbEsc(c.label)}</b></span>
+            <span class="lv">${id==='all' ? 'RANGSAN' : 'LV.'+lv(id)}</span>
+          </span>
+          <svg class="cup" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13v4.5A5.5 5.5 0 0 1 11.5 19h-1A5.5 5.5 0 0 1 5 13.5V9Z"/><path d="M17 10.3h1.2a2.2 2.2 0 1 1 0 4.4H17"/><path d="M9 5.5V4M13 5.5V4"/></svg>
+        </button>`; }).join('')}
+        <div class="idb-stack-sp" aria-hidden="true" style="margin-top:${depth*PEEK}px"><div></div></div>
+      </div>
+      <div class="idb-stack-panel" aria-live="polite">
+        <div><p class="n">${idbEsc(front.label)}</p><p class="m">${fmt(fs.classes)} รอบ · ${fmt(fs.students)} คน</p></div>
+        <p class="b">${idbBaht(fs.total)}</p>
+      </div>
+    </div>`);
+}
+function idbGauge(ctx){
+  const S = ctx.S; const src = S.gauge === 'month' ? ctx.month : ctx.cur;
+  const has = src.course > 0; const m = has ? Math.max(0, Math.min(1, src.profit/src.course)) : 0;
+  const R = 62, len = Math.PI*R, angle = -90 + m*180;
+  return idbTile('idb-gauge', 'อัตรากำไรค่าคอร์ส', `<span class="idb-tag">${S.gauge==='month'?'เดือนนี้':'ทั้งช่วง'}</span>`, `
+    <div class="idb-g-body">
+      <svg width="150" height="86" viewBox="0 0 150 86" aria-hidden="true">
+        <path d="M 13 78 A 62 62 0 0 1 137 78" fill="none" stroke-width="10" stroke-linecap="round" stroke="rgba(255,255,255,.09)"/>
+        <path class="idb-g-arc" d="M 13 78 A 62 62 0 0 1 137 78" fill="none" stroke-width="10" stroke-linecap="round" stroke="${IDB.solid}" stroke-dasharray="${len.toFixed(1)}" style="--off:${(len*(1-m)).toFixed(1)};--len:${len.toFixed(1)}"/>
+        <g class="idb-g-needle" style="--ang:${angle.toFixed(1)}deg"><line x1="75" y1="78" x2="75" y2="30" stroke-width="2.5" stroke-linecap="round" stroke="#F3EEE3"/></g>
+        <circle cx="75" cy="78" r="5" fill="#F3EEE3"/>
+      </svg>
+      <p class="v">${has ? (m*100).toFixed(1) : '—'}<span>%</span></p>
+      <p class="s">${has ? `กำไร ${idbBaht(src.profit)} จาก ${idbBaht(src.course)}` : 'ยังไม่มีรายได้ค่าคอร์ส'}</p>
+    </div>
+    <div class="idb-g-foot">${idbPills('gauge', S.gauge, [['range','ทั้งช่วง'],['month','เดือนนี้']], 'ช่วงของเกจ')}</div>`);
+}
+function idbLineData(ctx){
+  const S = ctx.S, L = ctx.L, R = ctx.R;
+  const pick = r=> !r ? 0 : S.metric === 'classes' ? r.classes : S.metric === 'students' ? r.students : r.course + r.product;
+  const a = [], b = [], dates = []; let ca = 0, cb = 0;
+  for(let i=0;i<R.len;i++){
+    const d = idbIso(idbAddDays(R.start, i)), pd = idbIso(idbAddDays(R.pStart, i));
+    ca += pick(L.day[d]); cb += pick(L.day[pd]); a.push(ca); b.push(cb); dates.push(d);
+  }
+  return { a, b, dates };
+}
+function idbLine(ctx){
+  const S = ctx.S; const { a, b, dates } = idbLineData(ctx); ctx.line = { a, b, dates };
+  const W = 640, H = 220; const hi = Math.max(1, ...a, ...b);
+  const y = v=> H - 14 - (v/hi)*(H - 34);
+  const n = a.length; const step = Math.max(1, Math.ceil(n/120)); // ≤120 points keeps the path light
+  const idxs = []; for(let i=0;i<n;i+=step) idxs.push(i); if(idxs[idxs.length-1] !== n-1) idxs.push(n-1);
+  const X = i=> n > 1 ? (i/(n-1))*W : W/2;
+  const pa = idxs.map(i=> [X(i), y(a[i])]), pb = idxs.map(i=> [X(i), y(b[i])]);
+  const la = idbSmooth(pa), lb = idbSmooth(pb);
+  ctx.lineGeom = { W, H, y, X };
+  const lastA = a[n-1], lastB = b[n-1];
+  const lead = lastB ? (lastA/lastB - 1)*100 : null;
+  const unit = S.metric === 'money' ? '' : S.metric === 'classes' ? ' รอบ' : ' คน';
+  const fv = v=> S.metric === 'money' ? idbBaht(v) : fmt(v) + unit;
+  ctx.lineFmt = fv;
+  // month ticks
+  let ticks = []; dates.forEach((d,i)=>{ if(d.endsWith('-01')) ticks.push({ i, l: IDB_TH_MONTH[Number(d.slice(5,7))-1] }); });
+  const narrow = (document.getElementById('idashBox')||{}).clientWidth < 640;
+  if(ticks.length > 7 || (narrow && ticks.length > 4)) ticks = ticks.filter((t,k)=> (ticks.length-1-k) % 2 === 0);
+  ticks = ticks.filter(t=> (n-1-t.i)/(n||1) > (narrow ? .12 : .07)); // keep clear of the “วันนี้” label
+  const uid = 'idbl' + Math.random().toString(36).slice(2,7);
+  return idbTile('idb-line', 'ยอดสะสม เทียบช่วงก่อนหน้า', idbPills('metric', S.metric, [['money','ยอดเงิน'],['classes','รอบสอน'],['students','ผู้เรียน']], 'ข้อมูลในกราฟ'), `
+    <div class="idb-line-head">
+      <div><p class="k"><i class="sw" style="background:${IDB.a}"></i>${ctx.periodShort}</p><p class="v" data-la>${fv(lastA)}</p></div>
+      <div><p class="k"><i class="sw dash"></i>ช่วงก่อนหน้า</p><p class="v m" data-lb>${fv(lastB)}</p></div>
+      <span class="idb-badge" style="${lead===null?'':`background:${lead>=0?'rgba(196,143,46,.18)':'rgba(232,144,122,.16)'};color:${lead>=0?IDB.solid:'#E8907A'}`}">${lead===null ? 'ช่วงก่อนยังไม่มีข้อมูล' : `${lead>=0?'+':'−'}${Math.abs(lead).toFixed(1)}% เทียบช่วงก่อน`}</span>
+    </div>
+    <div class="idb-plot" data-plot role="img" aria-label="ยอดสะสม ${fv(lastA)} เทียบช่วงก่อนหน้า ${fv(lastB)}">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="${uid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${IDB.a}" stop-opacity=".30"/><stop offset="1" stop-color="${IDB.a}" stop-opacity="0"/></linearGradient></defs>
+        ${[.25,.5,.75].map(f=> `<line x1="0" x2="${W}" y1="${H*f}" y2="${H*f}" vector-effect="non-scaling-stroke" stroke-dasharray="1 5" stroke="rgba(255,255,255,.14)"/>`).join('')}
+        <path class="idb-area" d="${la} L ${W} ${H} L 0 ${H} Z" fill="url(#${uid})"/>
+        <path d="${lb}" fill="none" stroke-width="1.5" stroke-dasharray="4 5" vector-effect="non-scaling-stroke" stroke="#8A8272"/>
+        <path class="idb-draw" d="${la}" fill="none" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke" pathLength="1" stroke="${IDB.a}"/>
+      </svg>
+      <span class="idb-xh" data-xh></span>
+      <span class="idb-dot a" data-da style="left:100%;top:${(y(lastA)/H*100).toFixed(2)}%;background:${IDB.a}"></span>
+      <span class="idb-dot b" data-db style="left:100%;top:${(y(lastB)/H*100).toFixed(2)}%"></span>
+      <span class="idb-tip" data-tip></span>
+    </div>
+    <div class="idb-ticks" aria-hidden="true">${ticks.map(t=> `<span style="left:${(X(t.i)/W*100).toFixed(2)}%">${t.l}</span>`).join('')}<span class="end">วันนี้</span></div>`);
+}
+function idbMix(ctx){
+  const per = {}; ctx.L.classes.forEach(c=>{ if(c.date >= ctx.R.from && c.date <= ctx.R.to) per[c.course] = (per[c.course]||0) + c.course$; });
+  let list = Object.keys(per).map(n=> ({ n, v: per[n] })).filter(x=> x.v > 0).sort((a,b)=> b.v - a.v);
+  if(list.length > 4){ const rest = list.slice(3).reduce((t,x)=> t + x.v, 0); list = list.slice(0,3).concat([{ n:'คอร์สอื่นๆ', v:rest, other:true }]); }
+  const total = list.reduce((t,x)=> t + x.v, 0);
+  const colors = [IDB.a, IDB.a2, IDB.a3];
+  const col = (x,i)=> x.other ? IDB.other : colors[i] || IDB.other;
+  const short = n=> n.replace(/^คอร์ส\s*\d+\s*:\s*/,'').replace(/\s*\(.*?\)\s*$/,'');
+  return idbTile('idb-mix', 'สัดส่วนรายได้ตามคอร์ส', '', total ? `
+    <p class="idb-big">${idbBaht(total)}</p>
+    <div class="idb-seg" data-seg>${list.map((x,i)=> `<span data-i="${i}" style="--fb:${(x.v/total*100).toFixed(2)}%;--fb0:${(100/list.length).toFixed(2)}%;--dl:${200+i*60}ms;background:${col(x,i)}" title="${idbEsc(x.n)}"></span>`).join('')}</div>
+    <ul class="idb-legend" data-segl>${list.map((x,i)=> `<li data-i="${i}"><span class="n"><i style="background:${col(x,i)}"></i>${idbEsc(short(x.n))}</span><span class="p">${(x.v/total*100).toFixed(1)}%</span></li>`).join('')}</ul>`
+    : `<div class="idb-empty">ยังไม่มีรายได้ค่าคอร์สในช่วงนี้</div>`);
+}
+function idbMonth(ctx){
+  const { L, R, who } = ctx; const mFrom = idbIso(new Date(R.today.getFullYear(), R.today.getMonth(), 1));
+  const m = ctx.month; const lastMonthStart = new Date(R.today.getFullYear(), R.today.getMonth()-1, 1);
+  const lmSame = idbSum(L, idbIso(lastMonthStart), idbIso(new Date(R.today.getFullYear(), R.today.getMonth()-1, Math.min(R.today.getDate(), new Date(R.today.getFullYear(), R.today.getMonth(), 0).getDate()))));
+  const dim = new Date(R.today.getFullYear(), R.today.getMonth()+1, 0).getDate(), dnow = R.today.getDate();
+  const mEnd = idbIso(new Date(R.today.getFullYear(), R.today.getMonth(), dim));
+  const todayS = idbIso(R.today);
+  const queue = (sharedBookings||[]).filter(b=> !b.taught && b.date && b.date >= todayS && b.date <= mEnd && (who ? b.instructor === who : true));
+  const queueClasses = new Set(queue.map(b=> [b.date,b.courseId,b.instructor||'',b.startTime||''].join('|'))).size;
+  const perC = {}; L.classes.forEach(c=>{ if(c.date >= mFrom && c.date <= todayS) perC[c.course] = (perC[c.course]||0) + 1; });
+  const topC = Object.keys(perC).sort((a,b)=> perC[b]-perC[a])[0];
+  const months = []; for(let i=9;i>=0;i--){ const s = new Date(R.today.getFullYear(), R.today.getMonth()-i, 1), e = new Date(s.getFullYear(), s.getMonth()+1, 0); months.push({ l: IDB_TH_MONTH[s.getMonth()], v: idbSum(L, idbIso(s), idbIso(e)).total }); }
+  const mx = Math.max(1, ...months.map(x=> x.v));
+  const vs = lmSame.total ? (m.total/lmSame.total*100) : null;
+  const short = n=> (n||'').replace(/^คอร์ส\s*\d+\s*:\s*/,'').replace(/\s*\(.*?\)\s*$/,'');
+  return `<section class="idb-tile idb-month" style="background:${IDB.solid};color:${IDB.ink}">
+    <header class="idb-th"><h3>${IDB_TH_MONTH[R.today.getMonth()]} ${String((R.today.getFullYear()+543)%100)} · เดือนนี้</h3>
+      <span class="idb-live"><i></i>${queueClasses ? 'มีคิวรอสอน' : 'สอนครบแล้ว'}</span></header>
+    <p class="big">${fmt(m.classes)}<span> รอบ</span></p>
+    <p class="sub">ผู้เรียน ${fmt(m.students)} คน · กำไรค่าคอร์ส ${idbBaht(m.profit)}</p>
+    <div class="box"><div class="r"><span>เดือนนี้ผ่านไป</span><b>${dnow}/${dim} วัน</b></div><div class="bar"><i style="--w:${(dnow/dim*100).toFixed(1)}%"></i></div></div>
+    <dl>
+      <div><dt>คลาสที่รอสอนเดือนนี้</dt><dd>${queueClasses}</dd></div>
+      <div><dt>คอร์สที่สอนบ่อย</dt><dd title="${idbEsc(topC||'')}">${topC ? idbEsc(short(topC)) : '—'}</dd></div>
+      <div><dt>ผู้เรียนต่อคลาส</dt><dd>${m.classes ? (m.students/m.classes).toFixed(1) : '—'}</dd></div>
+    </dl>
+    <div class="foot">
+      <p class="k">ยอดเดือนนี้ (ค่าคอร์ส + สินค้า)</p>
+      <p class="money">${idbBaht(m.total)}</p>
+      <p class="vs">${vs===null ? 'เดือนที่แล้วช่วงเดียวกันยังไม่มียอด' : `${vs.toFixed(0)}% ของเดือนที่แล้ว ณ วันเดียวกัน`}</p>
+      <div class="mb" aria-hidden="true">${months.map((x,i)=> `<span style="--h:${Math.max(4, x.v/mx*100).toFixed(1)}%;opacity:${(.14 + i/months.length*.6).toFixed(2)}" title="${x.l} ${idbBaht(x.v)}"></span>`).join('')}</div>
+      <p class="cap">10 เดือนล่าสุด</p>
+      <button type="button" class="go" data-goqueue>ดูคิวสอน →</button>
+    </div>
+  </section>`;
+}
+function idbProducts(ctx){
+  const per = {}; let cls = 0, shop = 0, qty = 0;
+  const add = it=>{ if(!per[it.name]) per[it.name] = { q:0, t:0 }; per[it.name].q += it.qty; per[it.name].t += it.total; qty += it.qty; if(it.where==='class') cls += it.total; else shop += it.total; };
+  ctx.L.classes.forEach(c=>{ if(c.date >= ctx.R.from && c.date <= ctx.R.to) c.items.forEach(add); });
+  ctx.L.sales.forEach(s=>{ if(s.date >= ctx.R.from && s.date <= ctx.R.to) s.items.forEach(add); });
+  const list = Object.keys(per).map(n=> ({ n, ...per[n] })).sort((a,b)=> b.t - a.t).slice(0,4);
+  const total = cls + shop; const mx = Math.max(1, ...list.map(x=> x.t));
+  return idbTile('idb-prod', 'สินค้าที่ขายได้', total ? `<span class="idb-tag v">ขายในคลาส ${(cls/total*100).toFixed(0)}%</span>` : '', total ? `
+    <p class="idb-big">${idbBaht(total)}</p><p class="idb-cap">${fmt(qty)} ชิ้น · ในคลาส ${idbBaht(cls)} · หน้าร้าน ${idbBaht(shop)}</p>
+    <ul class="idb-pl">${list.map(x=> `<li><span class="n">${idbEsc(x.n)}</span><span class="t"><i style="--w:${(x.t/mx*100).toFixed(1)}%;background:${IDB.a2}"></i></span><b>${idbCompact(x.t)}</b></li>`).join('')}</ul>`
+    : `<div class="idb-empty">ยังไม่มีการขายสินค้าในช่วงนี้</div>`);
+}
+function idbStream(ctx){
+  const S = ctx.S, L = ctx.L, R = ctx.R;
+  // weeks start on Monday, from the period start to this week
+  const first = idbAddDays(R.start, -((R.start.getDay()+6)%7));
+  const weeks = []; for(let d = new Date(first); d <= R.today; d = idbAddDays(d, 7)){ const e = idbAddDays(d, 6); const s = idbSum(L, idbIso(d), idbIso(e)); weeks.push({ from:idbIso(d), to:idbIso(e), ...s }); }
+  ctx.weeks = weeks;
+  const key = S.stream === 'students' ? 'students' : 'classes'; const unit = key === 'students' ? 'คน' : 'รอบ';
+  const mx = Math.max(1, ...weeks.map(w=> w[key]));
+  const last = weeks[weeks.length-1] || { classes:0, students:0, total:0, from:idbIso(R.today), to:idbIso(R.today) };
+  const best = weeks.reduce((b,w)=> w[key] > (b ? b[key] : -1) ? w : b, null);
+  const avg = weeks.length ? weeks.reduce((t,w)=> t + w[key], 0)/weeks.length : 0;
+  const sumC = weeks.reduce((t,w)=> t + w.classes, 0), sumS = weeks.reduce((t,w)=> t + w.students, 0);
+  return idbTile('idb-stream', 'การสอนรายสัปดาห์', idbPills('stream', S.stream, [['classes','รอบ'],['students','คน']], 'หน่วยของกราฟ'), `
+    <div class="idb-st-head">
+      <div><p class="v" data-sv>${fmt(last[key])} ${unit}</p><p class="m" data-sm>สัปดาห์นี้ · ${idbDayLbl(last.from)} – ${idbDayLbl(last.to)} · ${idbBaht(last.total)}</p></div>
+      <p class="m r">${weeks.length} สัปดาห์</p>
+    </div>
+    <div class="idb-st-bars${weeks.length > 30 ? ' dense' : ''}">${weeks.map((w,i)=>{ const isLast = i===weeks.length-1; return `<button type="button" class="idb-stb${isLast?' last':''}${w[key]?'':' z'}" data-i="${i}" aria-label="สัปดาห์ ${idbDayLbl(w.from)}: ${w[key]} ${unit}" style="--h:${w[key] ? Math.max(8, w[key]/mx*100).toFixed(1) : 4}%;--o:${isLast ? 1 : (.18 + i/weeks.length*.5).toFixed(2)};--d:${i*12}ms"></button>`; }).join('')}</div>
+    <dl class="idb-st-dl">
+      <div><dt>เฉลี่ยต่อสัปดาห์</dt><dd>${avg.toFixed(1)} ${unit}</dd></div>
+      <div><dt>สัปดาห์ที่ดีที่สุด</dt><dd>${best && best[key] ? `${best[key]} ${unit} · ${idbDayLbl(best.from)}` : '—'}</dd></div>
+      <div><dt>ผู้เรียนต่อคลาส</dt><dd>${sumC ? (sumS/sumC).toFixed(1) : '—'} คน</dd></div>
+    </dl>`);
+}
+function idbActivity(ctx){
+  const { L, who } = ctx; const todayS = idbIso(ctx.R.today);
+  const next = (sharedBookings||[]).filter(b=> !b.taught && b.date && b.date >= todayS && (who ? b.instructor === who : true)).sort((a,b)=> (a.date+(a.startTime||'')).localeCompare(b.date+(b.startTime||'')))[0];
+  const items = [];
+  if(next){ const c = courseById(next.courseId); const same = (sharedBookings||[]).filter(b=> !b.taught && b.date===next.date && b.courseId===next.courseId && b.instructor===next.instructor).length;
+    items.push({ kind:'next', title: c ? c.name : 'คลาสถัดไป', detail:`${same} คน${who?'':' · '+(next.instructor||'ยังไม่ระบุ')}${next.startTime?' · '+next.startTime:''}`, amount: c ? '≈ ' + idbBaht(c.price*same) : '', status:'รอสอน', time: idbRelDay(next.date), sort:'9' }); }
+  L.classes.forEach(c=> items.push({ kind:'class', title:c.course, detail:`${c.students} คน${who?'':' · '+(c.instructor||'')}`, amount:'+' + idbBaht(c.course$ + c.product$), status:'สอนแล้ว', time:idbRelDay(c.date), sort:c.date+'1' }));
+  L.sales.forEach(s=> items.push({ kind:'sale', title: s.items.length === 1 ? s.items[0].name : `${s.items[0] ? s.items[0].name : 'สินค้า'} และอีก ${s.items.length-1} รายการ`, detail:`ขายหน้าร้าน${who?'':' · '+(s.seller||'')}`, amount:'+' + idbBaht(s.total), status:'ขายแล้ว', time:idbRelDay(s.date), sort:s.date+'0'+String(s.time).padStart(14,'0') }));
+  const pastSorted = items.filter(x=> x.kind !== 'next').sort((a,b)=> b.sort.localeCompare(a.sort));
+  const show = items.filter(x=> x.kind === 'next').concat(pastSorted).slice(0, 5);
+  const icon = k=> k === 'sale' ? '<path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>'
+    : k === 'next' ? '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/>'
+    : '<path d="M4 9h13v4.5A5.5 5.5 0 0 1 11.5 19h-1A5.5 5.5 0 0 1 5 13.5V9Z"/><path d="M17 10.3h1.2a2.2 2.2 0 1 1 0 4.4H17"/>';
+  return idbTile('idb-act', 'ความเคลื่อนไหวล่าสุด', '', show.length ? `<ul class="idb-al">${show.map((a,i)=> `
+    <li style="--d:${300+i*70}ms">
+      <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon(a.kind)}</svg></span>
+      <div class="tx"><p class="t">${idbEsc(a.title)}</p><p class="d">${idbEsc(a.detail)} · ${a.time}</p></div>
+      <div class="am"><p class="a">${a.amount}</p><p class="st ${a.kind==='next'?'pend':''}">${a.kind==='next' ? '<svg width="10" height="10" viewBox="0 0 24 24" class="spin" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>' : ''}${a.status}</p></div>
+    </li>`).join('')}</ul>` : `<div class="idb-empty">ยังไม่มีความเคลื่อนไหว</div>`);
+}
+function idbTeam(ctx){
+  const team = state.instructors||[]; if(!team.length) return '';
+  const rows = team.map(n=> ({ n, t: ctx.teamTotals[n] })).sort((a,b)=> b.t.total - a.t.total);
+  const mx = Math.max(1, ...rows.map(r=> r.t.total)), mc = Math.max(1, ...rows.map(r=> r.t.classes));
+  return idbTile('idb-team', 'เทียบรายอาจารย์', `<span class="idb-legend-in"><span><i style="background:${IDB.a}"></i>ค่าคอร์ส</span><span><i style="background:${IDB.a2}"></i>ขายสินค้า</span></span>`, `
+    <div class="idb-tl">${rows.map(r=> `<button type="button" class="idb-tr" data-pick="${idbEsc(r.n)}">
+      ${idbAvatar(r.n, 36)}
+      <div class="nm"><b>${idbEsc(r.n)}</b>
+        <div class="seg"><i style="--w:${(r.t.course/mx*100).toFixed(2)}%;background:${IDB.a}"></i><i style="--w:${(r.t.product/mx*100).toFixed(2)}%;background:${IDB.a2}"></i></div>
+        <div class="cl"><i style="--w:${(r.t.classes/mc*100).toFixed(2)}%"></i></div>
+      </div>
+      <div class="num"><b>${idbBaht(r.t.total)}</b><span>${fmt(r.t.classes)} รอบ · ${fmt(r.t.students)} คน</span></div>
+    </button>`).join('')}</div>`);
+}
+
+/* ---------- board ---------- */
+function renderInstructorDashboard(opts){
+  opts = opts || {};
   const box = document.getElementById('idashBox'); if(!box) return;
-  const S = window._idash;
-  const team = (state.instructors||[]);
-  if(S.who === null) S.who = team.includes(currentUser) ? currentUser : 'all';
+  const S = window._idash; const team = state.instructors||[];
+  if(S.who === null || S.who === undefined) S.who = team.includes(currentUser) ? currentUser : 'all';
   if(S.who !== 'all' && !team.includes(S.who)) S.who = 'all';
   const who = S.who === 'all' ? null : S.who;
-  const keys = idashMonthKeys(S.months), prevKeys = idashMonthKeys(S.months, S.months);
-  const cur = idashCompute(who, keys), prev = idashCompute(who, prevKeys);
-  if(S.sel != null && S.sel >= keys.length) S.sel = null;
-  const todayStr = new Date().toISOString().slice(0,10);
-  const upcoming = (sharedBookings||[]).filter(b=> !b.taught && b.date && b.date >= todayStr && (who ? b.instructor===who : true)).length;
-  const T = cur.tot, P = prev.tot;
-  const boxW = box.clientWidth || 560, twoCol = boxW >= 720;
-  const chartW = Math.max(280, twoCol ? (boxW - 24)/2 : boxW), chartH = twoCol ? 220 : 196;
-  box.dataset.w = boxW;
-  const periodTxt = `${idashMonthLabel(keys[0], true)} – ${idashMonthLabel(keys[keys.length-1], true)}`;
+  const R = idbRanges(S.months); const L = idbLedger(who);
+  const ctx = { S, who, R, L };
+  ctx.cur = idbSum(L, R.from, R.to); ctx.prev = idbSum(L, R.pFrom, R.pTo);
+  ctx.month = idbSum(L, idbIso(new Date(R.today.getFullYear(), R.today.getMonth(), 1)), R.to);
+  ctx.periodTxt = `${R.start.getDate()} ${IDB_TH_MONTH[R.start.getMonth()]} ${String((R.start.getFullYear()+543)%100)} – วันนี้`;
+  ctx.periodShort = `${S.months} เดือนนี้`;
+  ctx.teamTotals = {}; team.forEach(n=> ctx.teamTotals[n] = idbSum(idbLedger(n), R.from, R.to));
+  const animKey = `${S.who}|${S.months}`;
+  const animate = !idbReduced() && box.dataset.anim !== animKey && !opts.quiet;
+  box.dataset.anim = animKey;
 
-  const chips = [`<button type="button" class="idash-chip ${S.who==='all'?'on':''}" data-who="all"><span class="idash-av all">${IDASH_TEAM_ICON}</span><span>ทุกคน</span></button>`]
-    .concat(team.map(n=> `<button type="button" class="idash-chip ${S.who===n?'on':''}" data-who="${n.replace(/"/g,'&quot;')}">${idashAvatar(n, 30)}<span>${n.replace('อาจารย์','อ.')}</span></button>`)).join('');
-  const seg = (name, cur, opts)=> `<div class="idash-seg" role="group">${opts.map(o=> `<button type="button" data-${name}="${o[0]}" class="${String(cur)===String(o[0])?'on':''}">${o[1]}</button>`).join('')}</div>`;
-
-  const kpi = (label, val, c, p, money)=> `<div class="idash-kpi"><div class="l">${label}</div><div class="v">${money ? fmt(val) : val}</div>${idashDelta(c, p)}</div>`;
-  const monthData = keys.map((k,i)=>{
-    const r = cur.rows[k]; const showYear = i===0 || k.endsWith('-01');
-    return { label: idashMonthLabel(k), sub: showYear ? String((Number(k.slice(0,4))+543)%100).padStart(2,'0') : '', values: { classes:r.classes, students:r.students, courseRev:r.courseRev, product:r.product } };
-  });
-  const metricSeries = S.metric === 'students' ? [{ key:'students', color:IDASH_C1, label:'ผู้เรียน' }] : [{ key:'classes', color:IDASH_C1, label:'รอบสอน' }];
-  const moneySeries = [{ key:'courseRev', color:IDASH_C1, label:'รายได้ค่าคอร์ส' }, { key:'product', color:IDASH_C2, label:'ยอดขายสินค้า' }];
-
-  // detail of the tapped month (also the table view for the charts)
-  const selKey = S.sel != null ? keys[S.sel] : null;
-  const selRow = selKey ? cur.rows[selKey] : null;
-  const detail = selRow ? `<div class="idash-detail"><b>${idashMonthLabel(selKey, true)}</b>
-      <span>${selRow.classes} รอบ</span><span>${selRow.students} คน</span>
-      <span><i style="background:${IDASH_C1}"></i>ค่าคอร์ส ${fmt(selRow.courseRev)}</span>
-      <span><i style="background:${IDASH_C2}"></i>สินค้า ${fmt(selRow.product)}</span>
-      <span>กำไรค่าคอร์ส ${fmt(selRow.courseProfit)}</span></div>`
-    : `<div class="idash-detail muted">แตะที่แท่งกราฟเพื่อดูตัวเลขของเดือนนั้น</div>`;
-
-  // compare everyone (only on the "ทุกคน" view)
-  let compare = '';
-  if(!who && team.length){
-    const per = team.map(n=> ({ n, d: idashCompute(n, keys).tot }));
-    const mk = S.metric === 'students' ? 'students' : 'classes';
-    const maxC = Math.max(1, ...per.map(p=> p.d[mk]));
-    const maxM = Math.max(1, ...per.map(p=> p.d.courseRev + p.d.product));
-    compare = `<div class="idash-sub">เทียบรายอาจารย์ <span>${periodTxt}</span></div>
-      <div class="idash-cmp">${per.sort((a,b)=> (b.d.courseRev+b.d.product)-(a.d.courseRev+a.d.product)).map(p=>`
-        <button type="button" class="idash-cmp-row" data-who="${p.n.replace(/"/g,'&quot;')}">
-          ${idashAvatar(p.n, 34)}
-          <div class="nm"><b>${p.n}</b>
-            <div class="bar"><i style="width:${p.d[mk]/maxC*100}%;background:${IDASH_C1}"></i></div>
-            <div class="bar"><i style="width:${p.d.courseRev/maxM*100}%;background:${IDASH_C1}"></i><i style="width:${p.d.product/maxM*100}%;background:${IDASH_C2};margin-left:2px"></i></div>
-          </div>
-          <div class="num"><b>${p.d[mk]} ${mk==='students'?'คน':'รอบ'}</b><span>${fmt(p.d.courseRev + p.d.product)} ฿</span></div>
-        </button>`).join('')}</div>`;
-  }
-
-  const courseList = Object.keys(cur.perCourse).map(n=> ({ n, c: cur.perCourse[n] })).sort((a,b)=> b.c - a.c).slice(0,6);
-  const maxCourse = Math.max(1, ...courseList.map(x=> x.c));
-  const prodList = Object.keys(cur.perProduct).map(n=> ({ n, ...cur.perProduct[n] })).sort((a,b)=> b.total - a.total).slice(0,5);
-  const maxProd = Math.max(1, ...prodList.map(x=> x.total));
-  const empty = t=> `<div class="idash-empty">${t}</div>`;
+  const chips = [`<button type="button" class="idb-chip ${S.who==='all'?'on':''}" data-pick="all"><span class="idb-av t">${IDB_TEAM_ICON}</span>ทุกคน</button>`]
+    .concat(team.map(n=> `<button type="button" class="idb-chip ${S.who===n?'on':''}" data-pick="${idbEsc(n)}">${idbAvatar(n, 24)}${idbEsc(n.replace('อาจารย์','อ.'))}</button>`)).join('');
 
   box.innerHTML = `
-    <div class="idash-chips">${chips}</div>
-    <div class="idash-controls">
-      ${seg('months', S.months, [[3,'3 เดือน'],[6,'6 เดือน'],[12,'12 เดือน']])}
-      <span class="idash-period">${periodTxt}</span>
+    <nav class="idb-bar" aria-label="เลือกอาจารย์และช่วงเวลา">
+      <div class="idb-chips">${chips}</div>
+      ${idbPills('months', S.months, [[3,'3 เดือน'],[6,'6 เดือน'],[12,'12 เดือน']], 'ช่วงเวลา')}
+    </nav>
+    <div class="idb-grid${animate?' anim':''}${who?'':' all'}">
+      ${idbHero(ctx)}
+      ${idbStack(ctx)}
+      ${idbGauge(ctx)}
+      ${idbLine(ctx)}
+      ${idbMix(ctx)}
+      ${idbMonth(ctx)}
+      ${idbProducts(ctx)}
+      ${idbStream(ctx)}
+      ${idbActivity(ctx)}
+      ${who ? '' : idbTeam(ctx)}
     </div>
-    ${who ? `<div class="idash-head">${idashAvatar(who, 48)}<div><div class="t">${who}</div><div class="s">${upcoming ? `มีคิวรอสอนอีก ${upcoming} คิว` : 'ยังไม่มีคิวรอสอน'} · เทียบกับ ${S.months} เดือนก่อนหน้า</div></div></div>`
-          : `<div class="idash-head"><span class="idash-av all big">${IDASH_TEAM_ICON}</span><div><div class="t">ทุกอาจารย์รวมกัน</div><div class="s">${upcoming ? `มีคิวรอสอนอีก ${upcoming} คิว` : 'ยังไม่มีคิวรอสอน'} · เทียบกับ ${S.months} เดือนก่อนหน้า</div></div></div>`}
-    <div class="idash-kpis">
-      ${kpi('รอบที่สอน', T.classes, T.classes, P.classes)}
-      ${kpi('ผู้เรียน', T.students, T.students, P.students)}
-      ${kpi('รายได้ค่าคอร์ส', T.courseRev, T.courseRev, P.courseRev, true)}
-      ${kpi('ยอดขายสินค้า', T.product, T.product, P.product, true)}
-      ${kpi('กำไรค่าคอร์ส', T.courseProfit, T.courseProfit, P.courseProfit, true)}
-      ${kpi('ยอดรวม (ค่าคอร์ส+สินค้า)', T.courseRev+T.product, T.courseRev+T.product, P.courseRev+P.product, true)}
-    </div>
-    <div class="idash-charts${twoCol?' two':''}">
-    <div class="idash-chart">
-      <div class="idash-sub">การสอนรายเดือน ${seg('metric', S.metric, [['classes','รอบสอน'],['students','ผู้เรียน']])}</div>
-      ${T.classes || T.students ? idashBarsSVG('idashChartA', monthData, metricSeries, { selIndex:S.sel, aria:'จำนวนการสอนรายเดือน', W:chartW, H:chartH }) : empty('ยังไม่มีการสอนที่ยืนยันแล้วในช่วงนี้')}
-    </div>
-    <div class="idash-chart">
-      <div class="idash-sub">ยอดรายเดือน (บาท)
-        <span class="idash-legend"><span><i style="background:${IDASH_C1}"></i>ค่าคอร์ส</span><span><i style="background:${IDASH_C2}"></i>ขายสินค้า</span></span></div>
-      ${T.courseRev || T.product ? idashBarsSVG('idashChartB', monthData, moneySeries, { money:true, selIndex:S.sel, aria:'ยอดรายเดือน', W:chartW, H:chartH }) : empty('ยังไม่มียอดในช่วงนี้')}
-    </div>
-    </div>
-    ${detail}
-    ${compare}
-    <div class="idash-two">
-      <div>
-        <div class="idash-sub">คอร์สที่สอน</div>
-        ${courseList.length ? courseList.map(x=> `<div class="idash-hb"><span class="n">${x.n}</span><span class="t"><i style="width:${x.c/maxCourse*100}%;background:${IDASH_C1}"></i></span><b>${x.c}</b></div>`).join('') : empty('ยังไม่มีข้อมูล')}
-      </div>
-      <div>
-        <div class="idash-sub">สินค้าที่ขายได้</div>
-        ${prodList.length ? prodList.map(x=> `<div class="idash-hb"><span class="n">${x.n}</span><span class="t"><i style="width:${x.total/maxProd*100}%;background:${IDASH_C2}"></i></span><b>${idashCompact(x.total)}</b></div>`).join('') : empty('ยังไม่มีการขายสินค้า')}
-      </div>
-    </div>
-    <p class="idash-note">นับจากคลาสที่กด “ยืนยันสอนแล้ว” · ยอดขายสินค้า = ขายระหว่างคลาส + ขายหน้าร้านโดยอาจารย์คนนั้น</p>
-  `;
+    <p class="idb-note">นับจากคลาสที่กด “ยืนยันสอนแล้ว” (หลายคนจองคลาสเดียวกันนับ 1 รอบ) · ยอดขายสินค้า = ขายระหว่างคลาส + ขายหน้าร้านโดยอาจารย์คนนั้น · เทียบกับช่วงก่อนหน้าที่ยาวเท่ากัน</p>`;
+  idbBind(box, ctx, animate);
+}
+function idbBind(box, ctx, animate){
+  const S = ctx.S;
+  const rerender = (o)=> renderInstructorDashboard(o);
+  box.querySelectorAll('[data-pick]').forEach(b=> b.addEventListener('click', ()=>{
+    const id = b.dataset.pick; if(id === S.who) return;
+    const card = b.classList.contains('idb-card');
+    S.who = id;
+    if(card && !idbReduced()){ // let the stack shuffle first, then refresh the board
+      const wrap = box.querySelector('[data-stack] .idb-stack-in'); const cards = [...wrap.querySelectorAll('.idb-card')];
+      const order = cards.map(c=> c.dataset.pick).filter(x=> x !== id).concat([id]); const depth = order.length - 1;
+      cards.forEach(c=>{ const pos = order.indexOf(c.dataset.pick), ff = depth - pos; c.style.top = ((depth-ff)*40)+'px'; c.style.zIndex = pos+1; c.style.setProperty('--sc', (1-ff*0.055).toFixed(3)); });
+      setTimeout(()=> rerender(), 520);
+    } else rerender();
+    if(b.classList.contains('idb-tr')) box.scrollIntoView({ behavior:'smooth', block:'start' });
+  }));
+  box.querySelectorAll('[data-months]').forEach(b=> b.onclick = ()=>{ S.months = Number(b.dataset.months); rerender(); });
+  box.querySelectorAll('[data-metric]').forEach(b=> b.onclick = ()=>{ S.metric = b.dataset.metric; rerender({ quiet:true }); });
+  box.querySelectorAll('[data-gauge]').forEach(b=> b.onclick = ()=>{ S.gauge = b.dataset.gauge; rerender({ quiet:true }); });
+  box.querySelectorAll('[data-stream]').forEach(b=> b.onclick = ()=>{ S.stream = b.dataset.stream; rerender({ quiet:true }); });
+  const gq = box.querySelector('[data-goqueue]');
+  if(gq) gq.onclick = ()=>{ try{ bkFilter.q = ctx.who || ''; bkFilter.date = ''; }catch(e){} switchTab('log'); };
 
-  box.querySelectorAll('[data-who]').forEach(b=> b.onclick = ()=>{ S.who = b.dataset.who; S.sel = null; renderInstructorDashboard(); if(b.classList.contains('idash-cmp-row')) box.scrollIntoView({ behavior:'smooth', block:'start' }); });
-  box.querySelectorAll('[data-months]').forEach(b=> b.onclick = ()=>{ S.months = Number(b.dataset.months); S.sel = null; renderInstructorDashboard(); });
-  box.querySelectorAll('[data-metric]').forEach(b=> b.onclick = ()=>{ S.metric = b.dataset.metric; renderInstructorDashboard(); });
-  box.querySelectorAll('.idash-hit').forEach(r=> r.addEventListener('click', ()=>{ const i = Number(r.dataset.i); S.sel = S.sel === i ? null : i; renderInstructorDashboard(); }));
-  if(!window.__idashRz){
-    window.__idashRz = true; let t = null;
-    window.addEventListener('resize', ()=>{ clearTimeout(t); t = setTimeout(()=>{ const b = document.getElementById('idashBox'); if(b && b.offsetParent && Math.abs((b.clientWidth||0) - Number(b.dataset.w||0)) > 40) renderInstructorDashboard(); }, 250); });
+  // count-up on the headline number
+  const big = box.querySelector('.idb-net .v[data-count]');
+  if(big && animate){ const target = Number(big.dataset.count)||0, t0 = performance.now(), dur = 1200;
+    const tick = now=>{ if(!big.isConnected) return; const p = Math.min(1, (now-t0)/dur); big.textContent = idbBaht(target*(1-Math.pow(1-p,4))); if(p<1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick); }
+  if(animate) requestAnimationFrame(()=> requestAnimationFrame(()=>{ const g = box.querySelector('.idb-grid'); if(g) g.classList.add('in'); }));
+  else { const g = box.querySelector('.idb-grid'); if(g) g.classList.add('in'); }
+
+  // 30-day strip scrub
+  const strip = box.querySelector('[data-strip]'), sl = box.querySelector('[data-strip-lbl]');
+  if(strip && sl){
+    const bars = [...strip.querySelectorAll('.idb-sb')];
+    const set = i=>{ strip.classList.toggle('hov', i!=null); bars.forEach((b,j)=> b.classList.toggle('on', j===i));
+      if(i==null){ sl.textContent = 'ยอดรายวัน 30 วันล่าสุด'; return; }
+      const d = ctx.strip[i]; sl.textContent = `${idbDayLbl(d.s)} · ${idbBaht(d.v)}${d.c ? ` · ${d.c} รอบ` : ''}`; };
+    const at = e=>{ const r = strip.getBoundingClientRect(); return Math.max(0, Math.min(bars.length-1, Math.floor((e.clientX - r.left)/r.width*bars.length))); };
+    strip.addEventListener('pointermove', e=> set(at(e)));
+    strip.addEventListener('pointerdown', e=> set(at(e)));
+    strip.addEventListener('pointerleave', e=>{ if(e.pointerType === 'mouse') set(null); }); // on touch the last tapped day stays shown
+    bars.forEach((b,i)=>{ b.addEventListener('focus', ()=> set(i)); b.addEventListener('blur', ()=> set(null)); });
   }
+  // cumulative line scrub
+  const plot = box.querySelector('[data-plot]');
+  if(plot && ctx.line){
+    const { a, b, dates } = ctx.line, G = ctx.lineGeom, n = a.length;
+    const xh = plot.querySelector('[data-xh]'), da = plot.querySelector('[data-da]'), db = plot.querySelector('[data-db]'), tip = plot.querySelector('[data-tip]');
+    const la = box.querySelector('[data-la]'), lb = box.querySelector('[data-lb]');
+    const show = i=>{
+      const hov = i != null; const k = hov ? i : n-1; const left = (G.X(k)/G.W*100).toFixed(2)+'%';
+      xh.style.left = left; da.style.left = left; db.style.left = left;
+      da.style.top = (G.y(a[k])/G.H*100).toFixed(2)+'%'; db.style.top = (G.y(b[k])/G.H*100).toFixed(2)+'%';
+      plot.classList.toggle('hov', hov);
+      la.textContent = ctx.lineFmt(a[k]); lb.textContent = ctx.lineFmt(b[k]);
+      if(hov){ tip.textContent = `${idbDayLbl(dates[k])} · วันที่ ${k+1}`; tip.style.left = `clamp(46px, ${left}, calc(100% - 46px))`; }
+    };
+    const at = e=>{ const r = plot.getBoundingClientRect(); return Math.max(0, Math.min(n-1, Math.round((e.clientX - r.left)/r.width*(n-1)))); };
+    plot.addEventListener('pointermove', e=> show(at(e)));
+    plot.addEventListener('pointerdown', e=> show(at(e)));
+    plot.addEventListener('pointerleave', e=>{ if(e.pointerType === 'mouse') show(null); });
+  }
+  // course mix hover
+  const seg = box.querySelector('[data-seg]'), segl = box.querySelector('[data-segl]');
+  if(seg && segl){
+    const parts = [...seg.children], rows = [...segl.children];
+    const hi = i=>{ parts.forEach((p,j)=> p.style.opacity = (i==null || i===j) ? 1 : .3); rows.forEach((r,j)=> r.classList.toggle('dim', i!=null && i!==j)); };
+    parts.concat(rows).forEach(el=>{ el.addEventListener('pointerenter', ()=> hi(Number(el.dataset.i))); el.addEventListener('pointerleave', ()=> hi(null)); });
+  }
+  // weekly stream scrub
+  const st = box.querySelector('.idb-st-bars');
+  if(st && ctx.weeks){
+    const bars = [...st.querySelectorAll('.idb-stb')]; const sv = box.querySelector('[data-sv]'), sm = box.querySelector('[data-sm]');
+    const key = S.stream === 'students' ? 'students' : 'classes', unit = key === 'students' ? 'คน' : 'รอบ';
+    const set = i=>{ const hov = i!=null; const k = hov ? i : bars.length-1; const w = ctx.weeks[k]; if(!w) return;
+      st.classList.toggle('hov', hov); bars.forEach((b,j)=> b.classList.toggle('on', hov && j===i));
+      sv.textContent = `${fmt(w[key])} ${unit}`; sm.textContent = `${k===bars.length-1?'สัปดาห์นี้':'สัปดาห์'} · ${idbDayLbl(w.from)} – ${idbDayLbl(w.to)} · ${idbBaht(w.total)}`; };
+    const at = e=>{ const r = st.getBoundingClientRect(); return Math.max(0, Math.min(bars.length-1, Math.floor((e.clientX - r.left)/r.width*bars.length))); };
+    st.addEventListener('pointermove', e=> set(at(e)));
+    st.addEventListener('pointerdown', e=> set(at(e)));
+    st.addEventListener('pointerleave', e=>{ if(e.pointerType === 'mouse') set(null); });
+    bars.forEach((b,i)=>{ b.addEventListener('focus', ()=> set(i)); b.addEventListener('blur', ()=> set(null)); });
+  }
+  // holographic glare follows the finger on the card stack
+  const stk = box.querySelector('[data-stack]');
+  if(stk) stk.addEventListener('pointermove', e=>{ const r = stk.getBoundingClientRect(); stk.style.setProperty('--gl', (((e.clientX - r.left)/r.width)*100).toFixed(1)+'%'); });
 }
 function openInstructorDashboard(name){
-  window._idash.who = name || 'all'; window._idash.sel = null;
+  window._idash.who = name || 'all';
   window._idash.scroll = true;
   switchTab('dashboard');
 }
