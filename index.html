@@ -2648,7 +2648,18 @@
 
   /* ---- instructor dashboard (dark bento) ---- */
   #idashCard.idash-card{ background:#0B0A07; border-color:#0B0A07; color:#F3EEE3; padding:20px 16px; }
-  #idashCard.idash-card h2{ color:#F3EEE3; }
+  #idashCard.idash-card h2{ color:#F3EEE3; margin:0; }
+  #idashCard.idash-card{ position:relative; isolation:isolate; overflow:hidden; }
+  #idashCard > .idash-bg-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; pointer-events:none; }
+  #idashCard.has-bgvid::after{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(rgba(11,10,7,.70),rgba(11,10,7,.86)); }
+  .idash-titlerow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
+  .idash-bgbtn{ flex:none; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#E9E2D2; border-radius:999px; padding:6px 12px; font:600 12px 'IBM Plex Sans Thai', sans-serif; cursor:pointer; }
+  .idash-bgbtn:active{ transform:scale(.96); }
+  /* with a custom background the tiles turn see-through so the picture shows between and behind them */
+  body.idash-has-bg #idashCard .idb-tile:not(.idb-month){ background:rgba(22,21,15,.74); border-color:rgba(255,255,255,.1); }
+  body.idash-has-bg.idash-bg-still #idashCard .idb-tile:not(.idb-month){ background:rgba(22,21,15,.6); -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2); }
+  body.idash-has-bg #idashCard .idb-month{ box-shadow:0 10px 30px -12px rgba(0,0,0,.6); }
+  .bg-row.bg-row-focus{ outline:2px solid #DCA73D; outline-offset:2px; transition:outline-color .3s; }
   #idashCard.idash-card .hint{ color:#9A927F; }
   #idashBox{ --ib-t:#F3EEE3; --ib-m:#9A927F; --ib-tile:#16150F; --ib-line:rgba(255,255,255,.08); --ib-a:#C48F2E; --ib-a2:#8F83DA; --ib-solid:#DCA73D; color:var(--ib-t); font-family:'IBM Plex Sans Thai', sans-serif; }
   #idashBox button{ font-family:inherit; -webkit-tap-highlight-color:transparent; }
@@ -6977,6 +6988,7 @@ function switchTab(tab){
   if(tab==='stock'){
     Promise.all([loadRetailProducts, loadSharedBookings, loadStandaloneSales, loadStockMovements, loadCustomCategories].map(freshLoad)).then(()=>{ if(document.getElementById('productGrid')) renderStockTab(); });
   }
+  if(tab!=='dashboard'){ const iv = document.querySelector('#idashCard > video.idash-bg-video'); if(iv) iv.pause(); }
   if(tab==='shop') renderShopTab(); document.body.classList.toggle('shop-tab-open', tab==='shop');
   if(tab==='sell'){
     freshLoad(loadRetailProducts).then(()=>{ if(document.getElementById('tab-sell')) renderSellTab(); });
@@ -7009,10 +7021,11 @@ const BG_SLOTS = [
   { key:'login', label:'หน้าเลือกผู้ใช้และหน้ารหัส',   hint:'ตอนเลือกชื่อและกรอก PIN',       max:1400 },
   { key:'page',  label:'พื้นหลังทั้งแอพ',              hint:'แสดงจางๆ ด้านหลังการ์ดทุกแท็บ',                max:1600 },
   { key:'modal', label:'หน้าต่างป๊อปอัพ',              hint:'ป๊อปอัพทุกตัว เช่น จองคิว เพิ่มสินค้า',         max:1000 },
+  { key:'idash', label:'Dashboard รายอาจารย์',         hint:'พื้นหลังหน้ากราฟการสอนและยอด (ใส่ได้ทั้งรูปและวิดีโอ) · ภาพจะถูกหรี่ให้มืดลงเพื่อให้อ่านตัวเลขชัด', max:1600 },
 ];
 let customBackgrounds = {};
 const BG_MOTIONS = [ { key:'zoom', label:'ซูม' }, { key:'pan', label:'แพน' }, { key:'float', label:'ลอย' }, { key:'none', label:'นิ่ง' } ];
-const BG_MOTION_DEFAULT = { splash:'zoom', hero:'zoom', login:'pan', page:'none', modal:'none' };
+const BG_MOTION_DEFAULT = { splash:'zoom', hero:'zoom', login:'pan', page:'none', modal:'none', idash:'none' };
 let bgMotion = { ...BG_MOTION_DEFAULT };
 async function saveBgMotion(){ await window.storage.set('shared_bg_motion', JSON.stringify(bgMotion), true); }
 async function loadCustomBackgrounds(){
@@ -7043,7 +7056,7 @@ function cacheSplashBackground(){
   }catch(e){ /* storage full — the splash just falls back to the video, nothing breaks */ }
 }
 // ---- background videos: chunked into shared rows, cached per device in IndexedDB ----
-const BG_VIDEO_SLOTS = ['splash','hero','login','page'];
+const BG_VIDEO_SLOTS = ['splash','hero','login','page','idash'];
 const BG_VIDEO_MAX_MB = 8;
 const BG_CHUNK = 600000;
 const bgVideoUrls = {};
@@ -7080,6 +7093,19 @@ async function loadBgVideos(){
   }
   applyBgVideos();
 }
+// the instructor dashboard card is rebuilt on every render, so its background video is (re)attached here
+function ensureIdashVideo(){
+  const card = document.getElementById('idashCard');
+  const cur = (typeof bgVideoUrls !== 'undefined') ? bgVideoUrls.idash : null;
+  document.body.classList.toggle('idash-has-bg', !!(cur || (customBackgrounds.idash && !isBgVideo(customBackgrounds.idash))));
+  if(!card) return;
+  let v = card.querySelector(':scope > video.idash-bg-video');
+  card.classList.toggle('has-bgvid', !!cur);
+  if(!cur){ if(v){ v.pause(); v.remove(); } return; }
+  if(!v){ v = document.createElement('video'); v.className = 'idash-bg-video is-custom-bg'; v.setAttribute('aria-hidden','true'); card.prepend(v); }
+  if(v.dataset.bgSrc !== cur.url){ v.dataset.bgSrc = cur.url; v.src = cur.url; }
+  if(card.offsetParent !== null) playQuiet(v); else v.pause();
+}
 function playQuiet(v){ v.muted = true; v.defaultMuted = true; v.setAttribute('muted',''); v.loop = true; v.playsInline = true; v.setAttribute('playsinline',''); const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }
 function applyBgVideos(){
   const set = (vid, slot, fallbackSrc)=>{
@@ -7110,6 +7136,7 @@ function applyBgVideos(){
     if(!pv){ const w = document.createElement('div'); w.id = 'pageBgVideoWrap'; w.innerHTML = '<video id="pageBgVideo" muted loop playsinline webkit-playsinline aria-hidden="true"></video>'; document.body.prepend(w); pv = document.getElementById('pageBgVideo'); }
     set(pv, 'page', '');
   } else if(pv){ pv.pause(); pv.parentNode.remove(); }
+  ensureIdashVideo();
   try{
     if(bgVideoUrls.splash) localStorage.setItem('rangsan_bg_splash_vid', bgVideoUrls.splash.id);
     else localStorage.removeItem('rangsan_bg_splash_vid');
@@ -7148,6 +7175,9 @@ function applyCustomBackgrounds(){
   if(u('login')) css += layer('#loginScreen', u('login'), -2, bgMotion.login) + ` #loginScreen .login-video{ display:none; }
     #pinModalOverlay .pin-modal-box{ background:linear-gradient(rgba(11,42,21,.78),rgba(11,42,21,.92)), ${u('login')} center/cover no-repeat !important; }`;
   if(u('page')) css += layer('body', u('page'), -1, bgMotion.page, 'linear-gradient(rgba(245,240,230,.84),rgba(245,240,230,.84))').replace('position:absolute','position:fixed');
+  if(u('idash')) css += layer('#idashCard', u('idash'), -1, bgMotion.idash, 'linear-gradient(rgba(11,10,7,.70),rgba(11,10,7,.86))');
+  document.body.classList.toggle('idash-has-bg', !!(customBackgrounds.idash));
+  document.body.classList.toggle('idash-bg-still', (bgMotion.idash||'none') === 'none' && !isBgVideo(customBackgrounds.idash||''));
   if(u('modal')){
     // popups scroll internally, so their image moves via background size/position on the box itself
     const MA = { zoom:'rsBgZoom 9s ease-in-out infinite alternate', pan:'rsBgPan 11s ease-in-out infinite alternate', float:'rsBgFloat 6s ease-in-out infinite alternate', none:'none' };
@@ -7258,10 +7288,14 @@ function renderBgSettings(){
     };
   });
 }
-function openBgSettings(){
+function openBgSettings(focusKey){
   if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่เปลี่ยนภาพพื้นหลังได้`); return; }
   renderBgSettings();
   openModal('bgSettingsOverlay');
+  if(focusKey){
+    const row = document.querySelector(`#bgSettingsList [data-bg-slot="${focusKey}"]`);
+    if(row){ setTimeout(()=>{ row.scrollIntoView({ behavior:'smooth', block:'center' }); row.classList.add('bg-row-focus'); setTimeout(()=> row.classList.remove('bg-row-focus'), 1800); }, 250); }
+  }
 }
 
 /* ============================= RENDER: MAIN SHELL ============================= */
@@ -7424,7 +7458,7 @@ function renderDashboard(){
 
   el.innerHTML = `
     <div class="card idash-card" id="idashCard">
-      <h2>Dashboard รายอาจารย์</h2>
+      <div class="idash-titlerow"><h2>Dashboard รายอาจารย์</h2>${currentUser===ADMIN_NAME ? `<button type="button" class="idash-bgbtn" id="idashBgBtn" title="ตั้งค่าพื้นหลังหน้านี้">🖼 พื้นหลัง</button>` : ''}</div>
       <p class="hint">กราฟการสอนและยอดของแต่ละอาจารย์ แตะชื่อหรือการ์ดอาจารย์เพื่อสลับ · แตะค้าง/ลากบนกราฟเพื่อดูตัวเลข</p>
       <div id="idashBox"></div>
     </div>
@@ -7514,6 +7548,8 @@ function renderDashboard(){
   `;
 
   try{ renderInstructorDashboard(); }catch(e){ console.error('instructor dashboard', e); }
+  try{ ensureIdashVideo(); }catch(e){}
+  const idBg = document.getElementById('idashBgBtn'); if(idBg) idBg.onclick = ()=> openBgSettings('idash');
   if(window._idash && window._idash.scroll){ window._idash.scroll = false; const ic = document.getElementById('idashCard'); if(ic) requestAnimationFrame(()=> ic.scrollIntoView({ behavior:'smooth', block:'start' })); }
   loadRegistrationList();
   document.getElementById('regRefreshBtn').onclick = ()=> loadRegistrationList();
