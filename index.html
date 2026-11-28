@@ -2855,6 +2855,17 @@
   .pfx-rl .ic{ background:#EFE8D6; color:#0B2A15; }
   .pfx-foot{ margin:16px 0 0 !important; }
   @media (max-width:699px){ .pfx-labels .c{ display:none; } }
+
+  /* ---- profile backdrop (admin background) ---- */
+  #bgSettingsOverlay{ z-index:80; }
+  #profX .pfx-backdrop{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  #profX .pfx-backdrop video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #profX .pfx-backdrop.has-vid::after{ content:''; position:absolute; inset:0; background:linear-gradient(rgba(5,5,5,.62),rgba(5,5,5,.80)); }
+  body.pfx-has-bg #profX .pfx-tile{ background:rgba(28,28,28,.80); }
+  body.pfx-has-bg #profX .pfx-stage-t{ background:rgba(38,38,38,.82); }
+  body.pfx-has-bg #profX .pfx-legend{ background:rgba(21,21,21,.7); }
+  body.pfx-has-bg.pfx-bg-still #profX .pfx-tile{ background:rgba(28,28,28,.62); -webkit-backdrop-filter:blur(16px) saturate(1.15); backdrop-filter:blur(16px) saturate(1.15); }
+  body.pfx-has-bg #profX .pfx-banner{ background:linear-gradient(180deg, rgba(5,5,5,.05) 0%, rgba(5,5,5,.35) 100%); }
   /* ---- instructor dashboard (light bento) ---- */
   #idashCard.idash-card{ background:#F7F3EA; border-color:#EAE2D2; color:#1D1810; padding:20px 16px; }
   #idashCard.idash-card h2{ color:#0B2A15; margin:0; }
@@ -3220,8 +3231,8 @@
   .cb-head .cb-sub{ letter-spacing:.24em; }
 
   /* ---- profile board: a little grain on the black ---- */
-  #profX::before{ position:fixed; opacity:.07; z-index:0; }
-  #profX .pfx-wrap{ position:relative; z-index:1; }
+  #profX::before{ position:fixed; opacity:.07; z-index:1; }
+  #profX .pfx-wrap{ position:relative; z-index:2; }
 
   /* ---- origin footer at the end of every tab ---- */
   .origin-foot{ position:relative; isolation:isolate; overflow:hidden; margin:26px 10px 14px; border-radius:26px; min-height:250px; color:#F6F1E6; display:flex; align-items:flex-end;
@@ -7403,11 +7414,12 @@ const BG_SLOTS = [
   { key:'login', label:'หน้าเลือกผู้ใช้และหน้ารหัส',   hint:'ตอนเลือกชื่อและกรอก PIN',       max:1400 },
   { key:'page',  label:'พื้นหลังทั้งแอพ',              hint:'แสดงจางๆ ด้านหลังการ์ดทุกแท็บ',                max:1600 },
   { key:'modal', label:'หน้าต่างป๊อปอัพ',              hint:'ป๊อปอัพทุกตัว เช่น จองคิว เพิ่มสินค้า',         max:1000 },
+  { key:'pfx',   label:'หน้าโปรไฟล์อาจารย์',          hint:'พื้นหลังด้านหลังหน้าโปรไฟล์ (ใส่ได้ทั้งรูปและวิดีโอ) · ภาพจะถูกหรี่ให้มืดลง ตัวเลขยังอ่านชัด', max:1600 },
   { key:'idash', label:'Dashboard รายอาจารย์',         hint:'พื้นหลังหน้ากราฟการสอนและยอด (ใส่ได้ทั้งรูปและวิดีโอ) · ภาพจะถูกหรี่ให้มืดลงเพื่อให้อ่านตัวเลขชัด', max:1600 },
 ];
 let customBackgrounds = {};
 const BG_MOTIONS = [ { key:'zoom', label:'ซูม' }, { key:'pan', label:'แพน' }, { key:'float', label:'ลอย' }, { key:'none', label:'นิ่ง' } ];
-const BG_MOTION_DEFAULT = { splash:'zoom', hero:'zoom', login:'pan', page:'none', modal:'none', idash:'none' };
+const BG_MOTION_DEFAULT = { splash:'zoom', hero:'zoom', login:'pan', page:'none', modal:'none', idash:'none', pfx:'none' };
 let bgMotion = { ...BG_MOTION_DEFAULT };
 async function saveBgMotion(){ await window.storage.set('shared_bg_motion', JSON.stringify(bgMotion), true); }
 async function loadCustomBackgrounds(){
@@ -7438,7 +7450,7 @@ function cacheSplashBackground(){
   }catch(e){ /* storage full — the splash just falls back to the video, nothing breaks */ }
 }
 // ---- background videos: chunked into shared rows, cached per device in IndexedDB ----
-const BG_VIDEO_SLOTS = ['splash','hero','login','page','idash'];
+const BG_VIDEO_SLOTS = ['splash','hero','login','page','idash','pfx'];
 const BG_VIDEO_MAX_MB = 8;
 const BG_CHUNK = 600000;
 const bgVideoUrls = {};
@@ -7488,6 +7500,17 @@ function ensureIdashVideo(){
   if(v.dataset.bgSrc !== cur.url){ v.dataset.bgSrc = cur.url; v.src = cur.url; }
   if(card.offsetParent !== null) playQuiet(v); else v.pause();
 }
+function ensurePfxVideo(){
+  const ov = document.getElementById('profX'); const bd = ov && ov.querySelector('.pfx-backdrop');
+  const cur = (typeof bgVideoUrls !== 'undefined') ? bgVideoUrls.pfx : null;
+  if(!bd) return;
+  let v = bd.querySelector('video');
+  bd.classList.toggle('has-vid', !!cur);
+  if(!cur){ if(v){ v.pause(); v.remove(); } return; }
+  if(!v){ v = document.createElement('video'); v.className = 'is-custom-bg'; v.setAttribute('aria-hidden','true'); bd.appendChild(v); }
+  if(v.dataset.bgSrc !== cur.url){ v.dataset.bgSrc = cur.url; v.src = cur.url; }
+  if(ov.classList.contains('open') || ov.style.display === 'block') playQuiet(v); else v.pause();
+}
 function playQuiet(v){ v.muted = true; v.defaultMuted = true; v.setAttribute('muted',''); v.loop = true; v.playsInline = true; v.setAttribute('playsinline',''); const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }
 function applyBgVideos(){
   const set = (vid, slot, fallbackSrc)=>{
@@ -7518,7 +7541,7 @@ function applyBgVideos(){
     if(!pv){ const w = document.createElement('div'); w.id = 'pageBgVideoWrap'; w.innerHTML = '<video id="pageBgVideo" muted loop playsinline webkit-playsinline aria-hidden="true"></video>'; document.body.prepend(w); pv = document.getElementById('pageBgVideo'); }
     set(pv, 'page', '');
   } else if(pv){ pv.pause(); pv.parentNode.remove(); }
-  ensureIdashVideo();
+  ensureIdashVideo(); ensurePfxVideo();
   try{
     if(bgVideoUrls.splash) localStorage.setItem('rangsan_bg_splash_vid', bgVideoUrls.splash.id);
     else localStorage.removeItem('rangsan_bg_splash_vid');
@@ -7558,6 +7581,9 @@ function applyCustomBackgrounds(){
     #pinModalOverlay .pin-modal-box{ background:linear-gradient(rgba(11,42,21,.78),rgba(11,42,21,.92)), ${u('login')} center/cover no-repeat !important; }`;
   if(u('page')) css += layer('body', u('page'), -1, bgMotion.page, 'linear-gradient(rgba(245,240,230,.84),rgba(245,240,230,.84))').replace('position:absolute','position:fixed');
   if(u('idash')) css += layer('#idashCard', u('idash'), -1, bgMotion.idash, 'linear-gradient(rgba(247,243,234,.78),rgba(247,243,234,.90))');
+  if(u('pfx')) css += layer('#profX .pfx-backdrop', u('pfx'), 0, bgMotion.pfx, 'linear-gradient(rgba(5,5,5,.62),rgba(5,5,5,.80))');
+  document.body.classList.toggle('pfx-has-bg', !!(customBackgrounds.pfx));
+  document.body.classList.toggle('pfx-bg-still', (bgMotion.pfx||'none') === 'none' && !isBgVideo(customBackgrounds.pfx||''));
   document.body.classList.toggle('idash-has-bg', !!(customBackgrounds.idash));
   document.body.classList.toggle('idash-bg-still', (bgMotion.idash||'none') === 'none' && !isBgVideo(customBackgrounds.idash||''));
   if(u('modal')){
@@ -8525,7 +8551,7 @@ function pfxEnsureShell(){
   if(ov) return ov;
   ov = document.createElement('div');
   ov.id = 'profX'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','โปรไฟล์อาจารย์');
-  ov.innerHTML = `<div class="pfx-wrap" id="pfxWrap"></div>`;
+  ov.innerHTML = `<div class="pfx-backdrop" aria-hidden="true"></div><div class="pfx-wrap" id="pfxWrap"></div>`;
   document.body.appendChild(ov);
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && ov.classList.contains('open')) closeProfileX(); });
   return ov;
@@ -8533,12 +8559,14 @@ function pfxEnsureShell(){
 function closeProfileX(){
   const ov = document.getElementById('profX'); if(!ov) return;
   ov.classList.remove('open'); document.documentElement.classList.remove('pfx-lock');
+  const bv = ov.querySelector('.pfx-backdrop video'); if(bv) bv.pause();
   setTimeout(()=>{ if(!ov.classList.contains('open')) ov.style.display = 'none'; }, 260);
 }
 function openProfileX(name, booking){
   const ov = pfxEnsureShell();
   window._pfx.name = name; window._pfx.booking = booking || null; window._pfx.sel = null; window._pfx.first = true;
   ov.style.display = 'block';
+  try{ ensurePfxVideo(); }catch(e){}
   try{ renderProfileX(); }
   catch(e){
     // never leave a blank screen: show what went wrong so it can be reported, with a way out
@@ -8724,6 +8752,7 @@ function renderProfileX(){
         <button type="button" class="pfx-arrow" data-pfx-step="1" aria-label="อาจารย์คนถัดไป">›</button>
       </div>
       <div class="pfx-actions">
+        ${currentUser===ADMIN_NAME ? `<button type="button" class="pfx-btn pfx-bgbtn" data-pfx-bg title="ตั้งค่าพื้นหลังหน้าโปรไฟล์">🖼 <span>พื้นหลัง</span></button>` : ''}
         <button type="button" class="pfx-btn" data-pfx-dash>📊 <span>Dashboard</span></button>
         <button type="button" class="pfx-close" data-pfx-close aria-label="ปิด">✕</button>
       </div>
@@ -8781,6 +8810,7 @@ function renderProfileX(){
 function pfxBind(wrap, d, animate){
   const S = window._pfx;
   wrap.querySelectorAll('[data-pfx-close]').forEach(b=> b.onclick = closeProfileX);
+  wrap.querySelectorAll('[data-pfx-bg]').forEach(b=> b.onclick = ()=> openBgSettings('pfx'));
   wrap.querySelectorAll('[data-pfx-dash]').forEach(b=>{ const go = ()=>{ closeProfileX(); openInstructorDashboard(S.name); }; b.onclick = go; b.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } }; });
   const team = state.instructors||[];
   const pick = n=>{ if(!n || n === S.name) return; S.name = n; S.booking = null; S.sel = null; S.first = true; regDayFilter = null; renderProfileX(); document.getElementById('profX').scrollTop = 0; };
