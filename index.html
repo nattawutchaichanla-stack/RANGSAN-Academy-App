@@ -2845,6 +2845,14 @@
   body.idash-has-bg #idashCard .idb-tile:not(.idb-month){ background:rgba(255,255,255,.82); border-color:rgba(255,255,255,.6); }
   body.idash-has-bg.idash-bg-still #idashCard .idb-tile:not(.idb-month){ background:rgba(255,255,255,.64); -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2); }
   body.idash-has-bg #idashCard .idb-month{ box-shadow:0 10px 30px -12px rgba(29,24,16,.35); }
+  .bg-origin{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px; margin-bottom:12px; border-radius:16px; background:#0B2A15; color:#EFE8D6; }
+  .bg-origin-pics{ display:flex; flex:none; }
+  .bg-origin-pics span{ width:44px; height:56px; border-radius:10px; background-size:cover; background-position:center; box-shadow:0 0 0 2px #0B2A15; margin-left:-10px; }
+  .bg-origin-pics span:first-child{ margin-left:0; }
+  .bg-origin-tx{ flex:1 1 180px; min-width:0; }
+  .bg-origin-tx b{ font-size:13.5px; }
+  .bg-origin-tx p{ margin:3px 0 0; font-size:12px; opacity:.8; }
+  .bg-origin .btn{ background:#DCA73D; color:#1A0F08; border:0; }
   .bg-row.bg-row-focus{ outline:2px solid #DCA73D; outline-offset:2px; transition:outline-color .3s; }
   #idashCard.idash-card .hint{ color:#7A6F5E; }
   #idashBox{ --ib-t:#1D1810; --ib-m:#7A6F5E; --ib-tile:#FFFFFF; --ib-gold-t:#8A5E0E; --ib-line:rgba(29,24,16,.08); --ib-a:#B8862A; --ib-a2:#7B6FD0; --ib-solid:#DCA73D; color:var(--ib-t); font-family:'IBM Plex Sans Thai', sans-serif; }
@@ -4784,7 +4792,7 @@ var qrcode = function() {
     <p class="rs-k" style="margin:0; color:rgba(243,238,228,.8);">Our Coffee Journey</p>
     <h3 class="of-t">The Road to Origin.</h3>
     <p class="of-s">ทุกแก้วเริ่มต้นที่ไร่ — จากต้นกาแฟบนดอย สู่บาร์และห้องเรียนของเรา</p>
-    <div class="of-row rs-k"><span>From Farm to Cup</span><span>Est. 2021 · Bangkok</span><span>Rooted in Origin</span></div>
+    <div class="of-row rs-k"><span>From Farm to Cup</span><span>Est. 2021 · Bangkok</span><span>Rooted in Origin</span><span style="margin-left:auto; opacity:.55; letter-spacing:.12em;">v.28.11</span></div>
   </div>
 </section>
 <footer class="savebar" id="savebar">บันทึกข้อมูลแล้ว ✓</footer>
@@ -7539,10 +7547,20 @@ function applyCustomBackgrounds(){
   }
   el.textContent = css;
 }
+const ORIGIN_SLOTS = [{ key:'hero', label:'หน้าหลัก (ส่วนหัว)' }, { key:'login', label:'หน้าเลือกผู้ใช้' }];
+function originSetHTML(){
+  const custom = ORIGIN_SLOTS.filter(s=> customBackgrounds[s.key]);
+  return `<div class="bg-origin">
+    <div class="bg-origin-pics" aria-hidden="true"><span style="background-image:url('brand/origin-field-sm.jpg')"></span><span style="background-image:url('brand/origin-hands-sm.jpg')"></span><span style="background-image:url('brand/origin-cherry-sm.jpg')"></span></div>
+    <div class="bg-origin-tx"><b>ภาพชุดแบรนด์ · Rooted in Origin</b>
+      <p>${custom.length ? `ตอนนี้ ${custom.map(s=> s.label).join(' และ ')} ใช้ภาพที่ตั้งเองอยู่ ภาพชุดไร่กาแฟจึงยังไม่ขึ้น` : 'กำลังใช้ภาพชุดไร่กาแฟอยู่ในหน้าหลักและหน้าเลือกผู้ใช้ ✓'}</p></div>
+    ${custom.length ? `<button type="button" class="btn small" id="bgUseOrigin">ใช้ภาพชุดนี้</button>` : ''}
+  </div>`;
+}
 function renderBgSettings(){
   const list = document.getElementById('bgSettingsList');
   if(!list) return;
-  list.innerHTML = BG_SLOTS.map(slot=>{
+  list.innerHTML = originSetHTML() + BG_SLOTS.map(slot=>{
     const raw = customBackgrounds[slot.key];
     const isVid = isBgVideo(raw);
     const img = raw;
@@ -7622,6 +7640,17 @@ function renderBgSettings(){
       catch(e){ console.error('save motion failed', e); const st = document.querySelector(`[data-bg-status="${key}"]`); if(st) st.textContent = 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'; }
     };
   });
+  const uo = document.getElementById('bgUseOrigin');
+  if(uo) uo.onclick = async ()=>{
+    if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่เปลี่ยนภาพพื้นหลังได้`); return; }
+    const keys = ORIGIN_SLOTS.map(s=> s.key).filter(k=> customBackgrounds[k]);
+    if(!confirm(`เอาภาพที่ตั้งไว้เองใน ${ORIGIN_SLOTS.filter(s=> keys.includes(s.key)).map(s=> s.label).join(' และ ')} ออก แล้วใช้ภาพชุดไร่กาแฟแทน?\n(ภาพเดิมจะถูกลบ ถ้าอยากได้คืนต้องอัปโหลดใหม่)`)) return;
+    uo.disabled = true;
+    try{
+      for(const key of keys){ const old = customBackgrounds[key]; await window.storage.set('shared_bg_'+key, '', true); customBackgrounds[key] = ''; clearBgVideoChunks(key, old); }
+      loadBgVideos(); applyCustomBackgrounds(); renderBgSettings(); flashSaved('ใช้ภาพชุดไร่กาแฟแล้ว ✓');
+    }catch(e){ console.error('origin set failed', e); alert('เปลี่ยนไม่สำเร็จ ลองใหม่อีกครั้ง'); uo.disabled = false; }
+  };
   list.querySelectorAll('[data-bg-remove]').forEach(btn=>{
     btn.onclick = async ()=>{
       if(currentUser !== ADMIN_NAME){ alert(`เฉพาะ ${ADMIN_NAME} เท่านั้นที่เปลี่ยนภาพพื้นหลังได้`); return; }
