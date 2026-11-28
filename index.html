@@ -15631,7 +15631,7 @@ function cbLiveNotice(root, msg){
   window.scrollTo({top:0, behavior:'smooth'});
   setTimeout(()=> n.remove(), 12000);
 }
-function cbExtraPersonHTML(n){
+function cbExtraPersonHTML(n, withAck){
   return `<div class="cb-person"><div class="cb-person-h">👤 ผู้เรียนคนที่ ${n}</div>
     <label>ชื่อ - นามสกุล (ภาษาไทย) <i>*</i><input name="p${n}_name" required maxlength="80"></label>
     <label>ชื่อ - นามสกุล (ภาษาอังกฤษ) <i>*</i><input name="p${n}_nameEn" required maxlength="80" placeholder="เช่น Somying Jaidee"></label>
@@ -15639,6 +15639,7 @@ function cbExtraPersonHTML(n){
     ${cbRadio(`p${n}_gender`,'เพศ',['ชาย','หญิง','อื่น ๆ'],true)}
     ${cbRadio(`p${n}_age`,'อายุ',['18 - 25 ปี','26 - 35 ปี','36 - 45 ปี','46 ปีขึ้นไป'],true)}
     ${cbRadio(`p${n}_milk`,'แพ้นมวัว',['แพ้','ไม่แพ้'],true,true)}
+    ${withAck ? cbRadio(`p${n}_ackLang`,'ใบ Acknowledgment ของผู้เรียนคนนี้ เป็นภาษาไทย หรือ ภาษาอังกฤษ',['ภาษาไทย','ภาษาอังกฤษ'],true) : ''}
   </div>`;
 }
 function cbFormValue(form, name, multi){
@@ -15773,7 +15774,7 @@ async function startCustomerBooking(param){
           <div class="cb-q"><div class="cb-ql">หลักฐานการชำระเงิน (สลิป)</div><div class="cb-qh">โปรดแนบสลิปเพื่อทำการจองคิว<br>ขอขอบพระคุณที่ไว้วางใจใช้บริการ 🙏</div>
             ${cbImg.qr ? `<img class="cb-qr" src="${cbImg.qr}" alt="QR ชำระเงิน">` : ''}${cbImg.qrNote ? `<div class="cb-qrnote">${cbEsc(cbImg.qrNote).replace(/\n/g,'<br>')}</div>` : ''}
             <label class="cb-file"><input type="file" name="slip" accept="image/*"><span id="cbSlipName">📎 แนบรูปสลิป</span></label></div>
-          ${cbIsWorkshop(st.cid) ? '' : cbRadio('ackLang','ประสงค์ออกใบ Acknowledgment เป็นภาษาไทย หรือ ภาษาอังกฤษ',['ภาษาไทย','ภาษาอังกฤษ'],false,false,'*หมายเหตุ : ใบ Acknowledgment ให้เฉพาะคอร์สเรียน Private เท่านั้น')}
+          ${cbIsWorkshop(st.cid) ? '' : cbRadio('ackLang','ประสงค์ออกใบ Acknowledgment เป็นภาษาไทย หรือ ภาษาอังกฤษ',['ภาษาไทย','ภาษาอังกฤษ'],true,false,'ชื่อบนใบจะใช้ตามภาษาที่เลือก (ภาษาไทย = ชื่อภาษาไทย · ภาษาอังกฤษ = ชื่อภาษาอังกฤษ)<br>*หมายเหตุ : ใบ Acknowledgment ให้เฉพาะคอร์สเรียน Private เท่านั้น')}
           ${cbRadio('consent','การยินยอมให้ใช้ภาพถ่ายและวิดีโอ พร้อมรับสิทธิพิเศษ',['ยินยอม และรับสิทธิ์ส่วนลด 5%','ไม่ยินยอม'],true,false,'ระหว่างการเรียนหรือเข้าร่วมกิจกรรม ทาง RANGSAN มีการถ่ายภาพและบันทึกวิดีโอ เพื่อนำไปใช้ประชาสัมพันธ์ รีวิวหลักสูตร และเผยแพร่ผ่านช่องทางออนไลน์ของบริษัท<br><br>🎁 ผู้ที่ยินยอมจะได้รับสิทธิ์ส่วนลดทันที 5%<br>สำหรับการซื้อวัตถุดิบ RANGSAN เท่านั้น')}
           <label>หมายเหตุถึงอาจารย์<textarea name="note" rows="2" maxlength="300"></textarea></label>
           <div class="cb-sum">📅 ${dateTh}${st.time?` · ${st.time} น.`:''}<br>📚 ${cbEsc(cbShortName(c))}</div>
@@ -15801,7 +15802,7 @@ async function startCustomerBooking(param){
           const want = Number(qs.value) || 1;
           let have = ex.querySelectorAll('.cb-person').length;
           while(have > want - 1){ ex.lastElementChild.remove(); have--; }
-          while(have < want - 1){ ex.insertAdjacentHTML('beforeend', cbExtraPersonHTML(have + 2)); have++; }
+          while(have < want - 1){ ex.insertAdjacentHTML('beforeend', cbExtraPersonHTML(have + 2, !cbIsWorkshop(st.cid))); have++; }
           ex.querySelectorAll('.cb-other input[type=text]').forEach(t=> t.oninput = ()=>{ const r = t.closest('.cb-other').querySelector('input[type=radio]'); if(t.value.trim()) r.checked = true; });
         };
         qs.onchange = syncExtra;
@@ -15873,7 +15874,7 @@ async function startCustomerBooking(param){
             const ag = cbFormValue(form, k+'age'); if(ag) b.age = ag;
             const mk = cbFormValue(form, k+'milk');
             b.allergy = mk === 'แพ้' ? 'แพ้นมวัว' : (mk.startsWith('อื่นๆ') ? mk.replace(/^อื่นๆ:\s*/,'') : '');
-            b.form = { gender: cbFormValue(form, k+'gender'), cameWith: name, lineId: extra.lineId ? `${extra.lineId} (ของ ${name})` : '' };
+            b.form = { gender: cbFormValue(form, k+'gender'), cameWith: name, lineId: extra.lineId ? `${extra.lineId} (ของ ${name})` : '', ackLang: cbFormValue(form, k+'ackLang') || extra.ackLang || '' };
             delete b.slipKey;
           }
           sharedBookings.push(b);
