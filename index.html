@@ -2832,6 +2832,29 @@
   @media (prefers-reduced-motion: reduce){
     #profX, .pfx-wrap{ transition:none; }
   }
+
+  /* ---- profile board · Rooted in Origin ---- */
+  .pfx-banner{ position:relative; isolation:isolate; overflow:hidden; border-radius:28px; padding:14px 16px 24px; margin:0 -4px;
+    background:linear-gradient(180deg, rgba(5,5,5,.30) 0%, rgba(5,5,5,.30) 30%, rgba(5,5,5,.72) 68%, #050505 100%), url('brand/origin-field-sm.jpg') 50% 18% / cover no-repeat, #0B2A15; }
+  @media (min-width:760px){ .pfx-banner{ padding:18px 22px 28px; background:linear-gradient(180deg, rgba(5,5,5,.25) 0%, rgba(5,5,5,.2) 30%, rgba(5,5,5,.7) 72%, #050505 100%), url('brand/origin-field.jpg') 50% 26% / cover no-repeat, #0B2A15; } }
+  .pfx-banner::after{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background-image:var(--rs-grain); background-size:180px 180px; opacity:.14; mix-blend-mode:overlay; }
+  .pfx-labels{ display:flex; justify-content:space-between; gap:10px; margin:26px 2px 0; color:rgba(243,238,228,.8); }
+  .pfx-hello .pfx-k{ margin:40px 0 0; color:rgba(243,238,228,.75); }
+  @media (max-width:699px){ .pfx-hello .pfx-k{ margin-top:26px; } }
+  .pfx-hello h2{ margin:6px 0 4px; font-family:'FC Jong Jaroen','Noto Serif Thai',serif; font-weight:400; font-size:clamp(30px,4.6vw,44px); line-height:1.05; color:#F6F1E6; }
+  .pfx-hello p:last-child{ color:rgba(243,238,228,.75); }
+  .pfx-th h3, .pfx-bars-head h3{ font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-weight:400; font-size:19px; letter-spacing:.01em; }
+  .pfx-photo .who h3{ font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-weight:400; font-size:27px; }
+  .pfx-photo .pic::after{ content:''; position:absolute; inset:auto 0 0 0; height:42%; background:linear-gradient(180deg, transparent, rgba(5,5,5,.72)); pointer-events:none; }
+  .pfx-photo .pic-k{ position:absolute; left:16px; bottom:14px; z-index:1; color:rgba(243,238,228,.85); }
+  .pfx-photo .pill.on i{ background:#4FA56A; }
+  .pfx-premium{ position:relative; isolation:isolate; overflow:hidden; background:#A68A6D; }
+  .pfx-premium::after{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background-image:var(--rs-grain); background-size:180px 180px; opacity:.22; mix-blend-mode:overlay; }
+  .pfx-premium h3{ font-family:'FC Jong Jaroen','IBM Plex Sans Thai',sans-serif; font-weight:400; font-size:26px; }
+  .pfx-stage .pct{ font-family:'IBM Plex Mono',monospace; font-size:12px; }
+  .pfx-rl .ic{ background:#EFE8D6; color:#0B2A15; }
+  .pfx-foot{ margin:16px 0 0 !important; }
+  @media (max-width:699px){ .pfx-labels .c{ display:none; } }
   /* ---- instructor dashboard (light bento) ---- */
   #idashCard.idash-card{ background:#F7F3EA; border-color:#EAE2D2; color:#1D1810; padding:20px 16px; }
   #idashCard.idash-card h2{ color:#0B2A15; margin:0; }
@@ -8492,7 +8515,7 @@ function pfxType(c){
 }
 const PFX_TYPES = [
   { k:'private', label:'Private (1 คน)', color:PFX.tan },
-  { k:'semi',    label:'Semi-Private (2 คนขึ้นไป)', color:PFX.violet },
+  { k:'semi',    label:'Semi-Private (2+ คน)', color:PFX.violet },
   { k:'group',   label:'คลาสกลุ่ม / Workshop', color:PFX.green },
 ];
 function pfxShortCourse(n){ return (n||'').replace(/^คอร์ส\s*\d+\s*:\s*/,'').replace(/\s*\(.*?\)\s*$/,''); }
@@ -8593,7 +8616,7 @@ function pfxBarsHTML(d){
       <div class="pfx-pills" role="radiogroup" aria-label="ช่วงเวลา">${[['12w','12 สัปดาห์'],['6m','6 เดือน'],['12m','12 เดือน']].map(o=> `<button type="button" role="radio" aria-checked="${S.range===o[0]}" class="${S.range===o[0]?'on':''}" data-pfx-range="${o[0]}">${o[1]}</button>`).join('')}</div>
     </div>
     <div class="pfx-bars" data-pfx-bars>
-      ${B.map((b,i)=>{ const h = b.total ? Math.max(6, b.total/max*100) : 3; const on = i===sel; return `
+      ${B.map((b,i)=>{ const h = b.total ? Math.max(6, b.total/max*74) : 3; /* headroom so the tooltip never leaves the chart */ const on = i===sel; return `
         <button type="button" class="pfx-bar${on?' on':''}" data-i="${i}" aria-label="${b.long}: ${idbBaht(b.total)}, ${b.classes} คลาส" style="--h:${h.toFixed(1)}%;--d:${i*40}ms">
           <span class="col">${on ? `<span class="tip"><b>${b.long}</b><i></i>${idbBaht(b.total)}<em>${b.classes} คลาส · ${b.students} คน</em></span><span class="dash"></span>` : ''}<span class="fill"></span></span>
           <span class="lb">${b.l}</span>
@@ -8650,7 +8673,7 @@ function pfxStageHTML(d){
   return `<div class="pfx-stage">
     <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r="${R}" fill="none" stroke="#333" stroke-width="4"/>
       <circle class="pfx-ring" cx="29" cy="29" r="${R}" fill="none" stroke="${PFX.green}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" style="--off:${(C*(1-into/3)).toFixed(1)};--c:${C.toFixed(1)}" transform="rotate(-90 29 29)"/></svg>
-    <b class="pct">${pct}%</b>
+    <b class="pct">${into}/3</b>
     <div><p class="m">LV.${d.level} · ${pfxTitle(d.level)}</p><p class="t">อีก ${left} รอบสอน ถึง LV.${d.level+1}</p></div>
   </div>`;
 }
@@ -8689,6 +8712,7 @@ function renderProfileX(){
     </section>`;
 
   wrap.innerHTML = `
+    <div class="pfx-banner">
     <header class="pfx-top">
       <div class="pfx-me">
         <span class="pfx-logo">${photo ? `<img src="${photo}" alt="">` : `<b style="background:${color}">${ini}</b>`}</span>
@@ -8704,13 +8728,15 @@ function renderProfileX(){
         <button type="button" class="pfx-close" data-pfx-close aria-label="ปิด">✕</button>
       </div>
     </header>
-    <div class="pfx-hello"><h2>${isMe ? 'โปรไฟล์ของฉัน' : 'โปรไฟล์'}, ${idbEsc(name.replace('อาจารย์','อ.'))}</h2><p>${fmt(d.classes.length)} คลาส · ${fmt(d.totalStudents)} ผู้เรียน ตั้งแต่เริ่มสอน</p></div>
+    <div class="pfx-labels rs-k" aria-hidden="true"><span>Rangsan Academy</span><span class="c">Instructor Profile</span><span>From Farm to Cup</span></div>
+    <div class="pfx-hello"><p class="pfx-k rs-k">Our Coffee Journey</p><h2>${isMe ? 'โปรไฟล์ของฉัน' : 'โปรไฟล์'}, ${idbEsc(name.replace('อาจารย์','อ.'))}</h2><p>${fmt(d.classes.length)} คลาส · ${fmt(d.totalStudents)} ผู้เรียน ตั้งแต่เริ่มสอน</p></div>
+    </div>
 
     ${bk ? regTile : ''}
     <div class="pfx-grid${animate?' anim':''}">
       <section class="pfx-tile pfx-photo">
         <div class="pic" style="${photo ? '' : `background:${color}`}">${photo ? `<img src="${photo}" alt="${idbEsc(name)}">` : `<b>${ini}</b>`}
-          <span class="pill st ${st.c}"><i></i>${st.t}</span><span class="pill tn">${pfxTenure(d.days)}</span></div>
+          <span class="pill st ${st.c}"><i></i>${st.t}</span><span class="pill tn">${pfxTenure(d.days)}</span><span class="pic-k rs-k">Rangsan Coffee · Est. 2021</span></div>
         <div class="who"><div><h3>${idbEsc(name)}</h3><p>${pfxTitle(d.level)} · LV.${d.level}</p></div>
           <button type="button" class="go" data-pfx-dash aria-label="เปิด Dashboard">↗</button></div>
       </section>
@@ -8734,7 +8760,7 @@ function renderProfileX(){
         <section class="pfx-tile pfx-stage-t">${pfxStageHTML(d)}</section>
         <section class="pfx-tile pfx-tl-t">${pfxTimelineHTML(d)}</section>
         <section class="pfx-premium" data-pfx-dash role="button" tabindex="0">
-          <div class="r"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true">${[...Array(28)].map((_,i)=>{ const a=i/28*Math.PI*2; return `<line x1="${(20+Math.cos(a)*6).toFixed(1)}" y1="${(20+Math.sin(a)*6).toFixed(1)}" x2="${(20+Math.cos(a)*18).toFixed(1)}" y2="${(20+Math.sin(a)*18).toFixed(1)}" stroke="#1A1209" stroke-width="1.3" stroke-linecap="round"/>`; }).join('')}</svg>
+          <div class="r"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#1A1209" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 43C15 34 24 23 43 7"/><path d="M17 33c-6-3-9-8-8-14 6 2 9 8 8 14Z"/><path d="M27 23c6 1 10 6 10 12-6-1-9-6-10-12Z"/><path d="M33 15c0-5 3-9 9-10 0 5-3 9-9 10Z"/><path d="M22 28c-4-4-5-9-3-13"/><circle cx="21.5" cy="31.5" r="3.2" fill="#A3202B" stroke="none"/><circle cx="26.5" cy="29" r="3" fill="#A3202B" stroke="none"/><circle cx="24.5" cy="34.5" r="2.8" fill="#7E1720" stroke="none"/></svg>
             <span class="pp">→ ${idbBaht(d.month.total)} <small>/เดือนนี้</small></span></div>
           <h3>ยอดเดือนนี้ของ${isMe ? 'ฉัน' : idbEsc(name.replace('อาจารย์','อ.'))}</h3>
           <p>ค่าคอร์ส ${idbBaht(d.month.course)} · ขายสินค้า ${idbBaht(d.month.product)} · กดดูกราฟทั้งหมด</p>
@@ -8742,6 +8768,13 @@ function renderProfileX(){
       </div>
     </div>
     ${bk ? '' : regTile}
+    <section class="origin-foot pfx-foot" aria-label="RANGSAN — from farm to cup">
+      <div class="of-top rs-k" aria-hidden="true"><span>Rangsan Coffee</span><span>Chiang Rai, Thailand</span></div>
+      <div class="of-script" aria-hidden="true">Rangsan</div>
+      <div class="of-in"><p class="rs-k" style="margin:0; color:rgba(243,238,228,.8);">Rooted in Origin</p>
+        <h3 class="of-t">The Road to Origin.</h3>
+        <p class="of-s">ทุกคลาสที่สอน คือการพาเมล็ดจากไร่ไปถึงมือคนชง</p></div>
+    </section>
   `;
   pfxBind(wrap, d, animate);
 }
